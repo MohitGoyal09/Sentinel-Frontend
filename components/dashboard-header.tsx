@@ -4,10 +4,10 @@ import { Bell, Menu, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type { Employee } from "@/lib/mock-data.bak"
+import type { UserSummary } from "@/types"
 
 interface DashboardHeaderProps {
-  selectedUser: Employee | null
+  selectedUser: UserSummary | null
   onToggleSidebar: () => void
   activeView: string
 }

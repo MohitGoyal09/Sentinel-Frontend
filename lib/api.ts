@@ -88,7 +88,7 @@ export async function getTeamAnalysis(userHashes: string[]): Promise<CultureTher
   const response = await fetch(`${API_BASE_URL}/teams/culture`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_hashes: userHashes }),
+    body: JSON.stringify({ team_hashes: userHashes }),
   });
   return handleResponse<CultureThermometerData>(response);
 }
