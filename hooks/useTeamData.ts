@@ -19,23 +19,23 @@ import { getTeamAnalysis } from '@/lib/api';
  * - elevated_count: Number of elevated risk members
  * - contagion_risk: Contagion risk score
  */
-export function useTeamData(teamHashes: string[]): UseTeamDataReturn {
+export function useTeamData(teamHashes?: string[]): UseTeamDataReturn {
   const [data, setData] = useState<CultureThermometerData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = useCallback(async () => {
-    if (teamHashes.length === 0) {
-      setData(null);
-      setError(null);
-      return;
-    }
+  // Stabilize array dependency
+  const stableHashes = JSON.stringify(teamHashes || []);
 
+  const fetchData = useCallback(async () => {
+    // Empty list means fetch all (global team analysis)
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      const result = await getTeamAnalysis(teamHashes);
+      const hashes = JSON.parse(stableHashes);
+      const result = await getTeamAnalysis(hashes);
       setData(result);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch team analysis';
@@ -44,7 +44,7 @@ export function useTeamData(teamHashes: string[]): UseTeamDataReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [teamHashes]);
+  }, [stableHashes]);
 
   // Fetch data when teamHashes changes
   useEffect(() => {

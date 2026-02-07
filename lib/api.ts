@@ -9,6 +9,8 @@ import {
   RiskLevel,
   PersonaType,
   NudgeData,
+  UserSummary,
+  SimulationEvent,
 } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1/engines';
@@ -130,6 +132,15 @@ export async function injectEvent(
   return handleResponse<InjectEventResponse>(response);
 }
 
+/**
+ * Get recent activity stream
+ * GET /events
+ */
+export async function getRecentEvents(limit: number = 20): Promise<SimulationEvent[]> {
+    const response = await fetch(`${API_BASE_URL}/events?limit=${limit}`);
+    return handleResponse<SimulationEvent[]>(response);
+  }
+
 // ============================================
 // Nudge Dispatcher API
 // ============================================
@@ -164,15 +175,9 @@ export async function acknowledgeNudge(nudgeId: string, action: string): Promise
  * List all users with their risk scores
  * GET /users
  */
-export async function listUsers(): Promise<Array<{
-  user_hash: string;
-  risk_level: string;
-  velocity: number;
-  confidence: number;
-  updated_at: string | null;
-}>> {
+export async function listUsers(): Promise<UserSummary[]> {
   const response = await fetch(`${API_BASE_URL}/users`);
-  return handleResponse(response);
+  return handleResponse<UserSummary[]>(response);
 }
 
 // ============================================

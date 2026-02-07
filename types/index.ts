@@ -33,10 +33,23 @@ export interface NudgeData {
   user_hash: string;
   nudge_type: string;
   message: string;
+  risk_level: RiskLevel;
   actions: Array<{
     label: string;
     action: string;
   }>;
+}
+
+// ============================================
+// History Types
+// ============================================
+export interface HistoryPoint {
+  timestamp: string;
+  date: string;
+  risk_level: RiskLevel;
+  velocity: number;
+  confidence: number;
+  belongingness_score: number;
 }
 
 // ============================================
@@ -51,12 +64,22 @@ export interface TalentScoutPerformer {
 }
 
 export interface TalentScoutData {
-  user_hash: string;
-  betweenness: number;
-  eigenvector: number;
-  unblocking_count: number;
-  knowledge_transfer_score: number;
-  is_hidden_gem: boolean;
+  engine: string;
+  top_performers: TalentScoutPerformer[];
+  nodes: NetworkNode[];
+  edges: NetworkEdge[];
+}
+
+export interface TeamMetrics {
+  total_members: number;
+  healthy_count: number;
+  elevated_count: number;
+  critical_count: number;
+  calibrating_count: number;
+  avg_velocity: number;
+  graph_fragmentation: number;
+  comm_decay_rate: number;
+  contagion_risk: RiskLevel;
 }
 
 // ============================================
@@ -70,13 +93,10 @@ export interface CultureThermometerMetrics {
 }
 
 export interface CultureThermometerData {
-  team_risk_level: RiskLevel;
-  average_velocity: number;
-  graph_fragmentation: number;
-  communication_decay: number;
-  critical_count: number;
-  elevated_count: number;
-  contagion_risk: number;
+  engine: string;
+  team_risk: string;
+  metrics: CultureThermometerMetrics;
+  recommendation: string;
 }
 
 // ============================================
@@ -84,11 +104,12 @@ export interface CultureThermometerData {
 // ============================================
 export interface NetworkNode {
   id: string;
-  user_hash: string;
+  label: string;
   risk_level: RiskLevel;
-  betweenness: number;
-  eigenvector: number;
-  is_hidden_gem: boolean;
+  betweenness?: number;
+  unblocking_count?: number;
+  is_hidden_gem?: boolean;
+  eigenvector?: number;
   x?: number;
   y?: number;
   vx?: number;
@@ -99,6 +120,7 @@ export interface NetworkEdge {
   source: string;
   target: string;
   weight: number;
+  edge_type: string;
 }
 
 export interface NetworkGraphData {
@@ -112,10 +134,23 @@ export interface NetworkGraphData {
 export type PersonaType = 'alex_burnout' | 'sarah_gem' | 'jordan_steady' | 'maria_contagion';
 
 export interface SimulationEvent {
+  id?: string;
   user_hash: string;
   timestamp: string;
   event_type: string;
   metadata: Record<string, unknown>;
+  description?: string;
+  risk_impact?: string;
+}
+
+export interface UserSummary {
+  user_hash: string;
+  name?: string;
+  role?: string;
+  risk_level?: string;
+  velocity?: number;
+  confidence?: number;
+  updated_at?: string;
 }
 
 export interface CreatePersonaResponse {
@@ -320,6 +355,29 @@ export interface UseTeamDataReturn {
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
+}
+
+export interface RiskIndicators {
+  overwork: boolean;
+  isolation: boolean;
+  fragmentation: boolean;
+  late_night_pattern: boolean;
+  weekend_work: boolean;
+  communication_decline: boolean;
+}
+
+export interface Employee {
+  user_hash: string;
+  name: string;
+  role: string;
+  risk_level: RiskLevel;
+  velocity: number;
+  confidence: number;
+  belongingness_score: number;
+  circadian_entropy: number;
+  updated_at: string;
+  persona: string;
+  indicators: RiskIndicators;
 }
 
 export interface UseWebSocketReturn {
