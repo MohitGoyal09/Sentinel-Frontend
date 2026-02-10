@@ -93,6 +93,19 @@ export async function getTeamAnalysis(userHashes: string[]): Promise<CultureTher
   return handleResponse<CultureThermometerData>(response);
 }
 
+/**
+ * Get SIR epidemic forecast for team contagion
+ * POST /teams/forecast
+ */
+export async function getTeamForecast(teamHashes: string[], days: number = 30): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/teams/forecast?days=${days}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ team_hashes: teamHashes }),
+  });
+  return handleResponse<any>(response);
+}
+
 // ============================================
 // Simulation API
 // ============================================

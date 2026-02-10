@@ -14,6 +14,8 @@ import { NetworkGraph } from "@/components/network-graph"
 import { SimulationPanel } from "@/components/simulation-panel"
 import { VaultStatus } from "@/components/vault-status"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ProtectedRoute } from "@/components/protected-route"
+import { ForecastChart } from "@/components/forecast-chart"
 
 // Types
 import { Employee, UserSummary } from "@/types"
@@ -28,8 +30,9 @@ import { useUsers } from "@/hooks/useUsers"
 import { useRecentEvents } from "@/hooks/useRecentEvents"
 import { useNudge } from "@/hooks/useNudge"
 import { useWebSocket } from "@/hooks/useWebSocket" // Included if needed for global connection maintenance
+import { useForecast } from "@/hooks/useForecast"
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [activeView, setActiveView] = useState("dashboard")
   const [selectedUserHash, setSelectedUserHash] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -79,6 +82,7 @@ export default function DashboardPage() {
   const { data: nudgeData } = useNudge(selectedUserHash)
   const { data: networkData } = useNetworkData("global") // Fetch global graph
   const { data: teamData } = useTeamData() // Fetch team Metrics
+  const { data: forecastData, isLoading: forecastLoading } = useForecast() // SIR forecast
   
   const { injectEvent, createPersona } = useSimulation()
   const { events: recentEvents, refetch: refetchEvents } = useRecentEvents()
@@ -131,26 +135,29 @@ export default function DashboardPage() {
      }))
   }, [recentEvents])
 
-  // Map Team Metrics
+  // Map Team Metrics - Dynamic calculation from actual data
   const mappedTeamMetrics = useMemo(() => {
       if (!teamData) return null
-      // Helper to map CultureThermometerData to TeamMetrics interface
-      // TeamMetrics needs: total_members, healthy_count, etc. 
-      // CultureThermometerData has: metrics (avg_velocity, etc), team_risk, etc.
-      // We might need to estimate counts or update interface. 
-      // For now, we use defaults or data where available.
+      
+      // Calculate counts from actual employees data
+      const total_members = employees.length
+      const healthy_count = employees.filter(e => e.risk_level === "LOW").length
+      const elevated_count = employees.filter(e => e.risk_level === "ELEVATED").length
+      const critical_count = employees.filter(e => e.risk_level === "CRITICAL").length
+      const calibrating_count = employees.filter(e => e.risk_level === "CALIBRATING" || !e.risk_level).length
+      
       return {
-          total_members: 6, // Hardcoded or fetch?
-          healthy_count: 0,
-          elevated_count: teamData.metrics.critical_members > 0 ? 0 : 0, 
-          critical_count: teamData.metrics.critical_members,
-          calibrating_count: 0,
+          total_members,
+          healthy_count,
+          elevated_count,
+          critical_count,
+          calibrating_count,
           avg_velocity: teamData.metrics.avg_velocity,
           graph_fragmentation: teamData.metrics.graph_fragmentation,
           comm_decay_rate: teamData.metrics.comm_decay_rate,
           contagion_risk: teamData.team_risk
       }
-  }, [teamData])
+  }, [teamData, employees])
 
   const networkNodes = networkData?.nodes || []
   const networkEdges = networkData?.edges || []
@@ -338,9 +345,12 @@ export default function DashboardPage() {
             {/* CULTURE THERMOMETER */}
             {activeView === "culture" && (
                <>
-                 <ViewHeader title="Culture Thermometer" description="Team-level health monitoring." />
+                 <ViewHeader title="Culture Thermometer" description="Team-level health monitoring with SIR epidemic model." />
                  {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics as any} />}
-                 <TeamDistribution employees={employees} />
+                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                   <TeamDistribution employees={employees} />
+                   <ForecastChart data={forecastData} isLoading={forecastLoading} />
+                 </div>
                  <NetworkGraph nodes={networkNodes} edges={networkEdges} />
                </>
             )}
@@ -395,3 +405,12 @@ function ViewHeader({ title, description }: { title: string; description: string
     </div>
   )
 }
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
+  )
+}
+

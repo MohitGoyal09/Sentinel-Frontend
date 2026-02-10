@@ -1,6 +1,7 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
+import { AuthProvider } from '@/contexts/auth-context'
 
 import './globals.css'
 
@@ -15,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Sentinel - AI-Powered Employee Insights',
+  title: 'AlgoQuest - AI-Powered Employee Insights',
   description: 'Privacy-first burnout detection, talent discovery, and team health monitoring.',
 }
 
@@ -31,8 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )
 }
+

@@ -11,8 +11,14 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  User,
+  Users,
+  Settings,
+  Home,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
+import Link from "next/link"
 
 interface AppSidebarProps {
   activeView: string
@@ -21,8 +27,27 @@ interface AppSidebarProps {
   onToggleCollapse?: () => void
 }
 
-const navItems = [
-  { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+// Navigation items for each role
+const roleBasedNavItems: Record<string, Array<{ id: string; label: string; icon: any; href?: string }>> = {
+  employee: [
+    { id: "me", label: "My Wellbeing", icon: User, href: "/me" },
+    { id: "dashboard", label: "Team Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  ],
+  manager: [
+    { id: "me", label: "My Wellbeing", icon: User, href: "/me" },
+    { id: "team", label: "My Team", icon: Users, href: "/team" },
+    { id: "dashboard", label: "Team Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  ],
+  admin: [
+    { id: "me", label: "My Wellbeing", icon: User, href: "/me" },
+    { id: "team", label: "My Team", icon: Users, href: "/team" },
+    { id: "admin", label: "Admin", icon: Settings, href: "/admin" },
+    { id: "dashboard", label: "Team Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  ],
+}
+
+// Engine navigation items (available to all roles)
+const engineNavItems = [
   { id: "safety-valve", label: "Safety Valve", icon: Shield },
   { id: "talent-scout", label: "Talent Scout", icon: Sparkles },
   { id: "culture", label: "Culture Temp", icon: Thermometer },
@@ -31,6 +56,12 @@ const navItems = [
 ]
 
 export function AppSidebar({ activeView, onViewChange, collapsed, onToggleCollapse }: AppSidebarProps) {
+  const { userRole } = useAuth()
+  const userRoleName = userRole?.role || "employee"
+  
+  // Get navigation items based on role
+  const navItems = roleBasedNavItems[userRoleName] || roleBasedNavItems.employee
+
   return (
     <aside
       className={cn(
@@ -55,15 +86,64 @@ export function AppSidebar({ activeView, onViewChange, collapsed, onToggleCollap
         )}
       </div>
 
-      {/* Navigation */}
+      {/* Role-Based Navigation */}
       <nav className="flex-1 px-3 pt-2">
+        {!collapsed && (
+          <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/40">
+            {userRoleName === "admin" ? "Administration" : userRoleName === "manager" ? "Management" : "Personal"}
+          </p>
+        )}
+        <ul className="flex flex-col gap-1 mb-6">
+          {navItems.map((item) => {
+            const isActive = activeView === item.id
+            const ButtonContent = (
+              <>
+                <item.icon className="h-[18px] w-[18px] shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </>
+            )
+            
+            return (
+              <li key={item.id}>
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
+                      isActive
+                        ? "bg-sidebar-primary text-white shadow-sm"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {ButtonContent}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onViewChange(item.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
+                      isActive
+                        ? "bg-sidebar-primary text-white shadow-sm"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {ButtonContent}
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+
+        {/* Engine Navigation */}
         {!collapsed && (
           <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/40">
             Engines
           </p>
         )}
         <ul className="flex flex-col gap-1">
-          {navItems.map((item) => {
+          {engineNavItems.map((item) => {
             const isActive = activeView === item.id
             return (
               <li key={item.id}>
@@ -101,7 +181,7 @@ export function AppSidebar({ activeView, onViewChange, collapsed, onToggleCollap
               </div>
               <div className="flex items-center gap-2 text-[10px] text-sidebar-foreground">
                 <Activity className="h-3 w-3" />
-                <span>Engines: 3/3 Running</span>
+                <span>Role: {userRoleName}</span>
               </div>
             </div>
           </div>
