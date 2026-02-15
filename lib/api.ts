@@ -36,10 +36,8 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 export const api = {
   async get<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const hasQueryParams = path.includes('?');
-    const normalizedPath = hasQueryParams 
-      ? path.replace('?', '/?') 
-      : (path.endsWith('/') ? path : path + '/');
+    // Don't add trailing slash if query params exist - causes redirect and CORS issues
+    const normalizedPath = path.includes('?') ? path : (path.endsWith('/') ? path : path + '/');
     const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
@@ -64,10 +62,8 @@ export const api = {
   // body is optional, defaults to {} to fix "Expected 2 arguments" errors when body is empty
   async post<T>(path: string, body: any = {}, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const hasQueryParams = path.includes('?');
-    const normalizedPath = hasQueryParams 
-      ? path.replace('?', '/?') 
-      : (path.endsWith('/') ? path : path + '/');
+    // Don't add trailing slash if query params exist - causes redirect and CORS issues
+    const normalizedPath = path.includes('?') ? path : (path.endsWith('/') ? path : path + '/');
     const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
@@ -91,10 +87,8 @@ export const api = {
 
   async put<T>(path: string, body: any = {}, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const hasQueryParams = path.includes('?');
-    const normalizedPath = hasQueryParams 
-      ? path.replace('?', '/?') 
-      : (path.endsWith('/') ? path : path + '/');
+    // Don't add trailing slash if query params exist - causes redirect and CORS issues
+    const normalizedPath = path.includes('?') ? path : (path.endsWith('/') ? path : path + '/');
     const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
@@ -118,10 +112,8 @@ export const api = {
 
   async delete<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const hasQueryParams = path.includes('?');
-    const normalizedPath = hasQueryParams 
-      ? path.replace('?', '/?') 
-      : (path.endsWith('/') ? path : path + '/');
+    // Don't add trailing slash if query params exist - causes redirect and CORS issues
+    const normalizedPath = path.includes('?') ? path : (path.endsWith('/') ? path : path + '/');
     const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
