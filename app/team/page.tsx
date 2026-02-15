@@ -107,26 +107,35 @@ function TeamPageContent() {
   const [memberDetails, setMemberDetails] = useState<MemberDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(12) // Show 12 cards per page
 
   useEffect(() => {
-    fetchTeamData()
-  }, [])
+    fetchTeamData(currentPage)
+  }, [currentPage])
 
-  const fetchTeamData = async () => {
+  const fetchTeamData = async (page: number) => {
     try {
       setLoading(true)
-      console.log('[team] Fetching team data...')
+      const skip = (page - 1) * pageSize
+      console.log(`[team] Fetching team data (page ${page})...`)
+      console.log(`[team] Auth token present:`, !!localStorage.getItem('sb-access-token'))
+      
       const [teamRes, analyticsRes] = await Promise.all([
-        api.get<TeamData>('/team'),
+        api.get<TeamData>(`/team?skip=${skip}&limit=${pageSize}`),
         api.get<TeamAnalytics>('/team/analytics?days=30')
       ])
+      
       console.log('[team] Team response:', teamRes)
-      console.log('[team] Analytics response:', analyticsRes)
       setTeamData(teamRes as TeamData)
       setAnalytics(analyticsRes as TeamAnalytics)
       setError(null)
     } catch (err: any) {
       console.error('[team] Error fetching team data:', err)
+      console.error('[team] Response status:', err.response?.status)
+      console.error('[team] Response data:', err.response?.data)
       setError(err.response?.data?.detail || err.message || "Failed to load team data")
     } finally {
       setLoading(false)
@@ -166,7 +175,13 @@ function TeamPageContent() {
     return "text-red-600"
   }
 
-  if (loading) {
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0) {
+      setCurrentPage(newPage)
+    }
+  }
+
+  if (loading && !teamData) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -190,21 +205,14 @@ function TeamPageContent() {
     )
   }
 
-  // Valid Data Check: If we have teamData, we render (even if metrics is null for empty team)
+  // Valid Data Check
   if (!teamData) {
-    return (
-       <div className="flex h-screen items-center justify-center">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>Failed to load team data</AlertDescription>
-        </Alert>
-      </div>
-    )
+    return null
   }
 
   // EMPTY STATE Handling
-  if (!teamData.metrics || teamData.team.member_count === 0) {
+  if ((!teamData.metrics || teamData.team.member_count === 0) && !loading) {
+     // ... (Existing Empty State JSX - omitted for brevity, keeping same logic)
     return (
       <div className="flex flex-col bg-background min-h-screen">
           <header className="border-b bg-card">
@@ -240,6 +248,10 @@ function TeamPageContent() {
     )
   }
 
+  // Derived check for pagination
+  const totalCount = (teamData.team as any).total_count || teamData.metrics?.total_members || 0
+  const totalPages = Math.ceil(totalCount / pageSize)
+
   return (
     <div className="flex flex-col bg-background">
       {/* Header */}
@@ -250,9 +262,14 @@ function TeamPageContent() {
               <Users className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold">Team Dashboard</h1>
+              <h1 className="text-lg font-semibold flex items-center gap-2">
+                {(teamData.team as any).title || "Team Dashboard"}
+                {(teamData.team as any).is_global_view && (
+                  <Badge variant="secondary" className="text-xs">Global Admin View</Badge>
+                )}
+              </h1>
               <p className="text-xs text-muted-foreground">
-                {teamData?.metrics?.total_members} team members
+                {totalCount} employees total
               </p>
             </div>
           </div>
@@ -284,12 +301,12 @@ function TeamPageContent() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Team Size</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Size</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{teamData?.metrics?.total_members}</div>
-                  <p className="text-xs text-muted-foreground">Direct reports</p>
+                  <p className="text-xs text-muted-foreground">{(teamData.team as any).is_global_view ? "Total employees" : "Direct reports"}</p>
                 </CardContent>
               </Card>
 
@@ -302,7 +319,7 @@ function TeamPageContent() {
                   <div className={`text-2xl font-bold ${getHealthScoreColor(analytics?.health_score || 0)}`}>
                     {analytics?.health_score || 0}/100
                   </div>
-                  <p className="text-xs text-muted-foreground">Overall team wellbeing</p>
+                  <p className="text-xs text-muted-foreground">Overall organization wellbeing</p>
                 </CardContent>
               </Card>
 
@@ -316,7 +333,7 @@ function TeamPageContent() {
                     {teamData?.metrics?.at_risk_count}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {teamData?.metrics?.critical_count} critical
+                    {teamData?.metrics?.critical_count} critical cases
                   </p>
                 </CardContent>
               </Card>
@@ -331,7 +348,7 @@ function TeamPageContent() {
                     {teamData?.consent_summary?.percentage}%
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {teamData?.consent_summary?.consented}/{teamData?.consent_summary?.total} members
+                    Data sharing enabled
                   </p>
                 </CardContent>
               </Card>
@@ -341,7 +358,7 @@ function TeamPageContent() {
             <Card>
               <CardHeader>
                 <CardTitle>Risk Distribution</CardTitle>
-                <CardDescription>Current risk levels across your team</CardDescription>
+                <CardDescription>Current risk levels across the organization</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -369,22 +386,42 @@ function TeamPageContent() {
               </CardContent>
             </Card>
 
-            {/* Privacy Notice */}
-            <Alert>
+             <Alert>
               <Shield className="h-4 w-4" />
               <AlertTitle>Privacy-First Analytics</AlertTitle>
               <AlertDescription>
-                Individual team members are shown as pseudonyms (User A, User B) unless they have 
-                explicitly consented to share their identity. You can still see team-level trends 
-                and provide support based on anonymized data.
+                Viewing anonymized data for whole organization. Individual identities are protected unless explicitly shared.
               </AlertDescription>
             </Alert>
           </TabsContent>
 
           {/* MEMBERS TAB */}
           <TabsContent value="members" className="space-y-6">
+             {/* Pagination Controls */}
+             <div className="flex items-center justify-between py-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1 || loading}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages || 1}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages || loading}
+                >
+                  Next
+                </Button>
+             </div>
+
             {selectedMember && memberDetails && (
-              <Card className="border-primary">
+              <Card className="border-primary mb-6">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -482,7 +519,7 @@ function TeamPageContent() {
                         <div>
                           <CardTitle className="text-base">{member.pseudonym}</CardTitle>
                           <CardDescription className="text-xs">
-                            {member.is_identified ? "Identified" : "Anonymous"}
+                            {(member as any).department ? (member as any).department : (member.is_identified ? "Identified" : "Anonymous")}
                           </CardDescription>
                         </div>
                       </div>
@@ -510,6 +547,30 @@ function TeamPageContent() {
                 </Card>
               ))}
             </div>
+             {/* Pagination Controls Bottom */}
+             <div className="flex items-center justify-center py-6">
+                 <div className="flex items-center gap-4">
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loading}
+                    >
+                    Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages || 1}
+                    </span>
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loading}
+                    >
+                    Next
+                    </Button>
+                 </div>
+             </div>
           </TabsContent>
 
           {/* ANALYTICS TAB */}
@@ -552,8 +613,8 @@ function TeamPageContent() {
                     </div>
                   </CardContent>
                 </Card>
-
-                <div className="grid gap-4 md:grid-cols-3">
+                {/* ... (Metrics Grid - Same as before) */}
+                 <div className="grid gap-4 md:grid-cols-3">
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium">Average Velocity</CardTitle>

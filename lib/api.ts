@@ -33,7 +33,8 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 export const api = {
   async get<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    const normalizedPath = path.includes('?') ? path : (path.endsWith('/') ? path : path + '/');
+    const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
       const response = await axios.get<T>(url, {
@@ -43,6 +44,7 @@ export const api = {
           ...options.headers,
         },
         timeout: 10000,
+        maxRedirects: 5,
       });
       return response.data;
     } catch (err: any) {
@@ -196,7 +198,7 @@ export async function getTeamAnalysis(userHashes: string[]): Promise<CultureTher
  * POST /engines/teams/forecast
  */
 export async function getTeamForecast(teamHashes: string[], days: number = 30): Promise<any> {
-  return handleResponse(api.post<any>(`/engines/teams/forecast?days=${days}`, { team_hashes: teamHashes }));
+  return handleResponse(api.post<any>(`/engines/teams/forecast`, { team_hashes: teamHashes, days }));
 }
 
 // ============================================

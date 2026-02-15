@@ -7,7 +7,7 @@ import {
   UseWebSocketReturn,
 } from '@/types';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
+const BASE_WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
 
 /**
  * Hook for managing WebSocket connection to the backend
@@ -26,27 +26,23 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
   const maxReconnectAttempts = 5;
 
   useEffect(() => {
-    if (!userHash || userHash.trim() === '') {
-      setConnectionStatus('disconnected');
-      // Close existing connection if userHash becomes null
+    // Basic validation
+    if (!userHash || userHash.trim() === '' || userHash === 'undefined') {
       if (wsRef.current) {
+        console.log('[WebSocket] Closing connection due to invalid userHash:', userHash);
+        // Remove listener before closing to avoid triggering reconnect logic
+        wsRef.current.onclose = null;
         wsRef.current.close();
         wsRef.current = null;
       }
+      setConnectionStatus('disconnected');
       return;
     }
 
     const connect = () => {
       // Don't attempt to reconnect if we've exceeded max attempts
       if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-        console.error('Max WebSocket reconnection attempts reached');
-        setConnectionStatus('disconnected');
-        return;
-      }
-
-      // Validate userHash
-      if (!userHash || userHash.trim() === '') {
-        console.warn('Invalid userHash, skipping WebSocket connection');
+        console.error('[WebSocket] Max reconnection attempts reached');
         setConnectionStatus('disconnected');
         return;
       }
@@ -54,34 +50,46 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
       setConnectionStatus('connecting');
       
       try {
-        const ws = new WebSocket(`${WS_URL}/${userHash}`);
+        const url = `${BASE_WS_URL}/${userHash}`;
+        console.log(`[WebSocket] Connecting to: ${url}`);
+        
+        const ws = new WebSocket(url);
         wsRef.current = ws;
 
         ws.onopen = () => {
+          console.log('[WebSocket] Connected');
           setConnectionStatus('connected');
           setLastPing(new Date());
           reconnectAttemptsRef.current = 0; // Reset attempts on successful connection
         };
 
         ws.onclose = (event) => {
+          console.log(`[WebSocket] Closed: Code=${event.code}, Reason=${event.reason}, Clean=${event.wasClean}`);
           setConnectionStatus('disconnected');
           wsRef.current = null;
           
-          // Only attempt reconnect if it wasn't a clean close and we have a userHash
-          if (!event.wasClean && userHash) {
+          // Only attempt reconnect if it wasn't a clean close and we have a valid userHash
+          // And if the code is NOT related to Auth failure (4000/4001)
+          if (!event.wasClean && userHash && event.code !== 4000 && event.code !== 4001) {
             reconnectAttemptsRef.current++;
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Exponential backoff, max 30s
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Exponential backoff
+            console.log(`[WebSocket] Reconnecting in ${delay}ms (Attempt ${reconnectAttemptsRef.current})`);
             
             reconnectTimeoutRef.current = setTimeout(() => {
               if (userHash) {
+                // Check userHash content again before reconnecting
+                const currentHash = userHash; 
+                 // Note: we're using closure variable 'userHash', make sure it's still valid context.
+                 // The effect dependency ensures this connect function is scoped to current userHash.
                 connect();
               }
             }, delay);
           }
         };
 
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
+        ws.onerror = (event) => {
+          // WebSocket error event doesn't give much detail in JS, but logging it helps confirm occurrence.
+          console.error('[WebSocket] Error event:', event);
           setConnectionStatus('disconnected');
         };
 
@@ -94,11 +102,11 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
               setLastPing(new Date());
             }
           } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
+            console.error('[WebSocket] Failed to parse message:', error);
           }
         };
       } catch (error) {
-        console.error('Failed to create WebSocket connection:', error);
+        console.error('[WebSocket] Failed to create connection:', error);
         setConnectionStatus('disconnected');
       }
     };
@@ -113,11 +121,13 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
     }, 30000);
 
     return () => {
+      console.log('[WebSocket] Cleanup hook');
       clearInterval(heartbeatInterval);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (wsRef.current) {
+        wsRef.current.onclose = null; // Prevent reconnect on unmount
         wsRef.current.close();
         wsRef.current = null;
       }
@@ -132,7 +142,7 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ action: 'request_update' }));
     } else {
-      console.warn('Cannot request update: WebSocket is not connected');
+      console.warn('[WebSocket] Cannot request update: Not connected');
     }
   }, []);
 
