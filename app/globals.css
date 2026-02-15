@@ -48,52 +48,90 @@
   --color-sentinel-elevated: hsl(var(--sentinel-elevated));
   --color-sentinel-critical: hsl(var(--sentinel-critical));
   --color-sentinel-info: hsl(var(--sentinel-info));
+  --color-sentinel-gem: hsl(var(--sentinel-gem));
 }
 
-/* V0 Green Theme - Light Mode */
+/* ═══════════════════════════════════════════════════════
+   DARK MODE FIRST — "Operational Intelligence Center"
+   ═══════════════════════════════════════════════════════ */
+
 :root {
-  --background: 210 20% 98%;
-  --foreground: 215 25% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 215 25% 12%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 215 25% 12%;
-  --primary: 160 60% 38%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 18% 95%;
-  --secondary-foreground: 215 20% 25%;
-  --muted: 210 14% 93%;
-  --muted-foreground: 215 12% 50%;
-  --accent: 210 90% 52%;
+  /* Surfaces — Deep navy, not pure black */
+  --background: 222 22% 8%;
+  --foreground: 210 15% 85%;
+  --card: 222 20% 12%;
+  --card-foreground: 210 15% 85%;
+  --popover: 222 20% 14%;
+  --popover-foreground: 210 15% 85%;
+
+  /* Brand — Warm teal */
+  --primary: 152 55% 48%;
+  --primary-foreground: 222 22% 8%;
+
+  /* Secondary surfaces */
+  --secondary: 222 18% 16%;
+  --secondary-foreground: 210 15% 78%;
+
+  /* Muted layers */
+  --muted: 222 15% 14%;
+  --muted-foreground: 215 15% 50%;
+
+  /* Accent — Cool blue */
+  --accent: 217 70% 55%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 0 72% 51%;
+
+  /* Danger */
+  --destructive: 0 65% 58%;
   --destructive-foreground: 0 0% 98%;
-  --border: 210 16% 90%;
-  --input: 210 16% 90%;
-  --ring: 160 60% 38%;
-  --chart-1: 160 60% 38%;
-  --chart-2: 210 90% 52%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 0 72% 51%;
-  --chart-5: 160 45% 28%;
+
+  /* Borders & inputs */
+  --border: 222 15% 18%;
+  --input: 222 15% 18%;
+  --ring: 152 55% 48%;
+
+  /* Charts */
+  --chart-1: 152 55% 48%;
+  --chart-2: 217 70% 55%;
+  --chart-3: 38 80% 55%;
+  --chart-4: 0 65% 58%;
+  --chart-5: 152 40% 35%;
+
   --radius: 0.625rem;
 
-  /* Dark Sidebar */
-  --sidebar-background: 215 28% 14%;
-  --sidebar-foreground: 210 15% 62%;
-  --sidebar-primary: 160 60% 45%;
+  /* Dark Sidebar — deeper than card */
+  --sidebar-background: 222 25% 6%;
+  --sidebar-foreground: 215 15% 55%;
+  --sidebar-primary: 152 55% 48%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 215 25% 20%;
-  --sidebar-accent-foreground: 210 15% 92%;
-  --sidebar-border: 215 22% 20%;
-  --sidebar-ring: 160 60% 45%;
+  --sidebar-accent: 222 20% 12%;
+  --sidebar-accent-foreground: 210 15% 85%;
+  --sidebar-border: 222 18% 14%;
+  --sidebar-ring: 152 55% 48%;
 
-  /* Sentinel Dashboard Colors */
-  --sentinel-healthy: 160 60% 38%;
-  --sentinel-elevated: 38 92% 50%;
-  --sentinel-critical: 0 72% 51%;
-  --sentinel-info: 210 90% 52%;
+  /* Sentinel semantic colors */
+  --sentinel-healthy: 152 55% 48%;
+  --sentinel-elevated: 38 80% 55%;
+  --sentinel-critical: 0 65% 58%;
+  --sentinel-info: 217 70% 55%;
+  --sentinel-gem: 270 65% 60%;
+
+  /* Glass effect tokens */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-bg-hover: rgba(255, 255, 255, 0.05);
+  --glass-border-hover: rgba(255, 255, 255, 0.10);
+
+  /* Glow tokens */
+  --glow-primary: 0 0 20px hsl(152 55% 48% / 0.15);
+  --glow-healthy: 0 0 20px hsl(152 55% 48% / 0.12);
+  --glow-elevated: 0 0 20px hsl(38 80% 55% / 0.12);
+  --glow-critical: 0 0 20px hsl(0 65% 58% / 0.12);
+  --glow-gem: 0 0 20px hsl(270 65% 60% / 0.12);
 }
+
+/* ═══════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════ */
 
 * {
   border-color: hsl(var(--border));
@@ -105,7 +143,63 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Custom Scrollbar */
+/* ═══════════════════════════════════════════════════════
+   GLASS UTILITY — Progressive Enhancement
+   ═══════════════════════════════════════════════════════ */
+
+.glass-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  transition: transform 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+@supports (backdrop-filter: blur(8px)) {
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-card:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+  }
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Glass card with left accent border */
+.glass-card-accent {
+  border-left-width: 3px;
+}
+
+.glass-card-accent--healthy {
+  border-left-color: hsl(var(--sentinel-healthy));
+  box-shadow: var(--glow-healthy);
+}
+
+.glass-card-accent--elevated {
+  border-left-color: hsl(var(--sentinel-elevated));
+  box-shadow: var(--glow-elevated);
+}
+
+.glass-card-accent--critical {
+  border-left-color: hsl(var(--sentinel-critical));
+  box-shadow: var(--glow-critical);
+}
+
+.glass-card-accent--gem {
+  border-left-color: hsl(var(--sentinel-gem));
+  box-shadow: var(--glow-gem);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCROLLBAR — Dark theme
+   ═══════════════════════════════════════════════════════ */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -116,25 +210,216 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--muted-foreground) / 0.2);
   border-radius: 4px;
+  transition: background 200ms ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.4);
 }
 
-/* Focus styles */
+/* ═══════════════════════════════════════════════════════
+   FOCUS & SELECTION
+   ═══════════════════════════════════════════════════════ */
+
 *:focus-visible {
-  outline: 2px solid hsl(var(--ring));
+  outline: 2px solid hsl(var(--ring) / 0.5);
   outline-offset: 2px;
+  transition: outline-color 150ms ease-out;
 }
 
-/* Selection styles */
 ::selection {
   background: hsl(var(--primary) / 0.2);
   color: hsl(var(--primary));
 }
+
+/* ═══════════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS — CSS-driven loops & states
+   ═══════════════════════════════════════════════════════ */
+
+/* CRITICAL badge pulse */
+@keyframes sentinel-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--sentinel-critical) / 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px hsl(var(--sentinel-critical) / 0);
+  }
+}
+
+.pulse-critical {
+  animation: sentinel-pulse 2s ease-in-out infinite;
+}
+
+/* Breathing animation for gauges */
+@keyframes sentinel-breathe {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.01);
+  }
+}
+
+.breathe {
+  animation: sentinel-breathe 4s ease-in-out infinite;
+}
+
+/* System online dot pulse */
+@keyframes dot-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.dot-pulse {
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+/* Skeleton shimmer */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.08) 50%,
+      hsl(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Sparkline draw */
+@keyframes sparkline-draw {
+  from {
+    stroke-dashoffset: var(--sparkline-length, 100);
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.sparkline-animate {
+  animation: sparkline-draw 800ms ease-out forwards;
+}
+
+/* Sparkline end dot */
+@keyframes sparkline-dot-appear {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* View transition fade-in */
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-transition-enter {
+  animation: view-fade-in 0.25s ease-out;
+}
+
+/* ═══════════════════════════════════════════════════════
+   AMBIENT BACKGROUND — CSS @property gradient mesh
+   ═══════════════════════════════════════════════════════ */
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ambient-rotate {
+  from {
+    --gradient-angle: 0deg;
+  }
+
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.4;
+  background:
+    radial-gradient(ellipse at 20% 50%,
+      hsl(var(--sentinel-healthy) / 0.04) 0%,
+      transparent 50%),
+    radial-gradient(ellipse at 80% 20%,
+      hsl(var(--sentinel-info) / 0.03) 0%,
+      transparent 50%),
+    radial-gradient(ellipse at 50% 80%,
+      hsl(var(--sentinel-gem) / 0.02) 0%,
+      transparent 50%);
+  animation: ambient-rotate 60s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════
+   REDUCED MOTION — Respect user preference
+   ═══════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ambient-bg {
+    animation: none;
+  }
+
+  .glass-card:hover {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TAILWIND BASE
+   ═══════════════════════════════════════════════════════ */
 
 @layer base {
   * {

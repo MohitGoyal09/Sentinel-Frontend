@@ -39,7 +39,7 @@ export function useSimulation(): UseSimulationReturn {
   ): Promise<CreatePersonaResponse> => {
     setIsCreating(true);
     setError(null);
-    
+
     try {
       const result = await apiCreatePersona(email, personaType);
       return result;
@@ -104,5 +104,5 @@ export function useSimulation(): UseSimulationReturn {
     events,
     error,
     clearEvents,
-  } as UseSimulationReturn & { error: Error | null; clearEvents: () => void };
+  };
 }

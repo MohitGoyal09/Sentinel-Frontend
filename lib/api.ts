@@ -150,9 +150,9 @@ export async function injectEvent(
  * GET /events
  */
 export async function getRecentEvents(limit: number = 20): Promise<SimulationEvent[]> {
-    const response = await fetch(`${API_BASE_URL}/events?limit=${limit}`);
-    return handleResponse<SimulationEvent[]>(response);
-  }
+  const response = await fetch(`${API_BASE_URL}/events?limit=${limit}`);
+  return handleResponse<SimulationEvent[]>(response);
+}
 
 // ============================================
 // Nudge Dispatcher API
@@ -242,3 +242,86 @@ export async function checkHealth(): Promise<boolean> {
     return false;
   }
 }
+
+// ============================================
+// Generic API Client (for /me, /team, /admin)
+// ============================================
+
+// Base URL for role-based endpoints (not engines)
+const API_CLIENT_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1/engines').replace('/engines', '');
+
+/**
+ * Typed error class for API failures.
+ * Carries the HTTP status and response body for downstream error handling.
+ */
+export class ApiError extends Error {
+  response: { data: unknown; status: number };
+  constructor(message: string, status: number, data: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.response = { data, status };
+  }
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const { createClient } = await import('@/lib/supabase');
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+  } catch {
+    // Supabase not available (e.g., SSR), proceed without auth
+  }
+  return headers;
+}
+
+export const api = {
+  get: async (path: string) => {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_CLIENT_BASE}${path}`, { headers });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new ApiError(errorData.detail || `GET ${path} failed: ${res.status}`, res.status, errorData);
+    }
+    return { data: await res.json() };
+  },
+  post: async (path: string, body?: unknown) => {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_CLIENT_BASE}${path}`, {
+      method: 'POST',
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new ApiError(errorData.detail || `POST ${path} failed: ${res.status}`, res.status, errorData);
+    }
+    return { data: await res.json() };
+  },
+  put: async (path: string, body?: unknown) => {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_CLIENT_BASE}${path}`, {
+      method: 'PUT',
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new ApiError(errorData.detail || `PUT ${path} failed: ${res.status}`, res.status, errorData);
+    }
+    return { data: await res.json() };
+  },
+  delete: async (path: string) => {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_CLIENT_BASE}${path}`, { method: 'DELETE', headers });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new ApiError(errorData.detail || `DELETE ${path} failed: ${res.status}`, res.status, errorData);
+    }
+    return { data: await res.json() };
+  },
+};
+

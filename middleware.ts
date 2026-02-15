@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { createServerClient } from "@supabase/ssr"
 
 /**
  * Role-based routing middleware
  * 
- * This middleware checks the user's role from the JWT token in the cookie
- * and redirects them to the appropriate default page.
+ * Uses @supabase/ssr to correctly read Supabase session cookies
+ * (cookie name is `sb-<project-ref>-auth-token`, NOT `sb-access-token`).
  * 
  * Role → Default Page Mapping:
  * - employee → /me (employee self-service dashboard)
@@ -13,8 +14,8 @@ import type { NextRequest } from "next/server"
  * - admin → /admin (admin system dashboard)
  */
 
-// Paths that require role-based redirection
-const ROLE_BASED_PATHS = ["/dashboard", "/"]
+// Paths that should redirect authenticated users to their role page
+const ROLE_BASED_PATHS = ["/dashboard"]
 
 // Role-based default routes
 const ROLE_ROUTES: Record<string, string> = {
@@ -24,7 +25,7 @@ const ROLE_ROUTES: Record<string, string> = {
 }
 
 // Protected routes that require authentication
-const PROTECTED_ROUTES = ["/me", "/team", "/admin", "/dashboard", "/engines"]
+const PROTECTED_ROUTES = ["/me", "/team", "/admin", "/dashboard"]
 
 // Routes that are role-specific (only accessible by certain roles)
 const ROLE_SPECIFIC_ROUTES: Record<string, string[]> = {
@@ -33,11 +34,35 @@ const ROLE_SPECIFIC_ROUTES: Record<string, string[]> = {
   admin: ["/me", "/team", "/admin"],
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Get the token from cookies or headers
-  const token = request.cookies.get("sb-access-token")?.value
+  // Create a Supabase client that reads cookies correctly
+  let supabaseResponse = NextResponse.next({ request })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value)
+          )
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // IMPORTANT: use getUser() not getSession() — getUser() validates the JWT server-side
+  const { data: { user }, error } = await supabase.auth.getUser()
 
   // Check if this is a protected route
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
@@ -46,60 +71,50 @@ export function middleware(request: NextRequest) {
 
   // If not protected, allow through
   if (!isProtectedRoute) {
-    return NextResponse.next()
+    return supabaseResponse
   }
 
-  // If no token and trying to access protected route, redirect to login
-  if (!token && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/login", request.url))
+  // If no user and trying to access protected route, redirect to login
+  if (!user || error) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/login"
+    url.searchParams.set("redirectTo", pathname)
+    return NextResponse.redirect(url)
   }
 
-  // If token exists, we need to decode it to get the role
-  // The role is stored in the JWT token from Supabase
-  try {
-    // Decode the JWT payload (base64)
-    const base64Payload = token!.split(".")[1]
-    const payload = JSON.parse(Buffer.from(base64Payload, "base64").toString())
-    
-    // Get user role from the token
-    // Note: The actual field name depends on your Supabase setup
-    // This assumes the role is stored in user_metadata
-    const userRole = payload.user_metadata?.role || payload.role || "employee"
+  // Get user role from metadata (set during signup or by admin)
+  const userRole = user.user_metadata?.role || "employee"
 
-    // If accessing /dashboard or /, redirect to role-specific page
-    if (ROLE_BASED_PATHS.includes(pathname)) {
-      const defaultRoute = ROLE_ROUTES[userRole] || "/me"
-      return NextResponse.redirect(new URL(defaultRoute, request.url))
-    }
-
-    // Check if user has access to this specific route
-    const allowedRoutes = ROLE_SPECIFIC_ROUTES[userRole] || ["/me"]
-    const hasAccess = allowedRoutes.some((route) => pathname.startsWith(route))
-
-    if (!hasAccess) {
-      // Redirect to their default page with error message
-      const defaultRoute = ROLE_ROUTES[userRole] || "/me"
-      const url = new URL(defaultRoute, request.url)
-      url.searchParams.set("error", "access_denied")
-      return NextResponse.redirect(url)
-    }
-
-    // User has access, allow through
-    return NextResponse.next()
-  } catch (error) {
-    // If token decoding fails, redirect to login
-    console.error("Token decoding error:", error)
-    return NextResponse.redirect(new URL("/login", request.url))
+  // If accessing /dashboard, redirect to role-specific page
+  if (ROLE_BASED_PATHS.includes(pathname)) {
+    const defaultRoute = ROLE_ROUTES[userRole] || "/me"
+    return NextResponse.redirect(new URL(defaultRoute, request.url))
   }
+
+  // Check if user has access to this specific route
+  const allowedRoutes = ROLE_SPECIFIC_ROUTES[userRole] || ["/me"]
+  const hasAccess = allowedRoutes.some((route) => pathname.startsWith(route))
+
+  if (!hasAccess) {
+    // Redirect to their default page with error message
+    const defaultRoute = ROLE_ROUTES[userRole] || "/me"
+    const url = new URL(defaultRoute, request.url)
+    url.searchParams.set("error", "access_denied")
+    return NextResponse.redirect(url)
+  }
+
+  // User has access, allow through
+  return supabaseResponse
 }
 
 // Configure middleware to run on specific paths
+// NOTE: "/" is excluded — landing page is public
 export const config = {
   matcher: [
-    "/",
     "/dashboard/:path*",
     "/me/:path*",
     "/team/:path*",
     "/admin/:path*",
   ],
 }
+

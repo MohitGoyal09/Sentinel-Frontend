@@ -1,7 +1,17 @@
+import type React from 'react';
+
 // ============================================
 // Risk Level Types
 // ============================================
 export type RiskLevel = 'CALIBRATING' | 'LOW' | 'ELEVATED' | 'CRITICAL';
+
+const RISK_LEVELS: readonly RiskLevel[] = ['CALIBRATING', 'LOW', 'ELEVATED', 'CRITICAL'];
+
+/** Safely cast an API string to RiskLevel, defaulting to 'CALIBRATING' if unknown. */
+export function toRiskLevel(value: string | undefined | null): RiskLevel {
+  if (value && RISK_LEVELS.includes(value as RiskLevel)) return value as RiskLevel;
+  return 'CALIBRATING';
+}
 
 // ============================================
 // API Response Types
@@ -140,6 +150,18 @@ export interface SimulationEvent {
   event_type: string;
   metadata: Record<string, unknown>;
   description?: string;
+  risk_impact?: string;
+}
+
+/**
+ * Lightweight event type for the ActivityFeed component.
+ * Unlike SimulationEvent, this doesn't require user_hash or metadata.
+ */
+export interface ActivityEvent {
+  id: string;
+  timestamp: string;
+  event_type: string;
+  description: string;
   risk_impact?: string;
 }
 
@@ -393,4 +415,6 @@ export interface UseSimulationReturn {
   isCreating: boolean;
   isInjecting: boolean;
   events: SimulationEvent[];
+  error: Error | null;
+  clearEvents: () => void;
 }

@@ -16,9 +16,10 @@ import { VaultStatus } from "@/components/vault-status"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProtectedRoute } from "@/components/protected-route"
 import { ForecastChart } from "@/components/forecast-chart"
+import { CommandPalette } from "@/components/command-palette"
 
 // Types
-import { Employee, UserSummary } from "@/types"
+import { Employee, UserSummary, PersonaType, toRiskLevel } from "@/types"
 
 // API Hooks
 import { useRiskData } from "@/hooks/useRiskData"
@@ -52,9 +53,9 @@ function DashboardContent() {
   const employees = useMemo(() => {
     return users.map(u => ({
       user_hash: u.user_hash,
-      name: u.name || `User ${u.user_hash.slice(0,4)}`,
+      name: u.name || `User ${u.user_hash.slice(0, 4)}`,
       role: u.role || "Engineer",
-      risk_level: u.risk_level as any || "LOW",
+      risk_level: toRiskLevel(u.risk_level),
       velocity: u.velocity || 0,
       confidence: u.confidence || 0,
       belongingness_score: 0.5,
@@ -72,18 +73,18 @@ function DashboardContent() {
     } as Employee))
   }, [users])
 
-  const selectedBaseEmployee = useMemo(() => 
+  const selectedBaseEmployee = useMemo(() =>
     employees.find(e => e.user_hash === selectedUserHash) || employees[0] || null
-  , [employees, selectedUserHash])
+    , [employees, selectedUserHash])
 
   // 2. Fetch specific data for selected user
   const { data: riskData } = useRiskData(selectedUserHash)
   const { history: fetchedHistory } = useRiskHistory(selectedUserHash)
   const { data: nudgeData } = useNudge(selectedUserHash)
-  const { data: networkData } = useNetworkData("global") // Fetch global graph
+  const { data: networkData } = useNetworkData(selectedUserHash) // Fetch selected user's network centrality
   const { data: teamData } = useTeamData() // Fetch team Metrics
   const { data: forecastData, isLoading: forecastLoading } = useForecast() // SIR forecast
-  
+
   const { injectEvent, createPersona } = useSimulation()
   const { events: recentEvents, refetch: refetchEvents } = useRecentEvents()
 
@@ -92,7 +93,7 @@ function DashboardContent() {
     if (!selectedBaseEmployee) return null
 
     if (!riskData) return selectedBaseEmployee
-    
+
     return {
       ...selectedBaseEmployee,
       risk_level: riskData.risk_level,
@@ -118,7 +119,7 @@ function DashboardContent() {
       return fetchedHistory.map((p: any) => ({
         ...p,
         date: new Date(p.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        risk_level: p.risk_level as any
+        risk_level: toRiskLevel(p.risk_level)
       }))
     }
     return [] // No history, return empty array (do NOT use mock fallback)
@@ -126,37 +127,37 @@ function DashboardContent() {
 
   // Map Activity Events
   const mappedEvents = useMemo(() => {
-     return recentEvents.map((e, index) => ({
-         id: `evt-${index}-${e.timestamp}`,
-         timestamp: e.timestamp,
-         event_type: e.event_type,
-         description: e.description || `Event: ${e.event_type}`,
-         risk_impact: (e.risk_impact as any) || "neutral"
-     }))
+    return recentEvents.map((e, index) => ({
+      id: `evt-${index}-${e.timestamp}`,
+      timestamp: e.timestamp,
+      event_type: e.event_type,
+      description: e.description || `Event: ${e.event_type}`,
+      risk_impact: e.risk_impact || "neutral"
+    }))
   }, [recentEvents])
 
   // Map Team Metrics - Dynamic calculation from actual data
   const mappedTeamMetrics = useMemo(() => {
-      if (!teamData) return null
-      
-      // Calculate counts from actual employees data
-      const total_members = employees.length
-      const healthy_count = employees.filter(e => e.risk_level === "LOW").length
-      const elevated_count = employees.filter(e => e.risk_level === "ELEVATED").length
-      const critical_count = employees.filter(e => e.risk_level === "CRITICAL").length
-      const calibrating_count = employees.filter(e => e.risk_level === "CALIBRATING" || !e.risk_level).length
-      
-      return {
-          total_members,
-          healthy_count,
-          elevated_count,
-          critical_count,
-          calibrating_count,
-          avg_velocity: teamData.metrics.avg_velocity,
-          graph_fragmentation: teamData.metrics.graph_fragmentation,
-          comm_decay_rate: teamData.metrics.comm_decay_rate,
-          contagion_risk: teamData.team_risk
-      }
+    if (!teamData) return null
+
+    // Calculate counts from actual employees data
+    const total_members = employees.length
+    const healthy_count = employees.filter(e => e.risk_level === "LOW").length
+    const elevated_count = employees.filter(e => e.risk_level === "ELEVATED").length
+    const critical_count = employees.filter(e => e.risk_level === "CRITICAL").length
+    const calibrating_count = employees.filter(e => e.risk_level === "CALIBRATING" || !e.risk_level).length
+
+    return {
+      total_members,
+      healthy_count,
+      elevated_count,
+      critical_count,
+      calibrating_count,
+      avg_velocity: teamData.metrics.avg_velocity,
+      graph_fragmentation: teamData.metrics.graph_fragmentation,
+      comm_decay_rate: teamData.metrics.comm_decay_rate,
+      contagion_risk: toRiskLevel(teamData.team_risk)
+    }
   }, [teamData, employees])
 
   const networkNodes = networkData?.nodes || []
@@ -178,20 +179,26 @@ function DashboardContent() {
   }
 
   const handleCreatePersona = async (personaId: string) => {
+    const validPersonas: PersonaType[] = ['alex_burnout', 'sarah_gem', 'jordan_steady', 'maria_contagion'];
+    if (!validPersonas.includes(personaId as PersonaType)) {
+      console.error(`Invalid persona type: ${personaId}`);
+      return;
+    }
     try {
       const email = `${personaId.split('_')[0]}@simulation.com`
-      await createPersona(email, personaId as any)
+      await createPersona(email, personaId as PersonaType)
     } catch (e) {
       console.error("Failed to create persona", e)
     }
   }
 
   if (!currentEmployee) {
-     return <div className="flex h-screen items-center justify-center">Loading Dashboard...</div>
+    return <div className="flex h-screen items-center justify-center">Loading Dashboard...</div>
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <CommandPalette onNavigate={setActiveView} />
       <div className="hidden lg:flex">
         <AppSidebar
           activeView={activeView}
@@ -241,7 +248,7 @@ function DashboardContent() {
                   <p className="text-sm text-muted-foreground">Real-time team health metrics and individual risk analysis.</p>
                 </div>
 
-                {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics as any} />}
+                {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics} />}
 
                 <div className="flex flex-col gap-1.5">
                   <label
@@ -264,7 +271,6 @@ function DashboardContent() {
                   <div className="flex flex-col gap-6 lg:col-span-2">
                     <VelocityChart history={history} />
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                       {/* @ts-ignore: ActivityFeed prop types strictness */}
                       <ActivityFeed events={mappedEvents} />
                       <VaultStatus eventCount={recentEvents.length} userCount={employees.length} />
                     </div>
@@ -298,7 +304,6 @@ function DashboardContent() {
                     <NudgeCard nudge={nudgeData || undefined} />
                   </div>
                 </div>
-                {/* @ts-ignore */}
                 <ActivityFeed events={mappedEvents} />
               </>
             )}
@@ -312,11 +317,10 @@ function DashboardContent() {
                 />
 
                 <NetworkGraph nodes={networkNodes} edges={networkEdges} />
-                
+
                 {/* Performers List or Hidden Gems */}
-                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {networkNodes
-                     // @ts-ignore: betweenness check
                     .sort((a, b) => (b.betweenness || 0) - (a.betweenness || 0))
                     .map((node) => (
                       <div
@@ -325,13 +329,12 @@ function DashboardContent() {
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-mono text-sm font-semibold text-foreground">{node.label}</span>
-                          <span className="text-[10px] text-muted-foreground">ID: {node.id.slice(0,4)}</span>
+                          <span className="text-[10px] text-muted-foreground">ID: {node.id.slice(0, 4)}</span>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <p className="text-[10px] text-muted-foreground">Betweenness</p>
                             <p className="font-mono text-sm font-semibold text-foreground">
-                               {/* @ts-ignore */}
                               {(node.betweenness || 0).toFixed(2)}
                             </p>
                           </div>
@@ -344,24 +347,24 @@ function DashboardContent() {
 
             {/* CULTURE THERMOMETER */}
             {activeView === "culture" && (
-               <>
-                 <ViewHeader title="Culture Thermometer" description="Team-level health monitoring with SIR epidemic model." />
-                 {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics as any} />}
-                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                   <TeamDistribution employees={employees} />
-                   <ForecastChart data={forecastData} isLoading={forecastLoading} />
-                 </div>
-                 <NetworkGraph nodes={networkNodes} edges={networkEdges} />
-               </>
+              <>
+                <ViewHeader title="Culture Thermometer" description="Team-level health monitoring with SIR epidemic model." />
+                {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics} />}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <TeamDistribution employees={employees} />
+                  <ForecastChart data={forecastData} isLoading={forecastLoading} />
+                </div>
+                <NetworkGraph nodes={networkNodes} edges={networkEdges} />
+              </>
             )}
-            
+
             {/* NETWORK GRAPH */}
             {activeView === "network" && (
-               <>
-                 <ViewHeader title="Network Graph" description="Team interaction topology." />
-                 <NetworkGraph nodes={networkNodes} edges={networkEdges} />
-                 <VaultStatus eventCount={recentEvents.length} userCount={employees.length} />
-               </>
+              <>
+                <ViewHeader title="Network Graph" description="Team interaction topology." />
+                <NetworkGraph nodes={networkNodes} edges={networkEdges} />
+                <VaultStatus eventCount={recentEvents.length} userCount={employees.length} />
+              </>
             )}
 
             {/* SIMULATION */}
@@ -369,19 +372,19 @@ function DashboardContent() {
               <>
                 <ViewHeader title="Simulation Mode" description="Generate digital twins and inject events." />
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                   <SimulationPanel
-                     onInjectEvent={handleSimulationInject}
-                     onRunSimulation={handleCreatePersona}
-                   />
-                   <VaultStatus eventCount={recentEvents.length} userCount={employees.length} />
+                  <SimulationPanel
+                    onInjectEvent={handleSimulationInject}
+                    onRunSimulation={handleCreatePersona}
+                  />
+                  <VaultStatus eventCount={recentEvents.length} userCount={employees.length} />
                 </div>
-                
+
                 <UserSelector
-                   employees={employees}
-                   selectedUser={currentEmployee}
-                   onSelect={handleUserSelect}
+                  employees={employees}
+                  selectedUser={currentEmployee}
+                  onSelect={handleUserSelect}
                 />
-                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <RiskAssessment employee={currentEmployee} />
                   <div className="lg:col-span-2">
                     <VelocityChart history={history} />

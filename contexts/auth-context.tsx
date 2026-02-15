@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase'
+
+// Module-scope singleton — prevents infinite re-renders from useEffect [supabase] dependency
+const supabase = createClient()
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
@@ -31,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
+  // supabase is at module scope (singleton)
 
   // Fetch user role from backend
   const fetchUserRole = async () => {
@@ -70,17 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     )
 
     return () => subscription.unsubscribe()
-  }, [supabase])
+  }, [])
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
-    
+
     // Fetch user role to determine redirect
     try {
       const roleResponse = await api.get('/me')
       const role = roleResponse.data.user.role
-      
+
       // Redirect based on role
       switch (role) {
         case 'admin':

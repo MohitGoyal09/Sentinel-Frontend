@@ -1,26 +1,44 @@
 "use client"
 
-import { Bot, Calendar, Clock } from "lucide-react"
+import { Bot, Calendar, Clock, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { NudgeData } from "@/types"
 import { cn } from "@/lib/utils"
+import { useRef, useCallback } from "react"
 
 interface NudgeCardProps {
   nudge: NudgeData | undefined
 }
 
 export function NudgeCard({ nudge }: NudgeCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  const handleDismiss = useCallback(() => {
+    if (!cardRef.current) return
+    import("gsap").then(({ default: gsap }) => {
+      gsap.to(cardRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        duration: 0.25,
+        ease: "power2.in",
+        onComplete: () => {
+          if (cardRef.current) cardRef.current.style.display = "none"
+        },
+      })
+    })
+  }, [])
+
   if (!nudge) {
     return (
-      <Card className="border-border bg-card shadow-sm">
+      <Card className="glass-card rounded-xl">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold text-foreground">AI Recommendation</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[hsl(var(--muted))]">
               <Bot className="h-5 w-5 text-muted-foreground/40" />
             </div>
             <p className="text-sm text-muted-foreground">No active nudge for this user</p>
@@ -37,25 +55,36 @@ export function NudgeCard({ nudge }: NudgeCardProps) {
 
   return (
     <Card
+      ref={cardRef}
       className={cn(
-        "border-border bg-card shadow-sm",
-        isUrgent && "border-[hsl(var(--sentinel-critical))]/20"
+        "glass-card glass-card-accent rounded-xl",
+        isUrgent ? "glass-card-accent--critical pulse-critical" : "glass-card-accent--elevated"
       )}
     >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold text-foreground">AI Recommendation</CardTitle>
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-[10px]",
-              isUrgent
-                ? "border-[hsl(var(--sentinel-critical))]/15 bg-[hsl(var(--sentinel-critical))]/6 text-[hsl(var(--sentinel-critical))]"
-                : "border-[hsl(var(--sentinel-elevated))]/15 bg-[hsl(var(--sentinel-elevated))]/6 text-[hsl(var(--sentinel-elevated))]"
-            )}
-          >
-            {nudge.nudge_type.replace(/_/g, " ")}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[10px]",
+                isUrgent
+                  ? "border-[hsl(var(--sentinel-critical))]/15 bg-[hsl(var(--sentinel-critical))]/6 text-[hsl(var(--sentinel-critical))]"
+                  : "border-[hsl(var(--sentinel-elevated))]/15 bg-[hsl(var(--sentinel-elevated))]/6 text-[hsl(var(--sentinel-elevated))]"
+              )}
+            >
+              {nudge.nudge_type.replace(/_/g, " ")}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={handleDismiss}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -74,7 +103,7 @@ export function NudgeCard({ nudge }: NudgeCardProps) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {nudge.actions.map((action : any) => (
+          {nudge.actions.map((action: any) => (
             <Button
               key={action.action}
               variant={
@@ -83,7 +112,7 @@ export function NudgeCard({ nudge }: NudgeCardProps) {
                   : "outline"
               }
               size="sm"
-              className="h-9 rounded-lg text-xs"
+              className="relative h-9 overflow-hidden rounded-lg text-xs active:scale-[0.97] transition-transform duration-100"
             >
               {action.action.includes("calendar") || action.action.includes("retro") ? (
                 <Calendar className="mr-1.5 h-3.5 w-3.5" />

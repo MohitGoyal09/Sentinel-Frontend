@@ -27,7 +27,7 @@ export function NetworkGraph({ nodes, edges }: NetworkGraphProps) {
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null)
 
   return (
-    <Card className="border-border bg-card shadow-sm h-full flex flex-col">
+    <Card className="glass-card rounded-xl h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold text-foreground">Team Network Graph</CardTitle>
@@ -50,16 +50,24 @@ export function NetworkGraph({ nodes, edges }: NetworkGraphProps) {
       </CardHeader>
       <CardContent className="flex-1 min-h-0">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 h-full">
-          {/* Graph */}
-          <div className="relative rounded-xl border border-border bg-muted/30 p-0 lg:col-span-2 overflow-hidden h-[400px] lg:h-auto">
-             <InteractiveNetworkGraph 
-                nodes={nodes} 
-                edges={edges} 
-                onNodeClick={setSelectedNode} 
-             />
+          {/* Graph area with dot grid background */}
+          <div
+            className="relative rounded-xl border border-[var(--glass-border)] p-0 lg:col-span-2 overflow-hidden h-[400px] lg:h-auto"
+            style={{
+              background: `
+                radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.08) 1px, transparent 0)
+              `,
+              backgroundSize: '20px 20px',
+            }}
+          >
+            <InteractiveNetworkGraph
+              nodes={nodes}
+              edges={edges}
+              onNodeClick={setSelectedNode}
+            />
           </div>
 
-          {/* Details */}
+          {/* Details panel */}
           <div className="flex flex-col gap-4 overflow-y-auto max-h-[400px] lg:max-h-full">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Node Details
@@ -69,13 +77,16 @@ export function NetworkGraph({ nodes, edges }: NetworkGraphProps) {
                 <div className="flex items-center gap-2.5">
                   <span
                     className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: riskFill(selectedNode.risk_level) }}
+                    style={{
+                      backgroundColor: riskFill(selectedNode.risk_level),
+                      boxShadow: `0 0 8px ${riskFill(selectedNode.risk_level)}40`,
+                    }}
                   />
                   <span className="font-mono text-sm font-semibold text-foreground">{selectedNode.label}</span>
                   {selectedNode.is_hidden_gem && (
                     <Badge
                       variant="outline"
-                      className="border-[hsl(var(--sentinel-elevated))]/20 bg-[hsl(var(--sentinel-elevated))]/6 text-[10px] text-[hsl(var(--sentinel-elevated))]"
+                      className="border-[hsl(var(--sentinel-gem))]/20 bg-[hsl(var(--sentinel-gem))]/6 text-[10px] text-[hsl(var(--sentinel-gem))]"
                     >
                       <Sparkles className="mr-1 h-2.5 w-2.5" />
                       Hidden Gem
@@ -89,14 +100,14 @@ export function NetworkGraph({ nodes, edges }: NetworkGraphProps) {
                     { label: "Eigenvector", value: (selectedNode.eigenvector || 0).toFixed(2) },
                     { label: "Unblocking", value: selectedNode.unblocking_count || 0 },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+                    <div key={item.label} className="glass-card rounded-lg px-3 py-2.5">
                       <p className="text-[10px] text-muted-foreground">{item.label}</p>
-                      <p className="mt-0.5 text-sm font-semibold text-foreground">{item.value}</p>
+                      <p className="mt-0.5 text-sm font-semibold font-mono tabular-nums text-foreground">{item.value}</p>
                     </div>
                   ))}
                 </div>
                 {selectedNode.is_hidden_gem && (
-                  <div className="rounded-lg border border-[hsl(var(--sentinel-elevated))]/15 bg-[hsl(var(--sentinel-elevated))]/4 p-4">
+                  <div className="rounded-lg border border-[hsl(var(--sentinel-gem))]/15 bg-[hsl(var(--sentinel-gem))]/4 p-4">
                     <p className="text-xs font-semibold text-foreground">Talent Scout Alert</p>
                     <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                       High betweenness centrality ({(selectedNode.betweenness || 0).toFixed(2)}) with{" "}
@@ -107,7 +118,7 @@ export function NetworkGraph({ nodes, edges }: NetworkGraphProps) {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-10 text-center">
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--glass-border)] py-10 text-center">
                 <p className="text-sm text-muted-foreground">Click a node to view details</p>
                 <p className="mt-1 text-xs text-muted-foreground/60">
                   Drag and Zoom using controls to inspect the network.
