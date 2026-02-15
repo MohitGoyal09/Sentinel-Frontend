@@ -95,12 +95,12 @@ function MePageContent() {
   const fetchMeData = async () => {
     try {
       setLoading(true)
-      const data = await api.get<MeData>('/me')
-      if (data && data.user) {
-        setData(data)
+      const response = await api.get<APIResponse<MeData>>('/me')
+      if (response.success && response.data) {
+        setData(response.data)
         setError(null)
       } else {
-        setError("Failed to load your data")
+        setError(response.error || "Failed to load your data")
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to load your data")

@@ -37,9 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserRole = async () => {
     try {
       const response = await api.get('/me')
-      setUserRole(response.data.user)
+      console.log('[auth] /me response:', response)
+      
+      if (response && response.user) {
+        setUserRole(response.user)
+        localStorage.setItem('userRole', response.user.role)
+      } else {
+        console.warn('[auth] No user data in response:', response)
+        setUserRole(null)
+      }
     } catch (error) {
-      console.error('Failed to fetch user role:', error)
+      console.error('[auth] Failed to fetch user role:', error)
       setUserRole(null)
     }
   }
@@ -79,23 +87,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Fetch user role to determine redirect
     try {
       const roleResponse = await api.get('/me')
-      const role = roleResponse.data.user.role
+      console.log('[auth] signIn /me response:', roleResponse)
       
-      // Redirect based on role
-      switch (role) {
-        case 'admin':
-          router.push('/admin')
-          break
-        case 'manager':
-          router.push('/team')
-          break
-        case 'employee':
-        default:
-          router.push('/me')
-          break
+      const userData = roleResponse?.user
+      
+      // Store role in localStorage for middleware to access
+      if (userData?.role) {
+        localStorage.setItem('userRole', userData.role)
       }
+      
+      // Redirect to dashboard - it will show content based on role
+      router.push('/dashboard')
     } catch (error) {
       // Fallback to dashboard if role fetch fails
+      console.error('[auth] Failed to fetch role:', error)
       router.push('/dashboard')
     }
   }

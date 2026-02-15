@@ -1,6 +1,4 @@
-"use client"
-
-import { Bell, Menu, Search } from "lucide-react"
+import { Bell, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +6,6 @@ import type { UserSummary } from "@/types"
 
 interface DashboardHeaderProps {
   selectedUser: UserSummary | null
-  onToggleSidebar: () => void
   activeView: string
 }
 
@@ -21,21 +18,11 @@ const viewLabels: Record<string, string> = {
   simulation: "Simulation",
 }
 
-export function DashboardHeader({ selectedUser, onToggleSidebar, activeView }: DashboardHeaderProps) {
+export function DashboardHeader({ selectedUser, activeView }: DashboardHeaderProps) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:px-8">
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleSidebar}
-          className="h-9 w-9 text-muted-foreground lg:hidden"
-        >
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
-
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="flex items-center gap-2">
           <h1 className="text-[15px] font-semibold text-foreground">{viewLabels[activeView] || "Dashboard"}</h1>
           {selectedUser && (
             <>

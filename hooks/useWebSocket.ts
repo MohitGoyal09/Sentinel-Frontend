@@ -26,7 +26,7 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
   const maxReconnectAttempts = 5;
 
   useEffect(() => {
-    if (!userHash) {
+    if (!userHash || userHash.trim() === '') {
       setConnectionStatus('disconnected');
       // Close existing connection if userHash becomes null
       if (wsRef.current) {
@@ -40,6 +40,13 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
       // Don't attempt to reconnect if we've exceeded max attempts
       if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
         console.error('Max WebSocket reconnection attempts reached');
+        setConnectionStatus('disconnected');
+        return;
+      }
+
+      // Validate userHash
+      if (!userHash || userHash.trim() === '') {
+        console.warn('Invalid userHash, skipping WebSocket connection');
         setConnectionStatus('disconnected');
         return;
       }

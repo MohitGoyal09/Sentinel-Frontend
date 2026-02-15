@@ -116,11 +116,11 @@ function TeamPageContent() {
     try {
       setLoading(true)
       const [teamRes, analyticsRes] = await Promise.all([
-        api.get("/team"),
-        api.get("/team/analytics?days=30")
+        api.get('/team') as TeamData,
+        api.get('/team/analytics?days=30') as TeamAnalytics
       ])
-      setTeamData(teamRes.data)
-      setAnalytics(analyticsRes.data)
+      setTeamData(teamRes)
+      setAnalytics(analyticsRes)
       setError(null)
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to load team data")
@@ -139,8 +139,8 @@ function TeamPageContent() {
     }
 
     try {
-      const response = await api.get(`/team/member/${member.real_hash}`)
-      setMemberDetails(response.data)
+      const response = await api.get(`/team/member/${member.real_hash}`) as MemberDetails
+      setMemberDetails(response)
       setSelectedMember(member)
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to load member details")
@@ -173,7 +173,7 @@ function TeamPageContent() {
     )
   }
 
-  if (!teamData) {
+  if (!teamData || !teamData.metrics) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Alert variant="destructive" className="max-w-md">
@@ -186,7 +186,7 @@ function TeamPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex flex-col flex-1 overflow-hidden bg-background">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -197,7 +197,7 @@ function TeamPageContent() {
             <div>
               <h1 className="text-lg font-semibold">Team Dashboard</h1>
               <p className="text-xs text-muted-foreground">
-                {teamData.metrics.total_members} team members
+                {teamData?.metrics?.total_members} team members
               </p>
             </div>
           </div>
@@ -233,7 +233,7 @@ function TeamPageContent() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{teamData.metrics.total_members}</div>
+                  <div className="text-2xl font-bold">{teamData?.metrics?.total_members}</div>
                   <p className="text-xs text-muted-foreground">Direct reports</p>
                 </CardContent>
               </Card>
@@ -258,10 +258,10 @@ function TeamPageContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-600">
-                    {teamData.metrics.at_risk_count}
+                    {teamData?.metrics?.at_risk_count}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {teamData.metrics.critical_count} critical
+                    {teamData?.metrics?.critical_count} critical
                   </p>
                 </CardContent>
               </Card>
@@ -273,10 +273,10 @@ function TeamPageContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {teamData.consent_summary.percentage}%
+                    {teamData?.consent_summary?.percentage}%
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {teamData.consent_summary.consented}/{teamData.consent_summary.total} members
+                    {teamData?.consent_summary?.consented}/{teamData?.consent_summary?.total} members
                   </p>
                 </CardContent>
               </Card>
@@ -290,7 +290,7 @@ function TeamPageContent() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Object.entries(teamData.risk_distribution).map(([level, count]) => (
+                  {Object.entries(teamData?.risk_distribution || {}).map(([level, count]) => (
                     <div key={level} className="flex items-center gap-4">
                       <div className="w-24 text-sm font-medium">{level}</div>
                       <div className="flex-1">
@@ -302,7 +302,7 @@ function TeamPageContent() {
                               level === "LOW" ? "bg-green-500" : "bg-gray-500"
                             }`}
                             style={{
-                              width: `${(count / teamData.metrics.total_members) * 100}%`
+                              width: `${(count / (teamData?.metrics?.total_members || 1)) * 100}%`
                             }}
                           />
                         </div>
@@ -406,7 +406,7 @@ function TeamPageContent() {
             )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {teamData.team.members.map((member) => (
+              {teamData?.team?.members?.map((member) => (
                 <Card 
                   key={member.pseudonym}
                   className="cursor-pointer transition-colors hover:bg-muted/50"

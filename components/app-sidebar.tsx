@@ -14,32 +14,30 @@ import {
   User,
   Users,
   Settings,
-  Home,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
-import Link from "next/link"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 interface AppSidebarProps {
-  activeView: string
-  onViewChange: (view: string) => void
+  activeView?: string
+  onViewChange?: (view: string) => void
   collapsed?: boolean
   onToggleCollapse?: () => void
 }
 
-// Navigation items for each role
+// Navigation items for each role - with href links for routing
 const roleBasedNavItems: Record<string, Array<{ id: string; label: string; icon: any; href?: string }>> = {
   employee: [
-    { id: "me", label: "My Wellbeing", icon: User, href: "/me" },
-    { id: "dashboard", label: "Team Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { id: "profile", label: "My Wellbeing", icon: User, href: "/profile" },
+    { id: "dashboard", label: "Team Overview", icon: LayoutDashboard, href: "/dashboard" },
   ],
   manager: [
-    { id: "me", label: "My Wellbeing", icon: User, href: "/me" },
+    { id: "profile", label: "My Wellbeing", icon: User, href: "/profile" },
     { id: "team", label: "My Team", icon: Users, href: "/team" },
     { id: "dashboard", label: "Team Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   ],
   admin: [
-    { id: "me", label: "My Wellbeing", icon: User, href: "/me" },
+    { id: "profile", label: "My Wellbeing", icon: User, href: "/profile" },
     { id: "team", label: "My Team", icon: Users, href: "/team" },
     { id: "admin", label: "Admin", icon: Settings, href: "/admin" },
     { id: "dashboard", label: "Team Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -56,18 +54,41 @@ const engineNavItems = [
 ]
 
 export function AppSidebar({ activeView, onViewChange, collapsed, onToggleCollapse }: AppSidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { userRole } = useAuth()
   const userRoleName = userRole?.role || "employee"
   
+  // Determine active view from URL
+  const currentView = pathname === '/dashboard' 
+    ? (searchParams.get('view') || 'dashboard')
+    : pathname.split('/')[1] || 'dashboard'
+
   // Get navigation items based on role
   const navItems = roleBasedNavItems[userRoleName] || roleBasedNavItems.employee
 
+  const handleNavigation = (id: string, href?: string) => {
+    if (href) {
+      router.push(href)
+    } else {
+      router.push(`/dashboard?view=${id}`)
+    }
+    if (onViewChange) onViewChange(id)
+  }
+
+  const isActive = (item: { id: string, href?: string }) => {
+    const isPageActive = item.href && pathname === item.href
+    const isDashboardViewActive = pathname === '/dashboard' && !item.href && currentView === item.id
+    const isDefaultDashboard = pathname === '/dashboard' && item.href === '/dashboard' && (!searchParams.get('view') || searchParams.get('view') === 'dashboard')
+    return isPageActive || isDashboardViewActive || isDefaultDashboard
+  }
+
   return (
     <aside
-      className={cn(
-        "flex h-full flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+      className={`flex h-full flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ${
         collapsed ? "w-[68px]" : "w-60"
-      )}
+      }`}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
@@ -86,76 +107,54 @@ export function AppSidebar({ activeView, onViewChange, collapsed, onToggleCollap
         )}
       </div>
 
-      {/* Role-Based Navigation */}
-      <nav className="flex-1 px-3 pt-2">
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 pt-2">
         {!collapsed && (
           <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/40">
-            {userRoleName === "admin" ? "Administration" : userRoleName === "manager" ? "Management" : "Personal"}
+            {userRoleName === "admin" ? "Admin" : userRoleName === "manager" ? "Management" : "Personal"}
           </p>
         )}
-        <ul className="flex flex-col gap-1 mb-6">
+        <ul className="flex flex-col gap-1">
           {navItems.map((item) => {
-            const isActive = activeView === item.id
-            const ButtonContent = (
-              <>
-                <item.icon className="h-[18px] w-[18px] shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </>
-            )
-            
+            const isPageActive = item.href && pathname === item.href
+            const isActiveItem = isPageActive || (pathname === '/dashboard' && activeView === item.id)
             return (
               <li key={item.id}>
-                {item.href ? (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
-                      isActive
-                        ? "bg-sidebar-primary text-white shadow-sm"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    )}
-                  >
-                    {ButtonContent}
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onViewChange(item.id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
-                      isActive
-                        ? "bg-sidebar-primary text-white shadow-sm"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    )}
-                  >
-                    {ButtonContent}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleNavigation(item.id, item.href)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
+                    isActiveItem
+                      ? "bg-sidebar-primary text-white shadow-sm"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  }`}
+                >
+                  <item.icon className="h-[18px] w-[18px] shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </button>
               </li>
             )
           })}
         </ul>
 
-        {/* Engine Navigation */}
         {!collapsed && (
-          <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/40">
+          <p className="mb-3 mt-6 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-sidebar-foreground/40">
             Engines
           </p>
         )}
         <ul className="flex flex-col gap-1">
           {engineNavItems.map((item) => {
-            const isActive = activeView === item.id
+            const isActiveItem = pathname === '/dashboard' && activeView === item.id
             return (
               <li key={item.id}>
                 <button
                   type="button"
-                  onClick={() => onViewChange(item.id)}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
-                    isActive
+                  onClick={() => handleNavigation(item.id)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
+                    isActiveItem
                       ? "bg-sidebar-primary text-white shadow-sm"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
+                  }`}
                 >
                   <item.icon className="h-[18px] w-[18px] shrink-0" />
                   {!collapsed && <span>{item.label}</span>}

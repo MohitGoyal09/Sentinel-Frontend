@@ -26,15 +26,14 @@
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), monospace;
 
-  /* Chart Colors */
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
+  /* Sentinel Dashboard Colors */
+  --color-sentinel-healthy: hsl(var(--sentinel-healthy));
+  --color-sentinel-elevated: hsl(var(--sentinel-elevated));
+  --color-sentinel-critical: hsl(var(--sentinel-critical));
+  --color-sentinel-info: hsl(var(--sentinel-info));
 
-  /* Sidebar Colors */
-  --color-sidebar: hsl(var(--sidebar-background));
+  /* Sidebar colors - must wrap in hsl() to produce valid CSS colors */
+  --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-primary: hsl(var(--sidebar-primary));
   --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
@@ -42,57 +41,53 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
-
-  /* Sentinel Dashboard Colors */
-  --color-sentinel-healthy: hsl(var(--sentinel-healthy));
-  --color-sentinel-elevated: hsl(var(--sentinel-elevated));
-  --color-sentinel-critical: hsl(var(--sentinel-critical));
-  --color-sentinel-info: hsl(var(--sentinel-info));
 }
 
-/* V0 Green Theme - Light Mode */
+/* SENTINEL ULTRA - High Contrast Premium Dark Theme */
 :root {
-  --background: 210 20% 98%;
-  --foreground: 215 25% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 215 25% 12%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 215 25% 12%;
-  --primary: 160 60% 38%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 18% 95%;
-  --secondary-foreground: 215 20% 25%;
-  --muted: 210 14% 93%;
-  --muted-foreground: 215 12% 50%;
-  --accent: 210 90% 52%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 210 16% 90%;
-  --input: 210 16% 90%;
-  --ring: 160 60% 38%;
-  --chart-1: 160 60% 38%;
-  --chart-2: 210 90% 52%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 0 72% 51%;
-  --chart-5: 160 45% 28%;
-  --radius: 0.625rem;
+  --background: 222 47% 4%;
+  --foreground: 213 31% 98%;
+  --card: 222 47% 4%;
+  --card-foreground: 213 31% 98%;
+  --popover: 222 47% 4%;
+  --popover-foreground: 213 31% 98%;
 
-  /* Dark Sidebar */
-  --sidebar-background: 215 28% 14%;
-  --sidebar-foreground: 210 15% 62%;
-  --sidebar-primary: 160 60% 45%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 215 25% 20%;
-  --sidebar-accent-foreground: 210 15% 92%;
-  --sidebar-border: 215 22% 20%;
-  --sidebar-ring: 160 60% 45%;
+  --primary: 142 70% 50%;
+  --primary-foreground: 144 80% 5%;
 
-  /* Sentinel Dashboard Colors */
-  --sentinel-healthy: 160 60% 38%;
+  --secondary: 222 47% 12%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 222 47% 12%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 142 70% 50%;
+  --accent-foreground: 144 80% 5%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217 32% 17%;
+  --input: 217 32% 17%;
+  --ring: 142 70% 50%;
+
+  --radius: 1rem;
+
+  /* Dashboard States */
+  --sentinel-healthy: 142 70% 50%;
   --sentinel-elevated: 38 92% 50%;
-  --sentinel-critical: 0 72% 51%;
-  --sentinel-info: 210 90% 52%;
+  --sentinel-critical: 0 84% 60%;
+  --sentinel-info: 199 89% 48%;
+
+  /* Sidebar - Dark theme matching the app's dark aesthetic */
+  --sidebar: 222 47% 7%;
+  --sidebar-foreground: 213 31% 91%;
+  --sidebar-primary: 142 70% 50%;
+  --sidebar-primary-foreground: 144 80% 5%;
+  --sidebar-accent: 222 47% 12%;
+  --sidebar-accent-foreground: 213 31% 98%;
+  --sidebar-border: 217 32% 17%;
+  --sidebar-ring: 142 70% 50%;
 }
 
 * {
@@ -105,42 +100,56 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Premium Animations */
+
+@keyframes mesh-rotate {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.5);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
+.ambient-bg {
+  background: radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 0% 0%, hsl(var(--sentinel-info) / 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, hsl(var(--sentinel-critical) / 0.03) 0%, transparent 40%);
+  filter: blur(80px);
+  animation: mesh-rotate 20s linear infinite;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+.glass-card {
+  background: rgba(8, 12, 21, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Focus styles */
-*:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }
 
 /* Selection styles */
 ::selection {
-  background: hsl(var(--primary) / 0.2);
-  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--primary-foreground));
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-
   body {
     @apply bg-background text-foreground;
   }

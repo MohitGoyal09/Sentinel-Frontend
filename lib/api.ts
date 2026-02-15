@@ -1,3 +1,4 @@
+import axios, { AxiosRequestConfig } from 'axios';
 import {
   APIResponse,
   SafetyValveData,
@@ -6,24 +7,129 @@ import {
   ContextCheckData,
   CreatePersonaResponse,
   InjectEventResponse,
-  RiskLevel,
   PersonaType,
   NudgeData,
   UserSummary,
   SimulationEvent,
 } from '@/types';
+import { createClient } from './supabase';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1/engines';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 // ============================================
-// Helper Functions
+// Core API Utility
 // ============================================
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+
+const supabase = createClient();
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return {};
+  return {
+    'Authorization': `Bearer ${session.access_token}`,
+  };
+}
+
+export const api = {
+  async get<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
+    const authHeaders = await getAuthHeaders();
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+    try {
+      const response = await axios.get<T>(url, {
+        ...options,
+        headers: {
+          ...authHeaders,
+          ...options.headers,
+        },
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        throw err;
+      }
+      throw err; // Re-throw other errors
+    }
+  },
+
+  // body is optional, defaults to {} to fix "Expected 2 arguments" errors when body is empty
+  async post<T>(path: string, body: any = {}, options: AxiosRequestConfig = {}): Promise<T> {
+    const authHeaders = await getAuthHeaders();
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+    try {
+      const response = await axios.post<T>(url, body, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+          ...options.headers,
+        },
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        throw err;
+      }
+      throw err;
+    }
+  },
+
+  async put<T>(path: string, body: any = {}, options: AxiosRequestConfig = {}): Promise<T> {
+    const authHeaders = await getAuthHeaders();
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+    try {
+      const response = await axios.put<T>(url, body, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+          ...options.headers,
+        },
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        throw err;
+      }
+      throw err;
+    }
+  },
+
+  async delete<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
+    const authHeaders = await getAuthHeaders();
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+    try {
+      const response = await axios.delete<T>(url, {
+        ...options,
+        headers: {
+          ...authHeaders,
+          ...options.headers,
+        },
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        throw err;
+      }
+      throw err;
+    }
   }
-  const result: APIResponse<T> = await response.json();
+};
+
+
+
+// ============================================
+// Helper Functions (Legacy Compatibility)
+// ============================================
+async function handleResponse<T>(response: Promise<APIResponse<T>>): Promise<T> {
+  const result = await response;
   if (!result.success) {
     throw new Error(result.error || 'API request failed');
   }
@@ -36,11 +142,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 /**
  * Get burnout risk analysis for a specific user
- * GET /users/{user_hash}/safety
+ * GET /engines/users/{user_hash}/safety
  */
 export async function getSafetyAnalysis(userHash: string): Promise<SafetyValveData> {
-  const response = await fetch(`${API_BASE_URL}/users/${userHash}/safety`);
-  return handleResponse<SafetyValveData>(response);
+  return handleResponse(api.get<SafetyValveData>(`/engines/users/${userHash}/safety`));
 }
 
 // ============================================
@@ -49,11 +154,10 @@ export async function getSafetyAnalysis(userHash: string): Promise<SafetyValveDa
 
 /**
  * Get network centrality analysis for a specific user
- * GET /users/{user_hash}/talent
+ * GET /engines/users/{user_hash}/talent
  */
 export async function getNetworkAnalysis(userHash: string): Promise<TalentScoutData> {
-  const response = await fetch(`${API_BASE_URL}/users/${userHash}/talent`);
-  return handleResponse<TalentScoutData>(response);
+  return handleResponse(api.get<TalentScoutData>(`/engines/users/${userHash}/talent`));
 }
 
 // ============================================
@@ -62,18 +166,17 @@ export async function getNetworkAnalysis(userHash: string): Promise<TalentScoutD
 
 /**
  * Check context explanation for a specific timestamp
- * GET /users/{user_hash}/context?timestamp=ISO8601
+ * GET /engines/users/{user_hash}/context?timestamp=ISO8601
  */
 export async function getContextCheck(
   userHash: string,
   timestamp?: string
 ): Promise<ContextCheckData> {
-  const url = new URL(`${API_BASE_URL}/users/${userHash}/context`);
+  let path = `/engines/users/${userHash}/context`;
   if (timestamp) {
-    url.searchParams.set('timestamp', timestamp);
+    path += `?timestamp=${encodeURIComponent(timestamp)}`;
   }
-  const response = await fetch(url);
-  return handleResponse<ContextCheckData>(response);
+  return handleResponse(api.get<ContextCheckData>(path));
 }
 
 // ============================================
@@ -82,28 +185,18 @@ export async function getContextCheck(
 
 /**
  * Analyze team-level contagion risk
- * POST /teams/culture
+ * POST /engines/teams/culture
  */
 export async function getTeamAnalysis(userHashes: string[]): Promise<CultureThermometerData> {
-  const response = await fetch(`${API_BASE_URL}/teams/culture`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ team_hashes: userHashes }),
-  });
-  return handleResponse<CultureThermometerData>(response);
+  return handleResponse(api.post<CultureThermometerData>(`/engines/teams/culture`, { team_hashes: userHashes }));
 }
 
 /**
  * Get SIR epidemic forecast for team contagion
- * POST /teams/forecast
+ * POST /engines/teams/forecast
  */
 export async function getTeamForecast(teamHashes: string[], days: number = 30): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/teams/forecast?days=${days}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ team_hashes: teamHashes }),
-  });
-  return handleResponse<any>(response);
+  return handleResponse(api.post<any>(`/engines/teams/forecast?days=${days}`, { team_hashes: teamHashes }));
 }
 
 // ============================================
@@ -112,47 +205,36 @@ export async function getTeamForecast(teamHashes: string[], days: number = 30): 
 
 /**
  * Create a simulation persona with synthetic behavioral data
- * POST /personas
+ * POST /engines/personas
  */
 export async function createPersona(
   email: string,
   personaType: PersonaType
 ): Promise<CreatePersonaResponse> {
-  const response = await fetch(`${API_BASE_URL}/personas`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, persona_type: personaType }),
-  });
-  return handleResponse<CreatePersonaResponse>(response);
+  return handleResponse(api.post<CreatePersonaResponse>(`/engines/personas`, { email, persona_type: personaType }));
 }
 
 /**
  * Inject a real-time behavioral event
- * POST /events
+ * POST /engines/events
  */
 export async function injectEvent(
   userHash: string,
   currentRisk: string,
 ): Promise<InjectEventResponse> {
-  const response = await fetch(`${API_BASE_URL}/events`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      user_hash: userHash,
-      current_risk: currentRisk,
-    }),
-  });
-  return handleResponse<InjectEventResponse>(response);
+  return handleResponse(api.post<InjectEventResponse>(`/engines/events`, {
+    user_hash: userHash,
+    current_risk: currentRisk,
+  }));
 }
 
 /**
  * Get recent activity stream
- * GET /events
+ * GET /engines/events
  */
 export async function getRecentEvents(limit: number = 20): Promise<SimulationEvent[]> {
-    const response = await fetch(`${API_BASE_URL}/events?limit=${limit}`);
-    return handleResponse<SimulationEvent[]>(response);
-  }
+  return handleResponse(api.get<SimulationEvent[]>(`/engines/events?limit=${limit}`));
+}
 
 // ============================================
 // Nudge Dispatcher API
@@ -160,24 +242,18 @@ export async function getRecentEvents(limit: number = 20): Promise<SimulationEve
 
 /**
  * Get nudge recommendation for a user
- * GET /users/{user_hash}/nudge
+ * GET /engines/users/{user_hash}/nudge
  */
 export async function getNudge(userHash: string): Promise<NudgeData> {
-  const response = await fetch(`${API_BASE_URL}/users/${userHash}/nudge`);
-  return handleResponse<NudgeData>(response);
+  return handleResponse(api.get<NudgeData>(`/engines/users/${userHash}/nudge`));
 }
 
 /**
  * Acknowledge a nudge action
- * POST /nudges/{nudge_id}/acknowledge
+ * POST /engines/nudges/{nudge_id}/acknowledge (Note: Endpoint path might vary)
  */
 export async function acknowledgeNudge(nudgeId: string, action: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/nudges/${nudgeId}/acknowledge`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action }),
-  });
-  return handleResponse<void>(response);
+  return handleResponse(api.post<void>(`/engines/nudges/${nudgeId}/acknowledge`, { action }));
 }
 
 // ============================================
@@ -186,11 +262,10 @@ export async function acknowledgeNudge(nudgeId: string, action: string): Promise
 
 /**
  * List all users with their risk scores
- * GET /users
+ * GET /engines/users
  */
 export async function listUsers(): Promise<UserSummary[]> {
-  const response = await fetch(`${API_BASE_URL}/users`);
-  return handleResponse<UserSummary[]>(response);
+  return handleResponse(api.get<UserSummary[]>(`/engines/users`));
 }
 
 // ============================================
@@ -199,7 +274,7 @@ export async function listUsers(): Promise<UserSummary[]> {
 
 /**
  * Get risk score history for timeline charts
- * GET /users/{user_hash}/history?days=30
+ * GET /engines/users/{user_hash}/history?days=30
  */
 export async function getRiskHistory(userHash: string, days: number = 30): Promise<Array<{
   timestamp: string;
@@ -208,8 +283,7 @@ export async function getRiskHistory(userHash: string, days: number = 30): Promi
   confidence: number;
   belongingness_score: number;
 }>> {
-  const response = await fetch(`${API_BASE_URL}/users/${userHash}/history?days=${days}`);
-  return handleResponse(response);
+  return handleResponse(api.get<any>(`/engines/users/${userHash}/history?days=${days}`));
 }
 
 // ============================================
@@ -234,9 +308,8 @@ export function createWebSocket(userHash: string): WebSocket {
  */
 export async function checkHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL.replace('/api/v1/engines', '')}/health`, {
-      method: 'GET',
-    });
+    const url = `${API_BASE_URL.replace('/api/v1', '')}/health`;
+    const response = await fetch(url);
     return response.ok;
   } catch {
     return false;

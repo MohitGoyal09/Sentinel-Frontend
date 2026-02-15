@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { AppSidebar } from "@/components/app-sidebar"
+import { useRouter, useSearchParams } from "next/navigation"
+
 import { DashboardHeader } from "@/components/dashboard-header"
 import { StatCards } from "@/components/stat-cards"
 import { UserSelector } from "@/components/user-selector"
@@ -16,6 +17,32 @@ import { VaultStatus } from "@/components/vault-status"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProtectedRoute } from "@/components/protected-route"
 import { ForecastChart } from "@/components/forecast-chart"
+import { useAuth } from "@/contexts/auth-context"
+import { api } from "@/lib/api"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { 
+  Activity, 
+  Shield, 
+  User, 
+  Clock, 
+  ToggleLeft, 
+  ToggleRight,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Eye,
+  EyeOff,
+  History,
+  LogOut,
+  Users
+} from "lucide-react"
 
 // Types
 import { Employee, UserSummary } from "@/types"
@@ -29,14 +56,128 @@ import { useRiskHistory } from "@/hooks/useRiskHistory"
 import { useUsers } from "@/hooks/useUsers"
 import { useRecentEvents } from "@/hooks/useRecentEvents"
 import { useNudge } from "@/hooks/useNudge"
-import { useWebSocket } from "@/hooks/useWebSocket" // Included if needed for global connection maintenance
+import { useWebSocket } from "@/hooks/useWebSocket"
 import { useForecast } from "@/hooks/useForecast"
 
+// Employee profile types (from /me endpoint)
+interface UserProfile {
+  user_hash: string
+  role: string
+  consent_share_with_manager: boolean
+  consent_share_anonymized: boolean
+  monitoring_paused_until: string | null
+  created_at: string
+}
+
+interface RiskDataProfile {
+  velocity: number | null
+  risk_level: string
+  confidence: number
+  thwarted_belongingness: number | null
+  updated_at: string | null
+}
+
+interface MonitoringStatus {
+  is_paused: boolean
+  paused_until: string | null
+}
+
+interface AuditEntry {
+  action: string
+  timestamp: string
+  details: any
+}
+
+interface MeData {
+  user: UserProfile
+  risk: RiskDataProfile | null
+  audit_trail: AuditEntry[]
+  monitoring_status: MonitoringStatus
+}
+
 function DashboardContent() {
-  const [activeView, setActiveView] = useState("dashboard")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeView = searchParams.get('view') || 'dashboard'
+  
+  const { userRole, signOut } = useAuth()
   const [selectedUserHash, setSelectedUserHash] = useState<string | null>(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  
+  // Mobile/desktop sidebar is now handled in layout, but mobile trigger might be needed
+  // However, we rely on layout for sidebar rendering.
+  // The header toggle button logic needs to be updated.
+  
+  // Employee profile data
+  const [profileData, setProfileData] = useState<MeData | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [updatingConsent, setUpdatingConsent] = useState(false)
+
+  // Fetch profile data for employee view
+  const fetchProfileData = async () => {
+    try {
+      setProfileLoading(true)
+      const response = await api.get('/me') as MeData
+      setProfileData(response)
+      setProfileError(null)
+    } catch (err: any) {
+      setProfileError(err.response?.data?.detail || "Failed to load profile")
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (userRole?.role === 'employee') {
+      fetchProfileData()
+    }
+  }, [userRole])
+
+  const handleUpdateConsent = async (type: "manager" | "anonymized", value: boolean) => {
+    try {
+      setUpdatingConsent(true)
+      const payload = type === "manager" 
+        ? { consent_share_with_manager: value }
+        : { consent_share_anonymized: value }
+      
+      await api.put("/me/consent", payload)
+      await fetchProfileData()
+    } catch (err: any) {
+      setProfileError(err.response?.data?.detail || "Failed to update consent")
+    } finally {
+      setUpdatingConsent(false)
+    }
+  }
+
+  const handlePauseMonitoring = async (hours: number) => {
+    try {
+      await api.post(`/me/pause-monitoring?hours=${hours}`, {})
+      await fetchProfileData()
+    } catch (err: any) {
+      setProfileError(err.response?.data?.detail || "Failed to pause monitoring")
+    }
+  }
+
+  const handleResumeMonitoring = async () => {
+    try {
+      await api.post("/me/resume-monitoring", {})
+      await fetchProfileData()
+    } catch (err: any) {
+      setProfileError(err.response?.data?.detail || "Failed to resume monitoring")
+    }
+  }
+
+  // Determine view based on role
+  const isEmployee = userRole?.role === 'employee'
+  const isManager = userRole?.role === 'manager'
+  const isAdmin = userRole?.role === 'admin'
+
+  // Default view is dashboard for all roles
+  useEffect(() => {
+    if (!activeView || activeView === "profile") {
+      router.push('/dashboard?view=dashboard')
+    }
+  }, [userRole])
 
   // 1. Fetch Users
   const { users, isLoading: usersLoading } = useUsers()
@@ -187,47 +328,13 @@ function DashboardContent() {
   }
 
   if (!currentEmployee) {
-     return <div className="flex h-screen items-center justify-center">Loading Dashboard...</div>
+     return <div className="flex h-full items-center justify-center">Loading Dashboard...</div>
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <div className="hidden lg:flex">
-        <AppSidebar
-          activeView={activeView}
-          onViewChange={setActiveView}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-        />
-      </div>
-
-      {mobileMenuOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
-            onClick={() => setMobileMenuOpen(false)}
-            onKeyDown={(e) => e.key === "Escape" && setMobileMenuOpen(false)}
-            role="button"
-            tabIndex={0}
-            aria-label="Close menu"
-          />
-          <div className="fixed inset-y-0 left-0 z-50 w-60 shadow-2xl">
-            <AppSidebar
-              activeView={activeView}
-              onViewChange={(view) => {
-                setActiveView(view)
-                setMobileMenuOpen(false)
-              }}
-            />
-          </div>
-        </>
-      )}
-
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col">
         <DashboardHeader
           selectedUser={currentEmployee}
-          onToggleSidebar={() => setMobileMenuOpen((prev) => !prev)}
           activeView={activeView}
         />
 
@@ -367,7 +474,7 @@ function DashboardContent() {
             {/* SIMULATION */}
             {activeView === "simulation" && (
               <>
-                <ViewHeader title="Simulation Mode" description="Generate digital twins and inject events." />
+              <ViewHeader title="Simulation Mode" description="Generate digital twins and inject events." />
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                    <SimulationPanel
                      onInjectEvent={handleSimulationInject}
@@ -382,17 +489,67 @@ function DashboardContent() {
                    onSelect={handleUserSelect}
                 />
                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <RiskAssessment employee={currentEmployee} />
-                  <div className="lg:col-span-2">
-                    <VelocityChart history={history} />
-                  </div>
+                   <RiskAssessment employee={currentEmployee} />
+                   <div className="lg:col-span-2">
+                     <VelocityChart history={history} />
+                   </div>
+                 </div>
+               </>
+            )}
+
+            {/* MANAGER TEAM VIEW */}
+            {activeView === "team" && (
+              <div className="space-y-6">
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-xl font-bold tracking-tight text-foreground">Team Dashboard</h2>
+                  <p className="text-sm text-muted-foreground">Your team's health metrics and member overview.</p>
                 </div>
-              </>
+                
+                {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics as any} />}
+                
+                <TeamDistribution employees={employees} />
+              </div>
+            )}
+
+            {/* ADMIN VIEW */}
+            {activeView === "admin" && (
+              <div className="space-y-6">
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-xl font-bold tracking-tight text-foreground">Admin Dashboard</h2>
+                  <p className="text-sm text-muted-foreground">System administration and user management.</p>
+                </div>
+                
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{employees.length}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">At Risk</CardTitle>
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-red-600">
+                        {employees.filter(e => e.risk_level === 'CRITICAL' || e.risk_level === 'ELEVATED').length}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <Button onClick={() => router.push('/admin')}>
+                  Go to Full Admin Panel
+                </Button>
+              </div>
             )}
 
           </main>
         </ScrollArea>
-      </div>
     </div>
   )
 }
