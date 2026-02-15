@@ -114,7 +114,7 @@ export function middleware(request: NextRequest) {
 
   // If not protected, allow through
   if (!isProtectedRoute) {
-    return supabaseResponse
+    return NextResponse.next()
   }
 
   // If no token and trying to access protected route, redirect to login

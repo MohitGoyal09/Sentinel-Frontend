@@ -23,7 +23,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/a
 const supabase = createClient();
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.warn('Auth session error:', error.message);
+  }
   if (!session?.access_token) return {};
   return {
     'Authorization': `Bearer ${session.access_token}`,
@@ -33,7 +36,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 export const api = {
   async get<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const normalizedPath = path.includes('?') ? path : (path.endsWith('/') ? path : path + '/');
+    const hasQueryParams = path.includes('?');
+    const normalizedPath = hasQueryParams 
+      ? path.replace('?', '/?') 
+      : (path.endsWith('/') ? path : path + '/');
     const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
@@ -58,7 +64,11 @@ export const api = {
   // body is optional, defaults to {} to fix "Expected 2 arguments" errors when body is empty
   async post<T>(path: string, body: any = {}, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    const hasQueryParams = path.includes('?');
+    const normalizedPath = hasQueryParams 
+      ? path.replace('?', '/?') 
+      : (path.endsWith('/') ? path : path + '/');
+    const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
       const response = await axios.post<T>(url, body, {
@@ -81,7 +91,11 @@ export const api = {
 
   async put<T>(path: string, body: any = {}, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    const hasQueryParams = path.includes('?');
+    const normalizedPath = hasQueryParams 
+      ? path.replace('?', '/?') 
+      : (path.endsWith('/') ? path : path + '/');
+    const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
       const response = await axios.put<T>(url, body, {
@@ -104,7 +118,11 @@ export const api = {
 
   async delete<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
-    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    const hasQueryParams = path.includes('?');
+    const normalizedPath = hasQueryParams 
+      ? path.replace('?', '/?') 
+      : (path.endsWith('/') ? path : path + '/');
+    const url = normalizedPath.startsWith('http') ? normalizedPath : `${API_BASE_URL}${normalizedPath}`;
 
     try {
       const response = await axios.delete<T>(url, {
@@ -130,12 +148,17 @@ export const api = {
 // ============================================
 // Helper Functions (Legacy Compatibility)
 // ============================================
-async function handleResponse<T>(response: Promise<APIResponse<T>>): Promise<T> {
+async function handleResponse<T>(response: Promise<T>): Promise<any> {
   const result = await response;
-  if (!result.success) {
-    throw new Error(result.error || 'API request failed');
+  // Check if result has the APIResponse format (success/data)
+  if (result && typeof result === 'object' && 'success' in result) {
+    if (!(result as any).success) {
+      throw new Error((result as any).error || 'API request failed');
+    }
+    return (result as any).data;
   }
-  return result.data as T;
+  // Otherwise return the result directly (some endpoints return data directly)
+  return result;
 }
 
 // ============================================
@@ -147,7 +170,7 @@ async function handleResponse<T>(response: Promise<APIResponse<T>>): Promise<T> 
  * GET /engines/users/{user_hash}/safety
  */
 export async function getSafetyAnalysis(userHash: string): Promise<SafetyValveData> {
-  return handleResponse(api.get<SafetyValveData>(`/engines/users/${userHash}/safety`));
+  return handleResponse(api.get<APIResponse<SafetyValveData>>(`/engines/users/${userHash}/safety`));
 }
 
 // ============================================

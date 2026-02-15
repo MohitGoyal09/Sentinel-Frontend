@@ -88,7 +88,6 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
         };
 
         ws.onerror = (event) => {
-          // WebSocket error event doesn't give much detail in JS, but logging it helps confirm occurrence.
           console.error('[WebSocket] Error event:', event);
           setConnectionStatus('disconnected');
         };
@@ -96,6 +95,7 @@ export function useWebSocket(userHash: string | null): UseWebSocketReturn {
         ws.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
+            console.log('[WebSocket] Received:', message.type);
             setLastMessage(message);
             
             if (message.type === 'pong') {

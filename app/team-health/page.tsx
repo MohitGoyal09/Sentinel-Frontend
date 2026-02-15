@@ -25,12 +25,12 @@ export default function TeamHealthPage() {
   const mappedTeamMetrics = useMemo(() => {
     if (!teamData) return null
     return {
-      total_members: teamData.metrics.total_members,
+      total_members: teamData.metrics.total_members ?? teamData.metrics.team_size ?? teamData.metrics.member_count ?? 0,
       healthy_count: 0, // Need full list for exact counts, using approximations or fetching users if needed. 
       // For now, let's rely on teamData stats if available, or just map what we have.
       // The backend /team endpoint provides summaries.
       elevated_count: 0, 
-      critical_count: teamData.metrics.critical_count,
+      critical_count: teamData.metrics.critical_members ?? teamData.metrics.critical_count ?? 0,
       calibrating_count: 0,
       avg_velocity: teamData.metrics.avg_velocity,
       graph_fragmentation: teamData.metrics.graph_fragmentation,

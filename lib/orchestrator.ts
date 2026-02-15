@@ -279,10 +279,10 @@ export class OrchestratorClient {
             },
             context: {
                 agent_id: "llm_context",
-                confidence: (result.results.talent_scout as Record<string, unknown>)?.confidence as number,
-            },
-            context: {
-                agent_id: "llm_context",
+                success: result.errors.llm_context === undefined,
+                result: (result.results.llm_context as Record<string, unknown>) || {},
+                error: result.errors.llm_context,
+                duration_ms: 0,
                 confidence: (result.results.llm_context as Record<string, unknown>)?.confidence as number,
             },
         };

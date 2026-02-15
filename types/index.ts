@@ -22,6 +22,26 @@ export interface APIResponse<T> {
   error?: string;
 }
 
+export interface MeResponse {
+  user: {
+    user_hash: string;
+    role: string;
+    consent_share_with_manager: boolean;
+    consent_share_anonymized: boolean;
+    monitoring_paused_until: string | null;
+  };
+  risk: any;
+  audit_trail: Array<{
+    action: string;
+    timestamp: string;
+    details: any;
+  }>;
+  monitoring_status: {
+    is_paused: boolean;
+    paused_until: string | null;
+  };
+}
+
 // ============================================
 // Safety Valve Types
 // ============================================
@@ -100,6 +120,10 @@ export interface CultureThermometerMetrics {
   critical_members: number;
   graph_fragmentation: number;
   comm_decay_rate: number;
+  total_members?: number;
+  team_size?: number;
+  member_count?: number;
+  critical_count?: number;
 }
 
 export interface CultureThermometerData {

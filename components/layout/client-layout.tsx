@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,10 +21,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex h-full shrink-0">
-        <AppSidebar
-          collapsed={collapsed}
-          onToggleCollapse={() => setCollapsed(!collapsed)}
-        />
+        <Suspense fallback={<div className="w-64 bg-muted animate-pulse" />}>
+          <AppSidebar
+            collapsed={collapsed}
+            onToggleCollapse={() => setCollapsed(!collapsed)}
+          />
+        </Suspense>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -39,9 +41,11 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             aria-label="Close menu"
           />
           <div className="fixed inset-y-0 left-0 z-50 w-60 shadow-2xl lg:hidden">
-            <AppSidebar
-              onToggleCollapse={() => setMobileMenuOpen(false)}
-            />
+            <Suspense fallback={<div className="w-60 bg-muted animate-pulse" />}>
+              <AppSidebar
+                onToggleCollapse={() => setMobileMenuOpen(false)}
+              />
+            </Suspense>
           </div>
         </>
       )}

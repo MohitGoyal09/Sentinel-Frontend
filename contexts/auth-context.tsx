@@ -8,6 +8,7 @@ const supabase = createClient()
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
+import { MeResponse } from '@/types'
 
 interface UserRole {
   user_hash: string
@@ -39,11 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user role from backend
   const fetchUserRole = async () => {
     try {
-      const response = await api.get('/me')
+      const response = await api.get<MeResponse>('/me')
       console.log('[auth] /me response:', response)
       
       if (response && response.user) {
-        setUserRole(response.user)
+        setUserRole(response.user as UserRole)
         localStorage.setItem('userRole', response.user.role)
       } else {
         console.warn('[auth] No user data in response:', response)
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Fetch user role to determine redirect
     try {
-      const roleResponse = await api.get('/me')
+      const roleResponse = await api.get<MeResponse>('/me')
       console.log('[auth] signIn /me response:', roleResponse)
       
       const userData = roleResponse?.user
