@@ -202,6 +202,7 @@ export interface UserSummary {
 export interface CreatePersonaResponse {
   user_hash: string;
   events_created: number;
+  persona?: string;
 }
 
 export interface SimulationData {

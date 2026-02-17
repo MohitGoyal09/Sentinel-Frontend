@@ -14,6 +14,7 @@ import {
   User,
   Users,
   Settings,
+  Play,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
@@ -46,6 +47,7 @@ const roleBasedNavItems: Record<string, Array<{ id: string; label: string; icon:
 
 // Engine navigation items (available to all roles)
 const engineNavItems = [
+  { id: "demo", label: "Quick Demo", icon: Play, href: "/demo" },
   { id: "safety-valve", label: "Safety Valve", icon: Shield },
   { id: "talent-scout", label: "Talent Scout", icon: Sparkles },
   { id: "culture", label: "Culture Temp", icon: Thermometer },

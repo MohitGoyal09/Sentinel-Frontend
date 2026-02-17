@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
 import { 
   Users, 
   Activity, 
@@ -23,6 +24,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { ProtectedRoute } from "@/components/protected-route"
+import { TeamNarrative } from "@/components/ai/TeamNarrative"
+import { SkillsRadar } from "@/components/skills-radar"
 import { api } from "@/lib/api"
 
 interface TeamMember {
@@ -81,6 +84,16 @@ interface TeamAnalytics {
   }>
 }
 
+interface SkillsData {
+  technical: number
+  communication: number
+  leadership: number
+  collaboration: number
+  adaptability: number
+  creativity: number
+  updated_at?: string
+}
+
 interface MemberDetails {
   access: "granted" | "denied"
   reason: string
@@ -96,10 +109,12 @@ interface MemberDetails {
     confidence: number
     thwarted_belongingness: number
   }
+  skills?: SkillsData
 }
 
 function TeamPageContent() {
   const router = useRouter()
+  const { loading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const [teamData, setTeamData] = useState<TeamData | null>(null)
   const [analytics, setAnalytics] = useState<TeamAnalytics | null>(null)
@@ -108,23 +123,17 @@ function TeamPageContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(12) // Show 12 cards per page
 
-  useEffect(() => {
-    fetchTeamData(currentPage)
-  }, [currentPage])
 
-  const fetchTeamData = async (page: number) => {
+  const fetchTeamData = useCallback(async () => {
+    if (authLoading) return
+    
     try {
       setLoading(true)
-      const skip = (page - 1) * pageSize
-      console.log(`[team] Fetching team data (page ${page})...`)
-      console.log(`[team] Auth token present:`, !!localStorage.getItem('sb-access-token'))
+      console.log(`[team] Fetching team data...`)
       
       const [teamRes, analyticsRes] = await Promise.all([
-        api.get<TeamData>(`/team?skip=${skip}&limit=${pageSize}`),
+        api.get<TeamData>('/team/?limit=1000'),
         api.get<TeamAnalytics>('/team/analytics?days=30')
       ])
       
@@ -140,7 +149,13 @@ function TeamPageContent() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [authLoading])
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchTeamData()
+    }
+  }, [authLoading, fetchTeamData])
 
   const fetchMemberDetails = async (member: TeamMember) => {
     if (!member.real_hash) {
@@ -175,11 +190,7 @@ function TeamPageContent() {
     return "text-red-600"
   }
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0) {
-      setCurrentPage(newPage)
-    }
-  }
+
 
   if (loading && !teamData) {
     return (
@@ -248,9 +259,8 @@ function TeamPageContent() {
     )
   }
 
-  // Derived check for pagination
+  // Derived check for count
   const totalCount = (teamData.team as any).total_count || teamData.metrics?.total_members || 0
-  const totalPages = Math.ceil(totalCount / pageSize)
 
   return (
     <div className="flex flex-col bg-background">
@@ -386,6 +396,14 @@ function TeamPageContent() {
               </CardContent>
             </Card>
 
+            {/* Team Health Narrative */}
+            {teamData?.team?.manager_hash && (
+              <TeamNarrative 
+                teamHash={teamData.team.manager_hash}
+                days={30}
+              />
+            )}
+
              <Alert>
               <Shield className="h-4 w-4" />
               <AlertTitle>Privacy-First Analytics</AlertTitle>
@@ -397,28 +415,6 @@ function TeamPageContent() {
 
           {/* MEMBERS TAB */}
           <TabsContent value="members" className="space-y-6">
-             {/* Pagination Controls */}
-             <div className="flex items-center justify-between py-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage <= 1 || loading}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages || 1}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= totalPages || loading}
-                >
-                  Next
-                </Button>
-             </div>
 
             {selectedMember && memberDetails && (
               <Card className="border-primary mb-6">
@@ -450,30 +446,42 @@ function TeamPageContent() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {memberDetails.access === "granted" && memberDetails.risk ? (
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Risk Level</p>
-                        <Badge className={getRiskColor(memberDetails.risk.current_level)}>
-                          {memberDetails.risk.current_level}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Velocity</p>
-                        <p className="text-lg font-semibold">{memberDetails.risk.velocity?.toFixed(2) || "N/A"}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Confidence</p>
-                        <p className="text-lg font-semibold">{(memberDetails.risk.confidence * 100).toFixed(0)}%</p>
-                      </div>
-                      {memberDetails.employee?.monitoring_paused && (
-                        <Alert className="col-span-3 border-amber-200 bg-amber-50">
-                          <AlertTriangle className="h-4 w-4 text-amber-600" />
-                          <AlertTitle className="text-amber-800">Monitoring Paused</AlertTitle>
-                          <AlertDescription className="text-amber-700">
-                            This employee has temporarily paused monitoring.
-                          </AlertDescription>
-                        </Alert>
+                  {memberDetails.access === "granted" ? (
+                    <div className="space-y-6">
+                      {memberDetails.risk && (
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Risk Level</p>
+                            <Badge className={getRiskColor(memberDetails.risk.current_level)}>
+                              {memberDetails.risk.current_level}
+                            </Badge>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Velocity</p>
+                            <p className="text-lg font-semibold">{memberDetails.risk.velocity?.toFixed(2) || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Confidence</p>
+                            <p className="text-lg font-semibold">{(memberDetails.risk.confidence * 100).toFixed(0)}%</p>
+                          </div>
+                          {memberDetails.employee?.monitoring_paused && (
+                            <Alert className="col-span-3 border-amber-200 bg-amber-50">
+                              <AlertTriangle className="h-4 w-4 text-amber-600" />
+                              <AlertTitle className="text-amber-800">Monitoring Paused</AlertTitle>
+                              <AlertDescription className="text-amber-700">
+                                This employee has temporarily paused monitoring.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        </div>
+                      )}
+                      
+                      {memberDetails.skills && (
+                        <div className="mt-6">
+                          <Separator className="mb-4" />
+                          <h4 className="text-sm font-medium mb-4">Skills Profile</h4>
+                          <SkillsRadar data={memberDetails.skills} height={280} />
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -547,30 +555,7 @@ function TeamPageContent() {
                 </Card>
               ))}
             </div>
-             {/* Pagination Controls Bottom */}
-             <div className="flex items-center justify-center py-6">
-                 <div className="flex items-center gap-4">
-                    <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage <= 1 || loading}
-                    >
-                    Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages || 1}
-                    </span>
-                    <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= totalPages || loading}
-                    >
-                    Next
-                    </Button>
-                 </div>
-             </div>
+
           </TabsContent>
 
           {/* ANALYTICS TAB */}

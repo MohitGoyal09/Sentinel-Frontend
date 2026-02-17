@@ -1,23 +1,25 @@
 "use client"
 
-import { Suspense } from "react"
-import { useState, useMemo, useEffect } from "react"
+import { Suspense, useState, useMemo, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { DashboardHeader } from "@/components/dashboard-header"
-import { StatCards } from "@/components/stat-cards"
 import { UserSelector } from "@/components/user-selector"
 import { RiskAssessment } from "@/components/risk-assessment"
 import { VelocityChart } from "@/components/velocity-chart"
 import { ActivityFeed } from "@/components/activity-feed"
-import { NudgeCard } from "@/components/nudge-card"
 import { TeamDistribution } from "@/components/team-distribution"
 import { NetworkGraph } from "@/components/network-graph"
 import { SimulationPanel } from "@/components/simulation-panel"
 import { VaultStatus } from "@/components/vault-status"
+import { StatCards } from "@/components/stat-cards"
+import { NudgeCard } from "@/components/nudge-card"
+import { EmployeeTable } from "@/components/employee-table"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProtectedRoute } from "@/components/protected-route"
 import { ForecastChart } from "@/components/forecast-chart"
+import { AgendaGenerator } from "@/components/copilot/AgendaGenerator"
+import { AskSentinel } from "@/components/ai/AskSentinel"
 import { useAuth } from "@/contexts/auth-context"
 import { api } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,30 +27,22 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { 
   Activity, 
   Shield, 
   User, 
   Clock, 
-  ToggleLeft, 
-  ToggleRight,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
-  Eye,
-  EyeOff,
-  History,
-  LogOut,
-  Users
+  Users,
+  RefreshCw
 } from "lucide-react"
 
 // Types
-import { Employee, UserSummary, PersonaType, toRiskLevel } from "@/types"
+import { Employee, UserSummary, toRiskLevel, PersonaType } from "@/types"
 
-// API Hooks
+// API Hooks - Simplified without WebSocket
 import { useRiskData } from "@/hooks/useRiskData"
 import { useNetworkData } from "@/hooks/useNetworkData"
 import { useSimulation } from "@/hooks/useSimulation"
@@ -57,7 +51,6 @@ import { useRiskHistory } from "@/hooks/useRiskHistory"
 import { useUsers } from "@/hooks/useUsers"
 import { useRecentEvents } from "@/hooks/useRecentEvents"
 import { useNudge } from "@/hooks/useNudge"
-import { useWebSocket } from "@/hooks/useWebSocket"
 import { useForecast } from "@/hooks/useForecast"
 
 // Employee profile types (from /me endpoint)
@@ -219,11 +212,11 @@ function DashboardContent() {
     , [employees, selectedUserHash])
 
   // 2. Fetch specific data for selected user
-  const { data: riskData } = useRiskData(selectedUserHash)
+  const { data: riskData, refetch: refetchRiskData } = useRiskData(selectedUserHash)
   const { history: fetchedHistory } = useRiskHistory(selectedUserHash)
   const { data: nudgeData } = useNudge(selectedUserHash)
-  const { data: networkData } = useNetworkData(selectedUserHash) // Fetch selected user's network centrality
-  const { data: teamData } = useTeamData() // Fetch team Metrics
+  const { data: networkData, refetch: refetchNetworkData } = useNetworkData(selectedUserHash) // Fetch selected user's network centrality
+  const { data: teamData, refetch: refetchTeamData } = useTeamData() // Fetch team Metrics
   const { data: forecastData, isLoading: forecastLoading } = useForecast() // SIR forecast
 
   const { injectEvent, createPersona } = useSimulation()
@@ -333,6 +326,28 @@ function DashboardContent() {
     }
   }
 
+  // Simple refresh handler - replaces WebSocket real-time updates
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        refetchRiskData?.(),
+        refetchTeamData?.(),
+        refetchEvents?.(),
+        refetchNetworkData?.()
+      ])
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [refetchRiskData, refetchTeamData, refetchEvents, refetchNetworkData])
+
+  // Auto-refresh every 60 seconds (simple polling instead of WebSocket)
+  useEffect(() => {
+    const interval = setInterval(handleRefresh, 60000)
+    return () => clearInterval(interval)
+  }, [handleRefresh])
+
   if (!currentEmployee) {
      return <div className="flex h-full items-center justify-center">Loading Dashboard...</div>
   }
@@ -346,13 +361,27 @@ function DashboardContent() {
 
         <ScrollArea className="flex-1">
           <main className="flex flex-col gap-6 p-5 lg:p-8">
-            {/* ==================== OVERVIEW ==================== */}
+{/* ==================== OVERVIEW ==================== */}
             {activeView === "dashboard" && (
               <>
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Team Dashboard</h2>
-                  <p className="text-sm text-muted-foreground">Real-time team health metrics and individual risk analysis.</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-bold tracking-tight text-foreground">Team Dashboard</h2>
+                    <p className="text-sm text-muted-foreground">Real-time team health metrics and individual risk analysis.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  </Button>
                 </div>
+
+                <AskSentinel />
 
                 {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics} />}
 
@@ -407,6 +436,13 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <RiskAssessment employee={currentEmployee} />
                   <div className="flex flex-col gap-6 lg:col-span-2">
+                    <AgendaGenerator
+                      userHash={currentEmployee.user_hash}
+                      userName={currentEmployee.name}
+                      riskLevel={currentEmployee.risk_level}
+                      pattern="Late nights +3 days this week"
+                      context="Post-sprint, unexplained"
+                    />
                     <NudgeCard nudge={nudgeData || undefined} />
                   </div>
                 </div>
@@ -509,7 +545,21 @@ function DashboardContent() {
                 
                 {mappedTeamMetrics && <StatCards metrics={mappedTeamMetrics as any} />}
                 
-                <TeamDistribution employees={employees} />
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <TeamDistribution employees={employees} />
+                  {/* Potentially another chart here to match layout, e.g. Velocity or Forecast */}
+                  <ForecastChart data={forecastData} isLoading={forecastLoading} />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-lg font-semibold tracking-tight text-foreground">Employee Roster</h3>
+                     <Button variant="outline" size="sm" className="h-8 gap-1">
+                        Filter
+                     </Button>
+                  </div>
+                  <EmployeeTable employees={employees} />
+                </div>
               </div>
             )}
 

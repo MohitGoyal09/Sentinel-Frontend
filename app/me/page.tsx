@@ -41,6 +41,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import { RiskNarrative } from "@/components/ai/RiskNarrative"
 
 // API client
 import { api } from "@/lib/api"
@@ -287,8 +288,8 @@ function MePageContent() {
           </div>
         )}
 
-        {/* ─── Top Row: 3 Cards ─── */}
-        <div className="grid gap-5 lg:grid-cols-3">
+        {/* ─── Top Row: 4 Cards ─── */}
+        <div className="grid gap-5 lg:grid-cols-4">
 
           {/* ══════ RISK LEVEL ══════ */}
           <div
@@ -333,6 +334,15 @@ function MePageContent() {
               </p>
             )}
           </div>
+
+          {/* ══════ RISK NARRATIVE ══════ */}
+          {data.user && (
+            <RiskNarrative 
+              userHash={data.user.user_hash} 
+              timeRange={14} 
+              className="lg:col-span-1"
+            />
+          )}
 
           {/* ══════ PRIVACY CONTROLS ══════ */}
           <div className="glass-card rounded-xl p-6 flex flex-col">

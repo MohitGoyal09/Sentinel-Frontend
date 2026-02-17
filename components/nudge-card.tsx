@@ -6,29 +6,63 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { NudgeData } from "@/types"
 import { cn } from "@/lib/utils"
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useState } from "react"
+import { dismissNudge, scheduleBreak } from "@/lib/api"
 
 interface NudgeCardProps {
   nudge: NudgeData | undefined
+  onDismiss?: () => void
 }
 
-export function NudgeCard({ nudge }: NudgeCardProps) {
+export function NudgeCard({ nudge, onDismiss }: NudgeCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
-  const handleDismiss = useCallback(() => {
-    if (!cardRef.current) return
-    import("gsap").then(({ default: gsap }) => {
-      gsap.to(cardRef.current, {
-        scale: 0.95,
-        opacity: 0,
-        duration: 0.25,
-        ease: "power2.in",
-        onComplete: () => {
-          if (cardRef.current) cardRef.current.style.display = "none"
-        },
-      })
-    })
-  }, [])
+  const handleDismiss = useCallback(async () => {
+    if (!nudge?.user_hash) return
+    setIsProcessing(true)
+    try {
+      await dismissNudge(nudge.user_hash)
+      if (onDismiss) {
+        onDismiss()
+      } else if (cardRef.current) {
+        import("gsap").then(({ default: gsap }) => {
+          gsap.to(cardRef.current, {
+            scale: 0.95,
+            opacity: 0,
+            duration: 0.25,
+            ease: "power2.in",
+            onComplete: () => {
+              if (cardRef.current) cardRef.current.style.display = "none"
+            },
+          })
+        })
+      }
+    } catch (err) {
+      console.error("Failed to dismiss nudge:", err)
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [nudge?.user_hash, onDismiss])
+
+  const handleAction = useCallback(async (action: string) => {
+    if (!nudge?.user_hash) return
+    setIsProcessing(true)
+    try {
+      if (action === "schedule_break" || action === "block_recovery") {
+        await scheduleBreak(nudge.user_hash)
+        alert("Break scheduled for tomorrow!")
+      } else if (action === "dismiss") {
+        await handleDismiss()
+      } else if (action === "request_support") {
+        alert("Support request sent. Someone will reach out soon.")
+      }
+    } catch (err) {
+      console.error("Failed to process action:", err)
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [nudge?.user_hash, handleDismiss])
 
   if (!nudge) {
     return (
@@ -107,16 +141,18 @@ export function NudgeCard({ nudge }: NudgeCardProps) {
             <Button
               key={action.action}
               variant={
-                action.action === "suggest_break" || action.action === "block_calendar"
+                action.action === "suggest_break" || action.action === "block_calendar" || action.action === "block_recovery" || action.action === "request_support"
                   ? "default"
                   : "outline"
               }
               size="sm"
+              disabled={isProcessing}
+              onClick={() => handleAction(action.action)}
               className="relative h-9 overflow-hidden rounded-lg text-xs active:scale-[0.97] transition-transform duration-100"
             >
               {action.action.includes("calendar") || action.action.includes("retro") ? (
                 <Calendar className="mr-1.5 h-3.5 w-3.5" />
-              ) : action.action.includes("break") ? (
+              ) : action.action.includes("break") || action.action.includes("recovery") ? (
                 <Clock className="mr-1.5 h-3.5 w-3.5" />
               ) : null}
               {action.label}

@@ -221,14 +221,23 @@ export async function getTeamForecast(teamHashes: string[], days: number = 30): 
 // ============================================
 
 /**
- * Create a simulation persona with synthetic behavioral data
+ * Create a new persona with synthetic behavioral data
  * POST /engines/personas
  */
 export async function createPersona(
   email: string,
   personaType: PersonaType
-): Promise<CreatePersonaResponse> {
-  return handleResponse(api.post<CreatePersonaResponse>(`/engines/personas`, { email, persona_type: personaType }));
+): Promise<{ user_hash: string; events_created: number; persona?: string }> {
+  const response = await api.post<any>(`/engines/personas`, { email, persona_type: personaType });
+  // Handle the nested response format
+  if (response && response.data) {
+    return {
+      user_hash: response.data.user_hash,
+      events_created: response.data.events_count,
+      persona: response.data.persona
+    };
+  }
+  return response;
 }
 
 /**
@@ -263,6 +272,22 @@ export async function getRecentEvents(limit: number = 20): Promise<SimulationEve
  */
 export async function getNudge(userHash: string): Promise<NudgeData> {
   return handleResponse(api.get<NudgeData>(`/engines/users/${userHash}/nudge`));
+}
+
+/**
+ * Dismiss an active nudge for a user
+ * POST /engines/users/{user_hash}/nudge/dismiss
+ */
+export async function dismissNudge(userHash: string): Promise<{ success: boolean; message: string }> {
+  return handleResponse(api.post(`/engines/users/${userHash}/nudge/dismiss`));
+}
+
+/**
+ * Schedule a break for a user
+ * POST /engines/users/{user_hash}/nudge/schedule-break
+ */
+export async function scheduleBreak(userHash: string): Promise<{ success: boolean; message: string; scheduled_time: string }> {
+  return handleResponse(api.post(`/engines/users/${userHash}/nudge/schedule-break`));
 }
 
 /**
@@ -334,6 +359,111 @@ export async function checkHealth(): Promise<boolean> {
 }
 
 // ============================================
-// Generic API Client (for /me, /team, /admin)
+// AI Copilot API
 // ============================================
+
+export interface AgendaTalkingPoint {
+  id: number;
+  text: string;
+}
+
+export interface AgendaSuggestion {
+  type: string;
+  label: string;
+  action: string;
+}
+
+export interface AgendaResponse {
+  user_hash: string;
+  user_name: string;
+  risk_level: string;
+  pattern: string;
+  context: string;
+  talking_points: AgendaTalkingPoint[];
+  suggestions: AgendaSuggestion[];
+}
+
+/**
+ * Generate AI-powered 1:1 agenda for a user
+ * POST /ai/copilot/agenda
+ */
+export async function generateAgenda(userHash: string): Promise<AgendaResponse> {
+  return handleResponse(api.post<AgendaResponse>(`/ai/copilot/agenda`, { user_hash: userHash }));
+}
+
+// ============================================
+// Semantic Query Engine (Ask Sentinel)
+// ============================================
+
+export interface SemanticQueryResult {
+  name: string;
+  user_hash: string;
+  risk_level: string;
+  insights: string[];
+  suggested_action: string;
+}
+
+export interface SemanticQueryResponse {
+  query: string;
+  results: SemanticQueryResult[];
+  summary: string;
+}
+
+/**
+ * Execute a semantic natural language query
+ * POST /ai/query
+ */
+export async function semanticQuery(query: string): Promise<SemanticQueryResponse> {
+  return handleResponse(api.post<SemanticQueryResponse>(`/ai/query`, { query }));
+}
+
+// ============================================
+// AI Narrative Reports API
+// ============================================
+
+export interface RiskNarrativeData {
+  user_hash: string;
+  narrative: string;
+  trend: 'increasing' | 'decreasing' | 'stable';
+  time_period: string;
+  key_insights: string[];
+}
+
+export interface TeamNarrativeData {
+  team_hash: string;
+  narrative: string;
+  health_trend: 'improving' | 'declining' | 'stable';
+  risk_distribution: {
+    critical: number;
+    elevated: number;
+    low: number;
+    calibrating: number;
+  };
+  key_insights: string[];
+  time_period: string;
+}
+
+/**
+ * Get AI-generated risk narrative for a specific user
+ * GET /ai/narratives/user/{user_hash}?time_range=14
+ */
+export async function getRiskNarrative(userHash: string, timeRange?: number): Promise<RiskNarrativeData> {
+  let path = `/ai/narratives/user/${userHash}`;
+  if (timeRange) {
+    path += `?time_range=${timeRange}`;
+  }
+  return handleResponse(api.get<RiskNarrativeData>(path));
+}
+
+/**
+ * Get AI-generated team health narrative
+ * GET /ai/narratives/team/{team_hash}?days=30
+ */
+export async function getTeamNarrative(teamHash: string, days?: number): Promise<TeamNarrativeData> {
+  let path = `/ai/narratives/team/${teamHash}`;
+  if (days) {
+    path += `?days=${days}`;
+  }
+  return handleResponse(api.get<TeamNarrativeData>(path));
+}
 

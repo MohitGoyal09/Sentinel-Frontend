@@ -3,23 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SafetyValveData, UseRiskDataReturn } from '@/types';
 import { getSafetyAnalysis } from '@/lib/api';
-import { useWebSocket } from './useWebSocket';
 
 /**
  * Hook for fetching and managing safety valve (burnout risk) data
  * 
- * Fetches initial data via REST API and listens for real-time updates via WebSocket
+ * Fetches data via REST API with polling for real-time updates
  * GET /users/{user_hash}/safety
  * 
- * WebSocket updates:
- * - type: 'risk_update' - Real-time risk level changes
- * - type: 'manual_refresh' - Manual refresh response with full data
+ * Note: WebSocket was removed in favor of simple REST polling for stability
  */
 export function useRiskData(userHash: string | null): UseRiskDataReturn {
   const [data, setData] = useState<SafetyValveData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { lastMessage, connectionStatus } = useWebSocket(userHash);
 
   const fetchData = useCallback(async () => {
     if (!userHash) {
@@ -47,34 +43,6 @@ export function useRiskData(userHash: string | null): UseRiskDataReturn {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  // Listen for WebSocket updates
-  useEffect(() => {
-    if (!lastMessage) return;
-
-    switch (lastMessage.type) {
-      case 'risk_update':
-        // Partial update with new risk data
-        if (lastMessage.data) {
-          setData((prev) => {
-            if (!prev) return lastMessage.data as SafetyValveData;
-            return { ...prev, ...lastMessage.data };
-          });
-        }
-        break;
-      
-      case 'manual_refresh':
-        // Full data refresh
-        if (lastMessage.data) {
-          setData(lastMessage.data);
-        }
-        break;
-      
-      case 'error':
-        setError(new Error('WebSocket error received'));
-        break;
-    }
-  }, [lastMessage]);
 
   return { 
     data, 
