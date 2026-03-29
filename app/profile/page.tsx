@@ -261,7 +261,7 @@ function MePageContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
+              <div className="text-xl font-semibold">
                 {data.risk?.risk_level || "LOW"}
               </div>
               {data.risk && (

@@ -10,11 +10,12 @@ interface AnonymityToggleProps {
 
 export function AnonymityToggle({ isAnonymized, onToggle }: AnonymityToggleProps) {
   return (
-    <div className="flex items-center space-x-2 bg-background border border-white/10 px-4 py-2 rounded-full">
-      <div className={`p-1.5 rounded-full ${isAnonymized ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-700/50 text-slate-400'}`}>
+    <div className="flex items-center space-x-2 bg-background border border-border px-4 py-2 rounded-full">
+      <div className={`p-1.5 rounded-full ${isAnonymized ? 'bg-[hsl(var(--primary))]/20' : 'bg-muted'}`}
+        style={{color: isAnonymized ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}}>
         {isAnonymized ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
       </div>
-      <label htmlFor="anonymity-mode" className="text-sm font-medium text-slate-200 cursor-pointer select-none">
+      <label htmlFor="anonymity-mode" className="text-sm font-medium text-foreground cursor-pointer select-none">
         {isAnonymized ? 'Anonymity Mode: ON' : 'Anonymity Mode: OFF'}
       </label>
       <Switch

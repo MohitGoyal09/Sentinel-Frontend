@@ -311,49 +311,49 @@ function AdminPageContent() {
 
   if (loading && !health) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0b101b]">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="relative h-12 w-12">
             <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin"></div>
             <div className="absolute inset-2 rounded-full border-t-2 border-indigo-500 animate-spin reverse"></div>
           </div>
-          <p className="text-sm font-medium text-slate-400">Initializing Engine Room...</p>
+          <p className="text-sm font-medium text-muted-foreground">Initializing Engine Room...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0b101b] text-slate-200 font-sans selection:bg-indigo-500/30">
+    <div className="flex flex-col min-h-screen bg-background       text-foreground font-sans selection:bg-indigo-500/30">
       {error && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 animate-in slide-in-from-top-2">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
-          <p className="text-sm font-medium text-red-400">{error}</p>
-          <Button variant="ghost" size="sm" onClick={() => setError(null)} className="ml-2 h-auto p-1 text-red-400 hover:text-red-300">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border border-[hsl(var(--sentinel-critical))]/20 bg-[hsl(var(--sentinel-critical))]/10 px-4 py-3 animate-in slide-in-from-top-2">
+          <AlertTriangle className="h-5 w-5" style={{color: 'hsl(var(--sentinel-critical))'}} />
+          <p className="text-sm font-medium" style={{color: 'hsl(var(--sentinel-critical))'}}>{error}</p>
+          <Button variant="ghost" size="sm" onClick={() => setError(null)} className="ml-2 h-auto p-1" style={{color: 'hsl(var(--sentinel-critical))'}}>
             <X className="h-4 w-4" />
           </Button>
         </div>
       )}
 
       {success && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3 animate-in slide-in-from-top-2">
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <p className="text-sm font-medium text-green-400">{success}</p>
-          <Button variant="ghost" size="sm" onClick={() => setSuccess(null)} className="ml-2 h-auto p-1 text-green-400 hover:text-green-300">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border border-[hsl(var(--sentinel-healthy))]/20 bg-[hsl(var(--sentinel-healthy))]/10 px-4 py-3 animate-in slide-in-from-top-2">
+          <CheckCircle2 className="h-5 w-5" style={{color: 'hsl(var(--sentinel-healthy))'}} />
+          <p className="text-sm font-medium" style={{color: 'hsl(var(--sentinel-healthy))'}}>{success}</p>
+          <Button variant="ghost" size="sm" onClick={() => setSuccess(null)} className="ml-2 h-auto p-1" style={{color: 'hsl(var(--sentinel-healthy))'}}>
             <X className="h-4 w-4" />
           </Button>
         </div>
       )}
 
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0b101b]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a1a2e] border border-amber-500/30">
               <Shield className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">Admin Panel</h1>
-              <p className="text-[11px] text-slate-400 font-medium">System Administration & Diagnostics</p>
+              <h1 className="text-lg font-bold tracking-tight text-foreground">Admin Panel</h1>
+              <p className="text-[11px] text-muted-foreground font-medium">System Administration & Diagnostics</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -361,7 +361,7 @@ function AdminPageContent() {
               variant="ghost" 
               size="sm"
               onClick={() => router.push("/dashboard?view=admin")}
-              className="gap-2 text-slate-400 hover:text-white hover:bg-white/5"
+              className="gap-2 text-muted-foreground hover:text-foreground hover:bg-white/5"
             >
               <LayoutDashboard className="h-4 w-4" />
               Command Center
@@ -376,25 +376,25 @@ function AdminPageContent() {
       <main className="container mx-auto px-6 py-8 flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <TabsList className="bg-[#111827] border border-white/5 p-1 h-auto w-fit">
-              <TabsTrigger value="health" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-4 py-2 text-xs font-medium gap-2">
+            <TabsList className="bg-card border border-border p-1 h-auto w-fit">
+              <TabsTrigger value="health" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-foreground px-4 py-2 text-xs font-medium gap-2">
                 <Activity className="h-3.5 w-3.5" /> System Health
               </TabsTrigger>
-              <TabsTrigger value="users" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-4 py-2 text-xs font-medium gap-2">
+              <TabsTrigger value="users" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-foreground px-4 py-2 text-xs font-medium gap-2">
                 <Users className="h-3.5 w-3.5" /> All Users
               </TabsTrigger>
-              <TabsTrigger value="audit" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-4 py-2 text-xs font-medium gap-2">
+              <TabsTrigger value="audit" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-foreground px-4 py-2 text-xs font-medium gap-2">
                 <FileText className="h-3.5 w-3.5" /> Audit Logs
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-500 font-mono hidden sm:block">
+                <span className="text-[10px] text-muted-foreground/70 font-mono hidden sm:block">
                 LAST SYNC: {lastRefreshed.toLocaleTimeString()}
               </span>
               <Button 
                 size="sm" 
                 variant="outline" 
-                className="h-8 border-white/10 hover:bg-white/5 text-slate-400 hover:text-white"
+                className="h-8 border-border hover:bg-white/5 text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   if (activeTab === "health") fetchHealthData()
                   if (activeTab === "users") fetchUsers()
@@ -418,9 +418,9 @@ function AdminPageContent() {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                  <Card className="col-span-2 md:col-span-1 bg-[#111827]/50 border-white/10">
-                    <CardHeader className="pb-3 border-b border-white/5">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2 text-white">
+                  <Card className="col-span-2 md:col-span-1 bg-card/50 border-border">
+                    <CardHeader className="pb-3 border-b border-border">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
                         <Server className="h-4 w-4 text-indigo-400" />
                         Infrastructure Status
                       </CardTitle>
@@ -430,12 +430,12 @@ function AdminPageContent() {
                         {MOCK_SERVICES.map((service, i) => (
                           <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
                             <div className="flex items-center gap-3">
-                              <div className={cn("h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-[#111827]", service.status === "operational" ? "bg-emerald-500 ring-emerald-500/20" : "bg-amber-500 ring-amber-500/20")} />
-                              <span className="text-sm font-medium text-slate-200">{service.name}</span>
+                              <div className={cn("h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-card", service.status === "operational" ? "bg-emerald-500 ring-emerald-500/20" : "bg-amber-500 ring-amber-500/20")} />
+                               <span className="text-sm font-medium text-foreground">{service.name}</span>
                             </div>
-                            <div className="flex items-center gap-4 text-xs text-slate-400">
-                              <span className="font-mono">Lat: <span className="text-slate-200">{service.latency}</span></span>
-                              <Badge variant="outline" className={cn("border-0 bg-opacity-10 uppercase tracking-wider text-[10px]", service.status === "operational" ? "bg-emerald-500 text-emerald-400" : "bg-amber-500 text-amber-400")}>
+                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                               <span className="font-mono">Lat: <span className="text-foreground">{service.latency}</span></span>
+                              <Badge variant="outline" className={cn("border-0 bg-opacity-10 uppercase tracking-wider text-[10px]", service.status === "operational" ? "bg-emerald-500 text-emerald-400" : "bg-[hsl(var(--sentinel-elevated))]")} style={service.status !== "operational" ? {color: 'hsl(var(--sentinel-elevated))'} : undefined}>
                                 {service.status}
                               </Badge>
                             </div>
@@ -445,22 +445,22 @@ function AdminPageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-[#111827]/50 border-white/10">
-                    <CardHeader className="pb-3 border-b border-white/5">
-                      <CardTitle className="text-sm font-medium text-white">Risk Distribution</CardTitle>
+                  <Card className="bg-card/50 border-border">
+                    <CardHeader className="pb-3 border-b border-border">
+                      <CardTitle className="text-sm font-medium text-foreground">Risk Distribution</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6 space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-400">Critical</span>
-                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30">{health.risk_summary.critical_count}</Badge>
+                         <span className="text-sm text-muted-foreground">Critical</span>
+                         <Badge className="bg-[hsl(var(--sentinel-critical))]/20 border-[hsl(var(--sentinel-critical))]/30" style={{color: 'hsl(var(--sentinel-critical))'}}>{health.risk_summary.critical_count}</Badge>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-400">Elevated</span>
-                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">{health.risk_summary.elevated_count}</Badge>
+                         <span className="text-sm text-muted-foreground">Elevated</span>
+                         <Badge className="bg-[hsl(var(--sentinel-elevated))]/20 border-[hsl(var(--sentinel-elevated))]/30" style={{color: 'hsl(var(--sentinel-elevated))'}}>{health.risk_summary.elevated_count}</Badge>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-400">Healthy</span>
-                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">{health.database.total_users - health.risk_summary.at_risk_total}</Badge>
+                         <span className="text-sm text-muted-foreground">Healthy</span>
+                         <Badge className="bg-[hsl(var(--sentinel-healthy))]/20 border-[hsl(var(--sentinel-healthy))]/30" style={{color: 'hsl(var(--sentinel-healthy))'}}>{health.database.total_users - health.risk_summary.at_risk_total}</Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -470,19 +470,19 @@ function AdminPageContent() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-[#111827]/50 p-4 rounded-xl border border-white/10">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-card/50 p-4 rounded-xl border border-border">
               <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
                   <Input 
                     placeholder="Search users..." 
-                    className="pl-9 bg-[#0b101b] border-white/10 w-full md:w-[250px] text-sm"
+                    className="pl-9 bg-background border-border w-full md:w-[250px] text-sm"
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                   />
                 </div>
                 <Select value={userRole} onValueChange={(val) => { setUserRole(val); fetchUsers() }}>
-                  <SelectTrigger className="w-[150px] bg-[#0b101b] border-white/10">
+                  <SelectTrigger className="w-[150px] bg-background border-border">
                     <SelectValue placeholder="Role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -493,36 +493,36 @@ function AdminPageContent() {
                   </SelectContent>
                 </Select>
                 </div>
-              <div className="text-sm text-slate-500">
+               <div className="text-sm text-muted-foreground/70">
                 {filteredUsers.length} users found
               </div>
             </div>
 
-            <Card className="bg-[#111827]/50 border-white/10 backdrop-blur-sm overflow-hidden">
+            <Card className="glass-card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-white/5">
-                    <tr className="border-b border-white/10">
-                      <th className="text-left text-xs font-semibold uppercase tracking-wider text-slate-400 h-12 px-4">User</th>
-                      <th className="text-left text-xs font-semibold uppercase tracking-wider text-slate-400 h-12 px-4">Role</th>
-                      <th className="text-left text-xs font-semibold uppercase tracking-wider text-slate-400 h-12 px-4">Risk Level</th>
-                      <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-400 h-12 px-4">Manager</th>
-                      <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-400 h-12 px-4">Consent</th>
-                      <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-400 h-12 px-4">Actions</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground h-12 px-4">User</th>
+                      <th className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground h-12 px-4">Role</th>
+                      <th className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground h-12 px-4">Risk Level</th>
+                      <th className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground h-12 px-4">Manager</th>
+                      <th className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground h-12 px-4">Consent</th>
+                      <th className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground h-12 px-4">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-border">
                     {filteredUsers.length > 0 ? (
                       filteredUsers.map((user) => (
                         <tr key={user.user_hash} className="hover:bg-white/[0.02]">
                           <td className="px-4 py-3">
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium text-white">{user.name || user.user_hash.slice(0, 8) + "..."}</span>
-                              {user.email && <span className="text-xs text-slate-500">{user.email}</span>}
+                              <span className="text-sm font-medium text-foreground">{user.name || user.user_hash.slice(0, 8) + "..."}</span>
+                               {user.email && <span className="text-xs text-muted-foreground/70">{user.email}</span>}
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <Badge variant="secondary" className="capitalize text-[10px] bg-white/10 text-slate-300">
+                             <Badge variant="secondary" className="capitalize text-[10px] bg-white/10 text-foreground">
                               {user.role}
                             </Badge>
                           </td>
@@ -547,16 +547,16 @@ function AdminPageContent() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => { setEditUser(user); setEditEmail(user.email || "") }}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditUser(user); setEditEmail(user.email || "") }}>
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => { setRoleUser(user); setNewRole(user.role) }}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setRoleUser(user); setNewRole(user.role) }}>
                                 <UserCog className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => { setAssignManagerUser(user); setSelectedManager(user.has_manager ? "remove" : "") }}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setAssignManagerUser(user); setSelectedManager(user.has_manager ? "remove" : "") }}>
                                 <Users className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-300" onClick={() => setDeleteUser(user)}>
+                               <Button variant="ghost" size="icon" className="h-8 w-8" style={{color: 'hsl(var(--sentinel-critical))'}} onClick={() => setDeleteUser(user)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -565,7 +565,7 @@ function AdminPageContent() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} className="h-32 text-center text-slate-500">
+                         <td colSpan={6} className="h-32 text-center text-muted-foreground/70">
                           No users found matching your criteria.
                         </td>
                       </tr>
@@ -577,10 +577,10 @@ function AdminPageContent() {
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-[#111827]/50 p-4 rounded-xl border border-white/10">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-card/50 p-4 rounded-xl border border-border">
               <div className="flex gap-3">
                 <Select value={auditDays} onValueChange={setAuditDays}>
-                  <SelectTrigger className="w-[140px] bg-[#0b101b] border-white/10">
+                  <SelectTrigger className="w-[140px] bg-background border-border">
                     <SelectValue placeholder="Period" />
                   </SelectTrigger>
                   <SelectContent>
@@ -590,7 +590,7 @@ function AdminPageContent() {
                   </SelectContent>
                 </Select>
                 <Select value={auditAction} onValueChange={setAuditAction}>
-                  <SelectTrigger className="w-[160px] bg-[#0b101b] border-white/10">
+                  <SelectTrigger className="w-[160px] bg-background border-border">
                     <SelectValue placeholder="Action Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -602,32 +602,32 @@ function AdminPageContent() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setAuditOffset(Math.max(0, auditOffset - 50))} disabled={auditOffset === 0} className="border-white/10">
+                <Button variant="outline" size="sm" onClick={() => setAuditOffset(Math.max(0, auditOffset - 50))} disabled={auditOffset === 0} className="border-border">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-xs font-mono text-slate-500 w-20 text-center">OFFSET: {auditOffset}</span>
-                <Button variant="outline" size="sm" onClick={() => setAuditOffset(auditOffset + 50)} className="border-white/10">
+                <span className="text-xs font-mono text-muted-foreground/70 w-20 text-center">OFFSET: {auditOffset}</span>
+                <Button variant="outline" size="sm" onClick={() => setAuditOffset(auditOffset + 50)} className="border-border">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <Card className="bg-[#111827]/50 border-white/10 overflow-hidden">
+            <Card className="bg-card/50 border-border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-white/5 text-xs uppercase text-slate-400 font-semibold">
+                  <thead className="bg-white/5 text-xs uppercase text-muted-foreground font-semibold">
                     <tr>
-                      <th className="px-6 py-3 border-b border-white/10 w-[200px]">Timestamp</th>
-                      <th className="px-6 py-3 border-b border-white/10 w-[150px]">Action</th>
-                      <th className="px-6 py-3 border-b border-white/10">User</th>
-                      <th className="px-6 py-3 border-b border-white/10">Details</th>
+                      <th className="px-6 py-3 border-b border-border w-[200px]">Timestamp</th>
+                      <th className="px-6 py-3 border-b border-border w-[150px]">Action</th>
+                      <th className="px-6 py-3 border-b border-border">User</th>
+                      <th className="px-6 py-3 border-b border-border">Details</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-border">
                     {auditLogs.length > 0 ? (
                       auditLogs.map((log) => (
                         <tr key={log.id} className="hover:bg-white/[0.02]">
-                          <td className="px-6 py-3 font-mono text-xs text-slate-400 whitespace-nowrap">
+                          <td className="px-6 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
                             {new Date(log.timestamp).toLocaleString()}
                           </td>
                           <td className="px-6 py-3">
@@ -635,11 +635,11 @@ function AdminPageContent() {
                               {formatAction(log.action)}
                             </Badge>
                           </td>
-                          <td className="px-6 py-3 font-mono text-xs text-slate-300">
+                          <td className="px-6 py-3 font-mono text-xs text-foreground">
                             {log.user_hash?.slice(0, 8)}...
                           </td>
                           <td className="px-6 py-3">
-                            <code className="text-[10px] text-slate-500 font-mono bg-black/20 px-2 py-1 rounded block truncate max-w-[400px]">
+                            <code className="text-[10px] text-muted-foreground/70 font-mono bg-black/20 px-2 py-1 rounded block truncate max-w-[400px]">
                               {JSON.stringify(log.details)}
                             </code>
                           </td>
@@ -647,7 +647,7 @@ function AdminPageContent() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="h-32 text-center text-slate-500">
+                         <td colSpan={4} className="h-32 text-center text-muted-foreground/70">
                           No audit logs found for this period.
                         </td>
                       </tr>
@@ -712,7 +712,7 @@ function AdminPageContent() {
       <Dialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-red-400">Delete User</DialogTitle>
+            <DialogTitle style={{color: 'hsl(var(--sentinel-critical))'}}>Delete User</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete user {deleteUser?.user_hash.slice(0, 8)}...? 
               This action cannot be undone and will remove all associated data.
@@ -769,16 +769,16 @@ function StatBlock({ label, value, icon, color }: { label: string, value: string
   const colorClass = {
     indigo: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
     emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    amber: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    amber: "text-[hsl(var(--sentinel-elevated))] bg-[hsl(var(--sentinel-elevated))]/10 border-[hsl(var(--sentinel-elevated))]/20",
     purple: "text-purple-400 bg-purple-500/10 border-purple-500/20"
-  }[color] || "text-slate-400 bg-slate-500/10 border-slate-500/20";
+  }[color] || "text-muted-foreground bg-muted/10 border-muted/20";
 
   return (
-    <Card className="bg-[#111827]/50 border-white/10">
+    <Card className="bg-card/50 border-border">
       <div className="p-5 flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">{label}</p>
-          <h3 className="text-2xl font-bold font-mono text-white">{value}</h3>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1">{label}</p>
+          <h3 className="text-2xl font-bold font-mono text-foreground">{value}</h3>
         </div>
         <div className={`p-2 rounded-lg border ${colorClass}`}>
           {icon}

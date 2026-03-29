@@ -168,7 +168,7 @@ const getDynamicSuggestions = (riskLevel: string, vel: number) => {
 function GlassTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#0f172a] border border-white/10 rounded-lg px-3 py-2 shadow-lg">
+    <div className="bg-card border border-white/10 rounded-lg px-3 py-2 shadow-lg">
       <p className="text-xs text-slate-400 mb-1">{label}</p>
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-2 text-xs">

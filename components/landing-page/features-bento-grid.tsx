@@ -1,130 +1,117 @@
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { Shield, Zap, Heart, Network, ArrowRight, TrendingUp, Users, Eye, Lock, MessageSquare, Target, Sparkles } from "lucide-react"
+import { Shield, Zap, Heart, Network, Lock, Eye, Sparkles, Users, ArrowUpRight } from "lucide-react"
 
 export function FeaturesBentoGrid() {
   const features = [
     {
       title: "Safety Valve",
-      description: "Detect burnout signals before they impact your team. Our AI monitors patterns to provide early warnings and actionable insights.",
+      description: "Detect burnout signals 30 days before they manifest using velocity analysis on metadata only.",
       Icon: Shield,
-      iconColor: "text-red-500",
-      bgColor: "bg-red-500/10",
-      borderColor: "border-red-500/20",
-      stats: "94% accuracy"
+      gradient: "from-red-500/15 to-orange-500/5",
+      iconBg: "bg-red-500/10",
+      iconColor: "text-red-400",
+      stat: "94% accuracy",
+      span: "md:col-span-2",
     },
     {
       title: "Talent Scout",
-      description: "Identify hidden high-performers and unearth potential leaders within your organization through network analysis.",
+      description: "Network analysis finds hidden gems — high-impact connectors invisible to traditional metrics.",
       Icon: Zap,
-      iconColor: "text-amber-500",
-      bgColor: "bg-amber-500/10",
-      borderColor: "border-amber-500/20",
-      stats: "3.2x discovery"
+      gradient: "from-amber-500/15 to-yellow-500/5",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-400",
+      stat: "3.2x discovery",
+      span: "",
     },
     {
-      title: "Culture Engine",
-      description: "Gauge team morale and engagement in real-time with anonymous feedback and sentiment analysis.",
+      title: "Culture Thermometer",
+      description: "SIR epidemic model tracks resignation contagion across your organization.",
       Icon: Heart,
-      iconColor: "text-pink-500",
-      bgColor: "bg-pink-500/10",
-      borderColor: "border-pink-500/20",
-      stats: "Real-time"
+      gradient: "from-pink-500/15 to-rose-500/5",
+      iconBg: "bg-pink-500/10",
+      iconColor: "text-pink-400",
+      stat: "Real-time",
+      span: "",
     },
     {
-      title: "Network Analysis",
-      description: "Understand communication patterns and identify key connectors in your organization.",
+      title: "Network Engine",
+      description: "Visualize collaboration patterns, identify silos, and map knowledge flow across teams.",
       Icon: Network,
-      iconColor: "text-cyan-500",
-      bgColor: "bg-cyan-500/10",
-      borderColor: "border-cyan-500/20",
-      stats: "Deep insights"
+      gradient: "from-cyan-500/15 to-blue-500/5",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-400",
+      stat: "Deep insights",
+      span: "md:col-span-2",
     },
   ]
 
   const benefits = [
-    {
-      icon: Lock,
-      title: "Privacy First",
-      description: "Employee data is always encrypted. No invasive tracking—only ethical, consent-based monitoring."
-    },
-    {
-      icon: Eye,
-      title: "Non-Invasive",
-      description: "Works with existing tools without monitoring personal messages or screen activity."
-    },
-    {
-      icon: Sparkles,
-      title: "AI-Powered",
-      description: "Advanced machine learning models trained on thousands of workplace patterns."
-    },
-    {
-      icon: Users,
-      title: "Team Focused",
-      description: "Built for managers who care about their people, not just metrics."
-    }
+    { icon: Lock, title: "Privacy by Architecture", description: "Two-vault system. Analytics never sees identity. Math on anonymous hashes, not people." },
+    { icon: Eye, title: "Metadata Only", description: "We analyze timestamps, never content. A smoke detector, not a camera." },
+    { icon: Sparkles, title: "Deterministic + AI", description: "Math makes the decisions. LLM writes the supportive messages. Nothing inverted." },
+    { icon: Users, title: "Employee First", description: "Nudges go to the employee before the manager. Agency always stays with the individual." },
   ]
 
   return (
-    <section id="features" className="py-24 bg-slate-950 relative overflow-hidden">
-      {/* Background accents */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-
+    <section id="features" className="py-24 relative overflow-hidden">
       <div className="container px-6 mx-auto relative z-10">
-        {/* Section Header */}
+        {/* Header */}
         <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 border-green-500/30 text-green-400 bg-green-500/10">
+          <Badge variant="outline" className="mb-4 border-primary/20 text-primary bg-primary/5">
             <Sparkles className="w-3 h-3 mr-1" />
             AI-Powered
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-6">
-            Everything you need to
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400"> build healthier teams</span>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
+            Three engines.{" "}
+            <span className="text-gradient-primary">One mission.</span>
           </h2>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-            Sentinel provides the complete toolkit for understanding, protecting, and growing your engineering organization.
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Built for managers who care about people, not just metrics.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-20">
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-20 stagger-children">
           {features.map((feature, index) => (
-            <Card key={index} className={cn(
-              "group relative bg-slate-900/80 border-slate-800 hover:border-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-black/20",
-              "hover:-translate-y-1"
-            )}>
+            <Card
+              key={index}
+              className={cn(
+                "group relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm",
+                "hover:border-border hover:bg-card/60 transition-all duration-200",
+                feature.span
+              )}
+            >
               <CardContent className="p-6">
-                <div className={cn("inline-flex p-3 rounded-xl mb-4 border", feature.bgColor, feature.borderColor)}>
-                  <feature.Icon className={cn("h-6 w-6", feature.iconColor)} />
+                <div className="flex items-start justify-between mb-4">
+                  <div className={cn("p-2.5 rounded-xl", feature.iconBg)}>
+                    <feature.Icon className={cn("h-5 w-5", feature.iconColor)} />
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+                    {feature.stat}
+                  </span>
                 </div>
-                <div className="text-sm font-medium text-slate-500 mb-2">{feature.stats}</div>
-                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Benefits Section */}
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="flex gap-4 p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                    <benefit.icon className="h-6 w-6 text-green-500" />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-white mb-1">{benefit.title}</h4>
-                  <p className="text-slate-400 text-sm">{benefit.description}</p>
-                </div>
+        {/* Benefits */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto stagger-children">
+          {benefits.map((benefit, index) => (
+            <div key={index} className="flex gap-4 p-5 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-colors duration-200">
+              <div className="flex-shrink-0 p-2.5 h-fit rounded-lg bg-primary/8">
+                <benefit.icon className="h-4.5 w-4.5 text-primary" />
               </div>
-            ))}
-          </div>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-1">{benefit.title}</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">{benefit.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

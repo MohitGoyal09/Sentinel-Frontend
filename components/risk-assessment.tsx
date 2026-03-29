@@ -16,12 +16,12 @@ export function RiskAssessment({ employee }: RiskAssessmentProps) {
   // Guard against undefined employee
   if (!employee) {
     return (
-      <Card className="bg-[#1a1a2e] border-white/5">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-lg">Risk Assessment</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-slate-400">No employee data available</p>
+          <p className="text-muted-foreground">No employee data available</p>
         </CardContent>
       </Card>
     )
@@ -88,7 +88,7 @@ export function RiskAssessment({ employee }: RiskAssessmentProps) {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={cn("text-3xl font-bold tabular-nums", riskTextColor(employee.risk_level))}>
+              <span className={cn("text-xl font-semibold tabular-nums", riskTextColor(employee.risk_level))}>
                 {employee.velocity.toFixed(1)}
               </span>
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Velocity</span>

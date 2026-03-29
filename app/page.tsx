@@ -3,101 +3,60 @@ import { LandingFooter } from "@/components/landing-page/footer"
 import { LandingHero } from "@/components/landing-page/hero"
 import { LandingNavbar } from "@/components/landing-page/navbar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Check, Shield, Zap, Heart, Users, MessageSquare, Play, Star } from "lucide-react"
+import { ArrowRight, Check, Shield, Zap, Heart, Users, Play, Star, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
 
 export default function Home() {
   const steps = [
-    {
-      number: "01",
-      title: "Connect Your Tools",
-      description: "Integrate with GitHub, Slack, Jira, and more. We only analyze work patterns—never personal messages.",
-      icon: Zap
-    },
-    {
-      number: "02", 
-      title: "AI Analysis",
-      description: "Our machine learning models identify risk signals and hidden talent patterns automatically.",
-      icon: Heart
-    },
-    {
-      number: "03",
-      title: "Get Insights",
-      description: "Receive actionable insights, early warnings, and personalized recommendations.",
-      icon: Shield
-    },
-    {
-      number: "04",
-      title: "Take Action",
-      description: "Use these insights to prevent burnout, recognize top performers, and build a healthier culture.",
-      icon: Users
-    }
+    { number: "01", title: "Connect Tools", description: "GitHub, Slack, Jira — we only see timestamps, never content.", icon: Zap },
+    { number: "02", title: "AI Analysis", description: "Velocity regression, entropy, and network centrality on metadata.", icon: Heart },
+    { number: "03", title: "Early Detection", description: "Risk scores flag burnout 30 days before it manifests.", icon: Shield },
+    { number: "04", title: "Intervene", description: "Supportive nudges to employees first. Managers see anonymized trends.", icon: Users },
   ]
 
   const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "VP of Engineering",
-      company: "TechCorp",
-      content: "Sentinel helped us identify burnout risk in 3 team members before it became a problem. We saved months of potential productivity loss.",
-      avatar: "SC"
-    },
-    {
-      name: "Marcus Johnson",
-      role: "Engineering Manager", 
-      company: "StartupXYZ",
-      content: "The hidden talent discovery feature found an incredible engineer who'd been quietly excelling. She's now leading our platform team.",
-      avatar: "MJ"
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "CTO",
-      company: "ScaleUp Inc",
-      content: "Finally, a tool that actually helps managers care for their teams without being invasive. Our retention improved by 40%.",
-      avatar: "ER"
-    }
+    { name: "Sarah Chen", role: "VP of Engineering", company: "TechCorp", content: "Sentinel caught burnout in 3 team members before it became a problem. We saved months of productivity." },
+    { name: "Marcus Johnson", role: "Engineering Manager", company: "StartupXYZ", content: "The hidden talent feature found an incredible engineer who'd been quietly unblocking everyone." },
+    { name: "Emily Rodriguez", role: "CTO", company: "ScaleUp Inc", content: "Finally a tool that helps managers care without being invasive. Retention improved 40%." },
   ]
 
-  const logos = ["Stripe", "Notion", "Figma", "Vercel", "Linear", "Arc"]
-
   return (
-    <div className="min-h-screen bg-slate-950 text-foreground flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans">
       <LandingNavbar />
-      
+
       <main className="flex-1 w-full">
         <LandingHero />
         <FeaturesBentoGrid />
-        
-        {/* How It Works Section */}
-        <section className="py-24 bg-slate-900 relative overflow-hidden">
+
+        {/* How It Works */}
+        <section id="how-it-works" className="py-24 border-y border-border/40">
           <div className="container px-6 mx-auto">
-            <div className="text-center mb-16">
-              <Badge variant="outline" className="mb-4 border-blue-500/30 text-blue-400 bg-blue-500/10">
+            <div className="text-center mb-14">
+              <Badge variant="outline" className="mb-3 border-primary/20 text-primary bg-primary/5">
                 How It Works
               </Badge>
-              <h2 className="text-4xl font-bold text-white mb-6">
-                Get started in <span className="text-blue-400">minutes</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                From data to insight in <span className="text-gradient-primary">minutes</span>
               </h2>
-              <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                Four simple steps to transform how you understand and manage your team.
+              <p className="text-muted-foreground max-w-lg mx-auto">
+                Four simple steps to transform how you understand your team.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto stagger-children">
               {steps.map((step, i) => (
                 <div key={i} className="relative">
-                  <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700 h-full">
-                    <div className="text-6xl font-bold text-slate-700/50 mb-4">{step.number}</div>
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mb-4">
-                      <step.icon className="h-6 w-6 text-blue-400" />
+                  <div className="metric-card h-full">
+                    <div className="text-4xl font-bold text-primary/15 mb-3">{step.number}</div>
+                    <div className="p-2 rounded-lg bg-primary/8 w-fit mb-3">
+                      <step.icon className="h-4 w-4 text-primary" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">{step.title}</h3>
-                    <p className="text-slate-400">{step.description}</p>
+                    <h3 className="text-sm font-semibold text-foreground mb-1.5">{step.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{step.description}</p>
                   </div>
                   {i < steps.length - 1 && (
-                    <ArrowRight className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 text-slate-600 h-6 w-6" />
+                    <ArrowRight className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/30 h-4 w-4 z-10" />
                   )}
                 </div>
               ))}
@@ -105,85 +64,73 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section className="py-24 bg-slate-950">
+        {/* Testimonials */}
+        <section id="testimonials" className="py-24">
           <div className="container px-6 mx-auto">
-            <div className="text-center mb-16">
-              <Badge variant="outline" className="mb-4 border-green-500/30 text-green-400 bg-green-500/10">
+            <div className="text-center mb-14">
+              <Badge variant="outline" className="mb-3 border-accent/20 text-accent bg-accent/5">
                 <Star className="w-3 h-3 mr-1" />
-                Loved by Engineering Leaders
+                Loved by Leaders
               </Badge>
-              <h2 className="text-4xl font-bold text-white mb-6">
-                Trusted by teams everywhere
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+                Trusted by engineering teams
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {testimonials.map((testimonial, i) => (
-                <Card key={i} className="bg-slate-900/80 border-slate-800">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-1 mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-green-500 text-green-500" />
-                      ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto stagger-children">
+              {testimonials.map((t, i) => (
+                <div key={i} className="metric-card p-6">
+                  <div className="flex items-center gap-0.5 mb-4">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className="h-3.5 w-3.5 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-5">&ldquo;{t.content}&rdquo;</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+                      {t.name.split(" ").map(n => n[0]).join("")}
                     </div>
-                    <p className="text-slate-300 mb-6 leading-relaxed">"{testimonial.content}"</p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center text-green-400 font-semibold text-sm">
-                        {testimonial.avatar}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-white">{testimonial.name}</div>
-                        <div className="text-sm text-slate-500">{testimonial.role}, {testimonial.company}</div>
-                      </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{t.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{t.role}, {t.company}</div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Logo Cloud */}
-        <section className="py-12 bg-slate-950 border-y border-slate-800">
-          <div className="container px-6 mx-auto">
-            <p className="text-center text-sm text-slate-500 mb-8">TRUSTED BY TEAMS AT</p>
-            <div className="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale">
-              {logos.map((logo, i) => (
-                <span key={i} className="text-xl font-bold text-slate-400">{logo}</span>
-              ))}
+        {/* CTA */}
+        <section className="py-24 border-t border-border/40">
+          <div className="container px-6 mx-auto text-center">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Ready to see what your data says?
+              </h2>
+              <p className="text-muted-foreground mb-8">
+                Join engineering leaders using Sentinel to build healthier, more productive teams.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link href="/login">
+                  <Button size="lg" className="h-11 px-6 rounded-xl font-medium group">
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+                  </Button>
+                </Link>
+                <Link href="/demo">
+                  <Button size="lg" variant="ghost" className="h-11 px-6 rounded-xl text-muted-foreground hover:text-foreground">
+                    <Play className="mr-2 h-4 w-4" />
+                    Watch Demo
+                  </Button>
+                </Link>
+              </div>
+              <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-muted-foreground/60">
+                <span className="flex items-center gap-1"><Check className="h-3 w-3" />No credit card</span>
+                <span className="flex items-center gap-1"><Check className="h-3 w-3" />14-day trial</span>
+                <span className="flex items-center gap-1"><Check className="h-3 w-3" />Cancel anytime</span>
+              </div>
             </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24 bg-background relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(34,197,94,0.1)_0%,_transparent_70%)]" />
-          <div className="container px-6 mx-auto text-center relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Ready to transform your team?
-            </h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10">
-              Join thousands of engineering leaders using Sentinel to build healthier, happier, and more productive teams.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/login">
-                <Button size="lg" className="h-14 px-8 rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg shadow-lg shadow-green-600/25 transition-all duration-300 group">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-              <Link href="/demo">
-                <Button size="lg" variant="outline" className="h-14 px-8 rounded-full border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white text-lg transition-all duration-300">
-                  <Play className="mr-2 h-5 w-5 fill-current" />
-                  Watch Demo
-                </Button>
-              </Link>
-            </div>
-            <p className="mt-6 text-sm text-slate-500 flex items-center justify-center gap-2">
-              <Shield className="h-4 w-4" />
-              No credit card required · 14-day free trial · Cancel anytime
-            </p>
           </div>
         </section>
       </main>

@@ -53,9 +53,9 @@ export default function PrivacyDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10">
-                <Shield className="h-5 w-5 text-green-500" />
+            <h1 className="text-xl font-semibold flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--sentinel-healthy))]/10">
+                <Shield className="h-5 w-5" style={{color: 'hsl(var(--sentinel-healthy))'}} />
               </div>
               Privacy Architecture
             </h1>
@@ -63,7 +63,7 @@ export default function PrivacyDashboard() {
               Dual-vault system separating analytics from identity — privacy by design
             </p>
           </div>
-          <Badge variant="outline" className="gap-1.5 text-green-500 border-green-500/30">
+          <Badge variant="outline" className="gap-1.5 border-[hsl(var(--sentinel-healthy))]/30" style={{color: 'hsl(var(--sentinel-healthy))'}}>
             <Lock className="h-3 w-3" />
             AES-256 + HMAC-SHA256
           </Badge>
@@ -73,8 +73,8 @@ export default function PrivacyDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
             { label: "Data Subjects", value: totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-            { label: "Behavioral Events", value: totalEvents.toLocaleString(), icon: Activity, color: "text-green-500", bg: "bg-green-500/10" },
-            { label: "Audit Entries", value: totalAuditLogs, icon: FileKey, color: "text-amber-500", bg: "bg-amber-500/10" },
+            { label: "Behavioral Events", value: totalEvents.toLocaleString(), icon: Activity, color: "text-[hsl(var(--sentinel-healthy))]", bg: "bg-[hsl(var(--sentinel-healthy))]/10" },
+            { label: "Audit Entries", value: totalAuditLogs, icon: FileKey, color: "text-[hsl(var(--sentinel-elevated))]", bg: "bg-[hsl(var(--sentinel-elevated))]/10" },
             { label: "Consent Rate", value: `${consentRate}%`, icon: CheckCircle2, color: "text-purple-500", bg: "bg-purple-500/10" },
           ].map((stat) => (
             <Card key={stat.label} className="glass-card">
@@ -206,13 +206,13 @@ export default function PrivacyDashboard() {
           <CardContent>
             <div className="flex flex-wrap items-center justify-center gap-2">
               {[
-                { label: "Raw Event", desc: "Git / Slack / Jira", color: "border-slate-500/30 bg-slate-500/5", text: "text-slate-500" },
+                { label: "Raw Event", desc: "Git / Slack / Jira", color: "border-slate-500/30 bg-slate-500/5", text: "text-muted-foreground/70" },
                 null,
-                { label: "HMAC Hash", desc: "email → user_hash", color: "border-amber-500/30 bg-amber-500/5", text: "text-amber-500" },
+                { label: "HMAC Hash", desc: "email → user_hash", color: "border-[hsl(var(--sentinel-elevated))]/30 bg-[hsl(var(--sentinel-elevated))]/5", text: "text-[hsl(var(--sentinel-elevated))]" },
                 null,
                 { label: "Vault A Store", desc: "Analytics schema", color: "border-blue-500/30 bg-blue-500/5", text: "text-blue-500" },
                 null,
-                { label: "Engine Process", desc: "Safety / Talent / Culture", color: "border-green-500/30 bg-green-500/5", text: "text-green-500" },
+                { label: "Engine Process", desc: "Safety / Talent / Culture", color: "border-[hsl(var(--sentinel-healthy))]/30 bg-[hsl(var(--sentinel-healthy))]/5", text: "text-[hsl(var(--sentinel-healthy))]" },
                 null,
                 { label: "Dashboard", desc: "Risk + insights", color: "border-purple-500/30 bg-purple-500/5", text: "text-purple-500" },
               ].map((step, i) =>
@@ -283,9 +283,9 @@ export default function PrivacyDashboard() {
                 <div key={control.title} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                   <div className={cn(
                     "p-2 rounded-lg shrink-0",
-                    control.active ? "bg-green-500/10" : "bg-muted"
+                    control.active ? "bg-[hsl(var(--sentinel-healthy))]/10" : "bg-muted"
                   )}>
-                    <control.icon className={cn("h-4 w-4", control.active ? "text-green-500" : "text-muted-foreground")} />
+                    <control.icon className={cn("h-4 w-4", control.active ? "" : "text-muted-foreground")} style={control.active ? {color: 'hsl(var(--sentinel-healthy))'} : undefined} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -342,7 +342,7 @@ export default function PrivacyDashboard() {
                 },
               ].map((guarantee) => (
                 <div key={guarantee.title} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{color: 'hsl(var(--sentinel-healthy))'}} />
                   <div>
                     <p className="text-sm font-medium">{guarantee.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{guarantee.desc}</p>

@@ -225,11 +225,11 @@ function SafetyContent() {
   const getRiskBg = (level: RiskLevel) => {
     switch (level) {
       case "CRITICAL":
-        return "bg-[hsl(var(--sentinel-critical))]/8 border-[hsl(var(--sentinel-critical))]/20"
+        return "bg-[hsl(var(--sentinel-critical))]/10 border-[hsl(var(--sentinel-critical))]/20"
       case "ELEVATED":
-        return "bg-[hsl(var(--sentinel-elevated))]/8 border-[hsl(var(--sentinel-elevated))]/20"
+        return "bg-[hsl(var(--sentinel-elevated))]/10 border-[hsl(var(--sentinel-elevated))]/20"
       case "LOW":
-        return "bg-[hsl(var(--sentinel-healthy))]/8 border-[hsl(var(--sentinel-healthy))]/20"
+        return "bg-[hsl(var(--sentinel-healthy))]/10 border-[hsl(var(--sentinel-healthy))]/20"
       default:
         return "bg-muted/50"
     }
@@ -247,215 +247,202 @@ function SafetyContent() {
   return (
     <div className="flex flex-1 flex-col">
       <ScrollArea className="flex-1">
-        <main className="flex flex-col gap-6 p-5 lg:p-8">
+        <main className="flex flex-col gap-8 p-6 lg:p-10">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/20 border border-red-500/30">
-                <Shield className="h-7 w-7 text-red-500" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[hsl(var(--sentinel-critical))]/15 border border-[hsl(var(--sentinel-critical))]/20">
+                <Shield className="h-6 w-6 text-[hsl(var(--sentinel-critical))]" />
               </div>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">Safety Valve</h2>
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">Safety Valve</h2>
                 <p className="text-sm text-muted-foreground">Burnout detection & risk analysis</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-2">
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
           </div>
 
-          {/* Hero Section - Team Risk Score */}
-          <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-700/50">
-            <div className="absolute inset-0 bg-red-500/5" />
+          {/* Hero Section */}
+          <div className="glass-card-elevated relative overflow-hidden rounded-2xl">
+            <div className="absolute inset-0 bg-[hsl(var(--sentinel-critical))]/3" />
             
-            <div className="relative grid gap-8 p-8 md:grid-cols-2 lg:gap-12">
+            <div className="relative grid gap-10 p-8 md:grid-cols-2 lg:gap-14">
               {/* Score Display */}
-              <div className="flex flex-col items-center justify-center gap-6">
+              <div className="flex flex-col items-center justify-center gap-5">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-red-500/20 blur-3xl" />
-                  <div className="relative flex h-48 w-48 items-center justify-center rounded-full border-4 border-slate-700 bg-slate-900/80 shadow-2xl">
+                  <div className="absolute inset-0 rounded-full bg-[hsl(var(--sentinel-critical))]/10 blur-3xl" />
+                  <div className="relative flex h-40 w-40 items-center justify-center rounded-full border border-border bg-background shadow-lg">
                     <div className="flex flex-col items-center">
-                      <span className="text-5xl font-bold tracking-tight text-white font-mono">
+                      <span className="text-4xl font-bold tracking-tight text-foreground font-mono tabular-nums">
                         {teamRiskScore}
                       </span>
-                      <span className="text-xs font-medium uppercase tracking-widest text-slate-400">
+                      <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground mt-1">
                         Risk Score
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {teamRiskScore >= 60 ? (
                     <>
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                      <span className="text-sm font-medium text-red-400">High team risk - Immediate action needed</span>
+                      <AlertCircle className="h-4 w-4 text-[hsl(var(--sentinel-critical))]" />
+                      <span className="text-sm font-medium text-[hsl(var(--sentinel-critical))]">High team risk — Immediate action needed</span>
                     </>
                   ) : teamRiskScore >= 30 ? (
                     <>
-                      <AlertTriangle className="h-5 w-5 text-orange-500" />
-                      <span className="text-sm font-medium text-orange-400">Elevated risk - Monitor closely</span>
+                      <AlertTriangle className="h-4 w-4 text-[hsl(var(--sentinel-elevated))]" />
+                      <span className="text-sm font-medium text-[hsl(var(--sentinel-elevated))]">Elevated risk — Monitor closely</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      <span className="text-sm font-medium text-green-400">Team health is good</span>
+                      <CheckCircle2 className="h-4 w-4 text-[hsl(var(--sentinel-healthy))]" />
+                      <span className="text-sm font-medium text-[hsl(var(--sentinel-healthy))]">Team health is good</span>
                     </>
                   )}
                 </div>
               </div>
 
               {/* Risk Distribution */}
-              <div className="flex flex-col justify-center gap-6">
-                <div className="flex flex-col gap-4">
-                  {/* Critical */}
-                  <div className="group relative overflow-hidden rounded-xl bg-red-950/30 p-4 border border-red-900/30">
-                    <div className="absolute right-0 top-0 h-full w-24 bg-red-500/10" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/20">
-                          <AlertTriangle className="h-5 w-5 text-red-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-red-400">Critical</p>
-                          <p className="text-xs text-red-500/60">Immediate attention required</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-red-400">{riskDistribution.critical}</p>
-                        <p className="text-xs text-red-500/60">{riskDistribution.criticalPct}%</p>
-                      </div>
+              <div className="flex flex-col justify-center gap-4">
+                {/* Critical */}
+                <div className="metric-card flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--sentinel-critical))]/10">
+                      <AlertTriangle className="h-4 w-4 text-[hsl(var(--sentinel-critical))]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[hsl(var(--sentinel-critical))]">Critical</p>
+                      <p className="text-[11px] text-muted-foreground">Immediate attention required</p>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold font-mono tabular-nums text-[hsl(var(--sentinel-critical))]">{riskDistribution.critical}</p>
+                    <p className="text-[10px] text-muted-foreground">{riskDistribution.criticalPct}%</p>
+                  </div>
+                </div>
 
-                  {/* Elevated */}
-                  <div className="group relative overflow-hidden rounded-xl bg-orange-950/30 p-4 border border-orange-900/30">
-                    <div className="absolute right-0 top-0 h-full w-24 bg-orange-500/10" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/20">
-                          <TrendingUp className="h-5 w-5 text-orange-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-orange-400">Elevated</p>
-                          <p className="text-xs text-orange-500/60">Monitoring closely</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-orange-400">{riskDistribution.elevated}</p>
-                        <p className="text-xs text-orange-500/60">{riskDistribution.elevatedPct}%</p>
-                      </div>
+                {/* Elevated */}
+                <div className="metric-card flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--sentinel-elevated))]/10">
+                      <TrendingUp className="h-4 w-4 text-[hsl(var(--sentinel-elevated))]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[hsl(var(--sentinel-elevated))]">Elevated</p>
+                      <p className="text-[11px] text-muted-foreground">Monitoring closely</p>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold font-mono tabular-nums text-[hsl(var(--sentinel-elevated))]">{riskDistribution.elevated}</p>
+                    <p className="text-[10px] text-muted-foreground">{riskDistribution.elevatedPct}%</p>
+                  </div>
+                </div>
 
-                  {/* Healthy */}
-                  <div className="group relative overflow-hidden rounded-xl bg-green-950/30 p-4 border border-green-900/30">
-                    <div className="absolute right-0 top-0 h-full w-24 bg-green-500/10" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/20">
-                          <Heart className="h-5 w-5 text-green-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-green-400">Healthy</p>
-                          <p className="text-xs text-green-500/60">Within normal range</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-400">{riskDistribution.healthy}</p>
-                        <p className="text-xs text-green-500/60">{riskDistribution.healthyPct}%</p>
-                      </div>
+                {/* Healthy */}
+                <div className="metric-card flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--sentinel-healthy))]/10">
+                      <Heart className="h-4 w-4 text-[hsl(var(--sentinel-healthy))]" />
                     </div>
+                    <div>
+                      <p className="text-sm font-medium text-[hsl(var(--sentinel-healthy))]">Healthy</p>
+                      <p className="text-[11px] text-muted-foreground">Within normal range</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold font-mono tabular-nums text-[hsl(var(--sentinel-healthy))]">{riskDistribution.healthy}</p>
+                    <p className="text-[10px] text-muted-foreground">{riskDistribution.healthyPct}%</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Burnout Prediction Section - PROMINENT */}
-          <div className="rounded-2xl border border-red-500/30 bg-red-950/20 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/20">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
+          {/* Burnout Prediction */}
+          <div className="glass-card rounded-2xl p-6 border border-[hsl(var(--sentinel-critical))]/15">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--sentinel-critical))]/10">
+                <AlertTriangle className="h-4 w-4 text-[hsl(var(--sentinel-critical))]" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Burnout Prediction</h3>
+                <h3 className="text-base font-semibold text-foreground">Burnout Prediction</h3>
                 <p className="text-xs text-muted-foreground">AI-powered risk forecasting based on behavioral patterns</p>
               </div>
             </div>
             
             <div className="grid gap-4 md:grid-cols-3">
-              {/* High Risk Predictions */}
-              <div className="rounded-xl bg-red-500/10 p-4 border border-red-500/20">
+              {/* High Risk */}
+              <div className="metric-card rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-red-400">High Risk (Next 2 Weeks)</span>
-                  <Badge variant="destructive" className="text-[10px]">
+                  <span className="text-xs font-medium text-[hsl(var(--sentinel-critical))]">High Risk (2 Weeks)</span>
+                  <Badge className="text-[10px] bg-[hsl(var(--sentinel-critical))]/15 text-[hsl(var(--sentinel-critical))] border-[hsl(var(--sentinel-critical))]/20">
                     {employees.filter(e => e.risk_level === "CRITICAL").length}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">
+                <p className="text-[11px] text-muted-foreground mb-3">
                   Employees showing signs of potential burnout
                 </p>
                 <div className="space-y-2">
                   {employees.filter(e => e.risk_level === "CRITICAL").slice(0, 3).map(emp => (
                     <div key={emp.user_hash} className="flex items-center gap-2 text-xs">
-                      <div className="h-2 w-2 rounded-full bg-red-500" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--sentinel-critical))]" />
                       <span className="text-foreground">{emp.name}</span>
                     </div>
                   ))}
                   {employees.filter(e => e.risk_level === "CRITICAL").length === 0 && (
-                    <p className="text-xs text-muted-foreground">No high-risk predictions</p>
+                    <p className="text-[11px] text-muted-foreground">No high-risk predictions</p>
                   )}
                 </div>
               </div>
 
               {/* At Risk */}
-              <div className="rounded-xl bg-orange-500/10 p-4 border border-orange-500/20">
+              <div className="metric-card rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-orange-400">At Risk (Next 4 Weeks)</span>
-                  <Badge className="text-[10px] bg-orange-500/20 text-orange-400 border-orange-500/30">
+                  <span className="text-xs font-medium text-[hsl(var(--sentinel-elevated))]">At Risk (4 Weeks)</span>
+                  <Badge className="text-[10px] bg-[hsl(var(--sentinel-elevated))]/15 text-[hsl(var(--sentinel-elevated))] border-[hsl(var(--sentinel-elevated))]/20">
                     {employees.filter(e => e.risk_level === "ELEVATED").length}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">
+                <p className="text-[11px] text-muted-foreground mb-3">
                   Employees who may become at-risk without intervention
                 </p>
                 <div className="space-y-2">
                   {employees.filter(e => e.risk_level === "ELEVATED").slice(0, 3).map(emp => (
                     <div key={emp.user_hash} className="flex items-center gap-2 text-xs">
-                      <div className="h-2 w-2 rounded-full bg-orange-500" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--sentinel-elevated))]" />
                       <span className="text-foreground">{emp.name}</span>
                     </div>
                   ))}
                   {employees.filter(e => e.risk_level === "ELEVATED").length === 0 && (
-                    <p className="text-xs text-muted-foreground">No at-risk predictions</p>
+                    <p className="text-[11px] text-muted-foreground">No at-risk predictions</p>
                   )}
                 </div>
               </div>
 
               {/* Prevention Tips */}
-              <div className="rounded-xl bg-green-500/10 p-4 border border-green-500/20">
+              <div className="metric-card rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-green-400">Prevention Actions</span>
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-xs font-medium text-[hsl(var(--sentinel-healthy))]">Prevention Actions</span>
+                  <CheckCircle2 className="h-4 w-4 text-[hsl(var(--sentinel-healthy))]" />
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">
+                <p className="text-[11px] text-muted-foreground mb-3">
                   Recommended interventions based on current patterns
                 </p>
-                <div className="space-y-2 text-xs">
+                <div className="space-y-2 text-[11px]">
                   <div className="flex items-start gap-2">
-                    <Zap className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
+                    <Zap className="h-3 w-3 text-[hsl(var(--sentinel-healthy))] mt-0.5 shrink-0" />
                     <span className="text-muted-foreground">Schedule mandatory breaks for high-velocity employees</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <MessageSquare className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
+                    <MessageSquare className="h-3 w-3 text-[hsl(var(--sentinel-healthy))] mt-0.5 shrink-0" />
                     <span className="text-muted-foreground">Initiate 1:1 check-ins with at-risk team members</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Heart className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
+                    <Heart className="h-3 w-3 text-[hsl(var(--sentinel-healthy))] mt-0.5 shrink-0" />
                     <span className="text-muted-foreground">Review workload distribution across the team</span>
                   </div>
                 </div>
@@ -470,12 +457,11 @@ function SafetyContent() {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Employee Cards */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Section Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-slate-400" />
-                  <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
-                  <Badge variant="secondary" className="ml-2">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-base font-semibold text-foreground">Team Members</h3>
+                  <Badge variant="secondary" className="ml-1 text-[10px]">
                     {filteredEmployees.length}
                   </Badge>
                 </div>
@@ -483,60 +469,59 @@ function SafetyContent() {
                   variant={showAlertsOnly ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowAlertsOnly(!showAlertsOnly)}
-                  className={showAlertsOnly ? "bg-red-500 hover:bg-red-600" : ""}
+                  className={showAlertsOnly ? "bg-[hsl(var(--sentinel-critical))] hover:bg-[hsl(var(--sentinel-critical))]/90 text-white" : ""}
                 >
                   {showAlertsOnly ? <Bell className="h-4 w-4 mr-2" /> : <BellOff className="h-4 w-4 mr-2" />}
                   {showAlertsOnly ? "Showing Alerts" : "Show Alerts Only"}
                 </Button>
               </div>
 
-              {/* Employee Grid */}
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2.5 sm:grid-cols-2">
                 {filteredEmployees.map((emp) => (
                   <button
                     key={emp.user_hash}
                     onClick={() => handleUserSelect(emp)}
-                    className={`relative flex items-center gap-4 rounded-xl border p-4 text-left transition-all hover:scale-[1.02] ${
+                    className={`relative flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all hover:shadow-sm ${
                       selectedUserHash === emp.user_hash
-                        ? `${getRiskBg(emp.risk_level)} border-current`
-                        : 'border-border bg-card hover:bg-accent'
+                        ? `${getRiskBg(emp.risk_level)} border-current shadow-sm`
+                        : 'border-border bg-card hover:bg-accent/50'
                     }`}
                   >
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-9 w-9">
                       <AvatarImage src="" alt={emp.name} />
-                      <AvatarFallback className={`text-xs ${getRiskBg(emp.risk_level)}`}>
+                      <AvatarFallback className={`text-[10px] ${getRiskBg(emp.risk_level)}`}>
                         {getInitials(emp.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold text-foreground truncate">{emp.name}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{emp.name}</p>
                         <Badge
                           variant="outline"
-                          className={`ml-2 text-[10px] ${getRiskBg(emp.risk_level)}`}
+                          className={`ml-2 text-[9px] px-1.5 py-0 ${getRiskBg(emp.risk_level)}`}
                         >
                           {emp.risk_level}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-muted-foreground">{emp.role}</span>
-                        <span className="text-xs text-muted-foreground">•</span>
-                        <span className={`text-xs font-mono font-medium ${getRiskColor(emp.risk_level)}`}>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-muted-foreground">{emp.role}</span>
+                        <span className="text-muted-foreground/30">·</span>
+                        <span className={`text-[11px] font-mono tabular-nums font-medium ${getRiskColor(emp.risk_level)}`}>
                           {emp.velocity.toFixed(1)} vel
                         </span>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Right Column - Selected Employee Details */}
+            {/* Right Column */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-slate-400" />
-                <h3 className="text-lg font-semibold text-foreground">Selected Employee</h3>
+                <Zap className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-base font-semibold text-foreground">Selected Employee</h3>
               </div>
 
               {currentEmployee ? (
@@ -545,100 +530,99 @@ function SafetyContent() {
                   <NudgeCard nudge={nudgeData ?? undefined} />
                 </div>
               ) : (
-                <Card className="border-dashed">
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                    <p className="text-sm text-muted-foreground">Select an employee to view details</p>
-                  </CardContent>
-                </Card>
+                <div className="glass-card rounded-xl flex flex-col items-center justify-center py-16">
+                  <Users className="h-10 w-10 text-muted-foreground/20 mb-3" />
+                  <p className="text-sm text-muted-foreground">Select an employee to view details</p>
+                </div>
               )}
             </div>
           </div>
 
-          {/* High Risk Alerts Section */}
+          {/* High Risk Alerts */}
           {highRiskEmployees.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <h3 className="text-lg font-semibold text-foreground">High Risk Alerts</h3>
-                <Badge variant="destructive" className="ml-2">
+                <AlertTriangle className="h-5 w-5 text-[hsl(var(--sentinel-critical))]" />
+                <h3 className="text-base font-semibold text-foreground">High Risk Alerts</h3>
+                <Badge className="ml-1 text-[10px] bg-[hsl(var(--sentinel-critical))]/15 text-[hsl(var(--sentinel-critical))] border-[hsl(var(--sentinel-critical))]/20">
                   {highRiskEmployees.length}
                 </Badge>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {highRiskEmployees.slice(0, 6).map((emp) => (
-                  <Card
+                  <button
                     key={emp.user_hash}
-                    className={`cursor-pointer transition-all hover:scale-[1.02] ${
-                      emp.risk_level === "CRITICAL"
-                        ? "border-red-500/50 bg-red-950/20"
-                        : "border-orange-500/50 bg-orange-950/20"
-                    }`}
                     onClick={() => handleUserSelect(emp)}
+                    className={`glass-card rounded-xl p-4 text-left transition-all hover:shadow-sm cursor-pointer ${
+                      emp.risk_level === "CRITICAL"
+                        ? "border border-[hsl(var(--sentinel-critical))]/25"
+                        : "border border-[hsl(var(--sentinel-elevated))]/25"
+                    }`}
                   >
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <Avatar className="h-10 w-10">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
                         <AvatarFallback className={
                           emp.risk_level === "CRITICAL" 
-                            ? "bg-red-500/20 text-red-400" 
-                            : "bg-orange-500/20 text-orange-400"
+                            ? "bg-[hsl(var(--sentinel-critical))]/15 text-[hsl(var(--sentinel-critical))]" 
+                            : "bg-[hsl(var(--sentinel-elevated))]/15 text-[hsl(var(--sentinel-elevated))]"
                         }>
                           {getInitials(emp.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground truncate">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{emp.role}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{emp.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{emp.role}</p>
                       </div>
                       <Badge
-                        variant={emp.risk_level === "CRITICAL" ? "destructive" : "secondary"}
-                        className={emp.risk_level === "ELEVATED" ? "bg-orange-500" : ""}
+                        className={
+                          emp.risk_level === "CRITICAL"
+                            ? "text-[9px] bg-[hsl(var(--sentinel-critical))]/15 text-[hsl(var(--sentinel-critical))] border-[hsl(var(--sentinel-critical))]/20"
+                            : "text-[9px] bg-[hsl(var(--sentinel-elevated))]/15 text-[hsl(var(--sentinel-elevated))] border-[hsl(var(--sentinel-elevated))]/20"
+                        }
                       >
                         {emp.risk_level}
                       </Badge>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Velocity Trends Chart */}
+          {/* Velocity Trends */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-slate-400" />
-                <h3 className="text-lg font-semibold text-foreground">Velocity Trends</h3>
+                <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-base font-semibold text-foreground">Velocity Trends</h3>
               </div>
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-red-500" />
-                  <span className="text-muted-foreground">Velocity</span>
+              <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[hsl(var(--sentinel-critical))]" />
+                  <span>Velocity</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-muted-foreground">Belongingness</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[hsl(var(--sentinel-healthy))]" />
+                  <span>Belongingness</span>
                 </div>
               </div>
             </div>
 
-            <Card className="overflow-hidden">
-              <CardContent className="p-6">
-                <VelocityChart history={chartData} title="" />
-              </CardContent>
-            </Card>
+            <div className="glass-card rounded-2xl p-6">
+              <VelocityChart history={chartData} title="" />
+            </div>
           </div>
 
-          {/* Footer Info */}
-          <div className="flex items-center justify-center gap-6 py-4 text-xs text-muted-foreground">
+          {/* Footer */}
+          <div className="flex items-center justify-center gap-6 py-3 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Info className="h-4 w-4" />
+              <Info className="h-3.5 w-3.5" />
               <span>Data refreshed every 5 minutes</span>
             </div>
-            <Separator orientation="vertical" className="h-4" />
+            <Separator orientation="vertical" className="h-3" />
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3.5 w-3.5" />
               <span>Last updated: {new Date().toLocaleTimeString()}</span>
             </div>
           </div>

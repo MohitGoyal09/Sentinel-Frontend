@@ -6,10 +6,10 @@ import { Activity, Shield, Cpu, RefreshCw } from "lucide-react"
 export function GlobalStatsCards() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-background border-teal-500/20 shadow-lg shadow-teal-500/5">
+      <Card className="bg-background shadow-lg" style={{borderColor: 'hsl(var(--sentinel-healthy) / 0.2)', boxShadow: '0 4px 6px -1px hsl(var(--sentinel-healthy) / 0.05)'}}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-teal-400">Total Org Health</CardTitle>
-          <Activity className="h-4 w-4 text-teal-400" />
+          <CardTitle className="text-sm font-medium" style={{color: 'hsl(var(--sentinel-healthy))'}}>Total Org Health</CardTitle>
+          <Activity className="h-4 w-4" style={{color: 'hsl(var(--sentinel-healthy))'}} />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-foreground">94%</div>
@@ -19,10 +19,10 @@ export function GlobalStatsCards() {
         </CardContent>
       </Card>
       
-      <Card className="bg-background border-purple-500/20 shadow-lg shadow-purple-500/5">
+      <Card className="bg-background shadow-lg" style={{borderColor: 'hsl(var(--primary) / 0.2)', boxShadow: '0 4px 6px -1px hsl(var(--primary) / 0.05)'}}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-purple-400">Active Engines</CardTitle>
-          <RefreshCw className="h-4 w-4 text-purple-400 animate-spin-slow" />
+          <CardTitle className="text-sm font-medium" style={{color: 'hsl(var(--primary))'}}>Active Engines</CardTitle>
+          <RefreshCw className="h-4 w-4 animate-spin-slow" style={{color: 'hsl(var(--primary))'}} />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-foreground">4/4</div>
@@ -32,10 +32,10 @@ export function GlobalStatsCards() {
         </CardContent>
       </Card>
       
-      <Card className="bg-background border-amber-500/20 shadow-lg shadow-amber-500/5">
+      <Card className="bg-background shadow-lg" style={{borderColor: 'hsl(var(--sentinel-elevated) / 0.2)', boxShadow: '0 4px 6px -1px hsl(var(--sentinel-elevated) / 0.05)'}}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-amber-400">System Load</CardTitle>
-          <Cpu className="h-4 w-4 text-amber-400" />
+          <CardTitle className="text-sm font-medium" style={{color: 'hsl(var(--sentinel-elevated))'}}>System Load</CardTitle>
+          <Cpu className="h-4 w-4" style={{color: 'hsl(var(--sentinel-elevated))'}} />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-foreground">Normal</div>
@@ -45,10 +45,10 @@ export function GlobalStatsCards() {
         </CardContent>
       </Card>
 
-      <Card className="bg-background border-blue-500/20 shadow-lg shadow-blue-500/5">
+      <Card className="bg-background shadow-lg" style={{borderColor: 'hsl(var(--sentinel-info) / 0.2)', boxShadow: '0 4px 6px -1px hsl(var(--sentinel-info) / 0.05)'}}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-blue-400">Active Users</CardTitle>
-          <Shield className="h-4 w-4 text-blue-400" />
+          <CardTitle className="text-sm font-medium" style={{color: 'hsl(var(--sentinel-info))'}}>Active Users</CardTitle>
+          <Shield className="h-4 w-4" style={{color: 'hsl(var(--sentinel-info))'}} />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-foreground">26</div>

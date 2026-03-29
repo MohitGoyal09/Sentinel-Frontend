@@ -9,15 +9,11 @@ import {
   Shield, 
   Eye, 
   EyeOff,
-  TrendingUp,
   AlertTriangle,
   CheckCircle2,
   User,
-  Network,
-  BarChart3,
-  ArrowRight
+  BarChart3
 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -112,6 +108,86 @@ interface MemberDetails {
   skills?: SkillsData
 }
 
+function getRiskBadgeClass(level: string) {
+  switch (level) {
+    case "CRITICAL": return "risk-badge-critical"
+    case "ELEVATED": return "risk-badge-elevated"
+    case "LOW": return "risk-badge-low"
+    default: return "bg-muted/50 text-muted-foreground border border-border/50"
+  }
+}
+
+function getHealthScoreColor(score: number) {
+  if (score >= 80) return "[color:hsl(var(--sentinel-healthy))]"
+  if (score >= 60) return "[color:hsl(var(--sentinel-elevated))]"
+  return "[color:hsl(var(--sentinel-critical))]"
+}
+
+function getBarColor(level: string) {
+  switch (level) {
+    case "CRITICAL": return "bg-[hsl(var(--sentinel-critical))]"
+    case "ELEVATED": return "bg-[hsl(var(--sentinel-elevated))]"
+    case "LOW": return "bg-[hsl(var(--sentinel-healthy))]"
+    default: return "bg-muted"
+  }
+}
+
+function getVelocityColor(velocity: number) {
+  if (velocity > 2.5) return "bg-[hsl(var(--sentinel-critical))]"
+  if (velocity > 1.5) return "bg-[hsl(var(--sentinel-elevated))]"
+  return "bg-[hsl(var(--sentinel-healthy))]"
+}
+
+function PseudonymDisplay({ member }: { member: TeamMember }) {
+  const display = member.pseudonym || `Member ${(member.real_hash || "").slice(0, 6)}`
+  const initial = display.charAt(0).toUpperCase()
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium ${
+        member.is_identified
+          ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]"
+          : "bg-muted text-muted-foreground"
+      }`}>
+        {member.is_identified ? <User className="h-4 w-4" /> : initial}
+      </div>
+      <div>
+        <p className="text-sm font-medium leading-tight">{display}</p>
+        <p className="text-xs text-muted-foreground">
+          {member.is_identified ? "Identified" : "Anonymized"}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function MetricCard({
+  label,
+  value,
+  sublabel,
+  icon: Icon,
+  accentColor,
+}: {
+  label: string
+  value: string | number
+  sublabel: string
+  icon: React.ComponentType<{ className?: string }>
+  accentColor?: string
+}) {
+  return (
+    <div className="metric-card">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+        <Icon className="h-4 w-4 text-muted-foreground/60" />
+      </div>
+      <div className={`text-2xl font-semibold font-mono tabular-nums tracking-tight ${accentColor || ""}`}>
+        {value}
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>
+    </div>
+  )
+}
+
 function TeamPageContent() {
   const router = useRouter()
   const { loading: authLoading } = useAuth()
@@ -122,8 +198,6 @@ function TeamPageContent() {
   const [memberDetails, setMemberDetails] = useState<MemberDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-
 
   const fetchTeamData = useCallback(async () => {
     if (authLoading) return
@@ -158,6 +232,7 @@ function TeamPageContent() {
         access: "denied",
         reason: "Employee has not consented to share detailed data"
       })
+      setSelectedMember(member)
       return
     }
 
@@ -170,35 +245,17 @@ function TeamPageContent() {
     }
   }
 
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case "CRITICAL": return "bg-red-100 text-red-800 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30"
-      case "ELEVATED": return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30"
-      case "LOW": return "bg-green-100 text-green-800 border-green-200 dark:bg-green-500/15 dark:text-green-400 dark:border-green-500/30"
-      default: return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-500/15 dark:text-gray-400 dark:border-gray-500/30"
-    }
-  }
-
-  const getHealthScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600"
-    if (score >= 60) return "text-amber-600"
-    return "text-red-600"
-  }
-
-
-
   if (loading && !teamData) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <Activity className="mx-auto h-8 w-8 animate-spin text-primary" />
-          <p className="mt-2 text-sm text-muted-foreground">Loading team dashboard...</p>
+          <Activity className="mx-auto h-8 w-8 animate-spin text-[hsl(var(--primary))]" />
+          <p className="mt-3 text-sm text-muted-foreground">Loading team dashboard...</p>
         </div>
       </div>
     )
   }
 
-  // Error State (only if no data at all and we have an error)
   if (error && !teamData) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -211,24 +268,21 @@ function TeamPageContent() {
     )
   }
 
-  // Valid Data Check
   if (!teamData) {
     return null
   }
 
-  // EMPTY STATE Handling
   if ((!teamData.metrics || teamData.team.member_count === 0) && !loading) {
-     // ... (Existing Empty State JSX - omitted for brevity, keeping same logic)
     return (
       <div className="flex flex-col bg-background min-h-screen">
-          <header className="border-b bg-card">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <header className="border-b border-border/60">
+          <div className="container mx-auto flex h-14 items-center justify-between px-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Users className="h-5 w-5 text-primary-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.12)]">
+                <Users className="h-4 w-4 text-[hsl(var(--primary))]" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold">Team Dashboard</h1>
+                <h1 className="text-sm font-semibold">Team Dashboard</h1>
                 <p className="text-xs text-muted-foreground">No team members</p>
               </div>
             </div>
@@ -238,39 +292,40 @@ function TeamPageContent() {
           </div>
         </header>
 
-        <main className="container mx-auto p-4 lg:p-8 flex items-center justify-center flex-1">
-          <Card className="max-w-lg w-full text-center p-8">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-              <Users className="h-8 w-8 text-muted-foreground" />
+        <main className="container mx-auto flex flex-1 items-center justify-center p-6">
+          <div className="glass-card rounded-xl p-10 max-w-md w-full text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Users className="h-7 w-7 text-muted-foreground" />
             </div>
-            <CardTitle className="text-xl mb-2">No Team Members Assigned</CardTitle>
-            <CardDescription className="mb-6">
-              You haven't been assigned any team members yet. Once employees are added to your team, their wellbeing insights will appear here.
-            </CardDescription>
+            <h2 className="text-lg font-semibold mb-2">No Team Members Assigned</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              You haven&apos;t been assigned any team members yet. Once employees are added to your team, their wellbeing insights will appear here.
+            </p>
             <Button onClick={() => router.push('/dashboard')}>Return to Dashboard</Button>
-          </Card>
+          </div>
         </main>
       </div>
     )
   }
 
-  // Derived check for count
   const totalCount = (teamData.team as any).total_count || teamData.metrics?.total_members || 0
 
   return (
-    <div className="flex flex-col bg-background">
+    <div className="flex flex-col bg-background min-h-screen">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <header className="border-b border-border/60">
+        <div className="container mx-auto flex h-14 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Users className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.12)]">
+              <Users className="h-4 w-4 text-[hsl(var(--primary))]" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold flex items-center gap-2">
+              <h1 className="text-sm font-semibold flex items-center gap-2">
                 {(teamData.team as any).title || "Team Dashboard"}
                 {(teamData.team as any).is_global_view && (
-                  <Badge variant="secondary" className="text-xs">Global Admin View</Badge>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    Global Admin View
+                  </Badge>
                 )}
               </h1>
               <p className="text-xs text-muted-foreground">
@@ -305,7 +360,7 @@ function TeamPageContent() {
         </div>
       </header>
 
-      <main className="container mx-auto p-4 lg:p-8">
+      <main className="container mx-auto px-6 py-6">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-4 w-4" />
@@ -314,103 +369,66 @@ function TeamPageContent() {
           </Alert>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6 h-9">
+            <TabsTrigger value="overview" className="text-xs px-3">Overview</TabsTrigger>
+            <TabsTrigger value="members" className="text-xs px-3">Members</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs px-3">Analytics</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="mt-0 space-y-5">
             {/* Key Metrics */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Size</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{teamData?.metrics?.total_members}</div>
-                  <p className="text-xs text-muted-foreground">{(teamData.team as any).is_global_view ? "Total employees" : "Direct reports"}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Health Score</CardTitle>
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl font-bold ${getHealthScoreColor(analytics?.health_score || 0)}`}>
-                    {analytics?.health_score || 0}/100
-                  </div>
-                  <p className="text-xs text-muted-foreground">Overall organization wellbeing</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">At Risk</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    {teamData?.metrics?.at_risk_count}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {teamData?.metrics?.critical_count} critical cases
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Consent Rate</CardTitle>
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {teamData?.consent_summary?.percentage}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Data sharing enabled
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 stagger-children">
+              <MetricCard
+                label="Team Size"
+                value={teamData?.metrics?.total_members ?? 0}
+                sublabel={(teamData.team as any).is_global_view ? "Total employees" : "Direct reports"}
+                icon={Users}
+              />
+              <MetricCard
+                label="Health Score"
+                value={`${analytics?.health_score || 0}/100`}
+                sublabel="Organization wellbeing"
+                icon={Activity}
+                accentColor={getHealthScoreColor(analytics?.health_score || 0)}
+              />
+              <MetricCard
+                label="At Risk"
+                value={teamData?.metrics?.at_risk_count ?? 0}
+                sublabel={`${teamData?.metrics?.critical_count ?? 0} critical cases`}
+                icon={AlertTriangle}
+                accentColor="[color:hsl(var(--sentinel-critical))]"
+              />
+              <MetricCard
+                label="Consent Rate"
+                value={`${teamData?.consent_summary?.percentage ?? 0}%`}
+                sublabel="Data sharing enabled"
+                icon={Shield}
+              />
             </div>
 
             {/* Risk Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Distribution</CardTitle>
-                <CardDescription>Current risk levels across the organization</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(teamData?.risk_distribution || {}).map(([level, count]) => (
-                    <div key={level} className="flex items-center gap-4">
-                      <div className="w-24 text-sm font-medium">{level}</div>
-                      <div className="flex-1">
-                        <div className="h-2 rounded-full bg-muted">
-                          <div
-                            className={`h-2 rounded-full ${
-                              level === "CRITICAL" ? "bg-red-500" :
-                              level === "ELEVATED" ? "bg-amber-500" :
-                              level === "LOW" ? "bg-green-500" : "bg-gray-500"
-                            }`}
-                            style={{
-                              width: `${(count / (teamData?.metrics?.total_members || 1)) * 100}%`
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div className="w-12 text-right text-sm">{count}</div>
+            <div className="glass-card rounded-xl p-5">
+              <h3 className="text-sm font-semibold mb-1">Risk Distribution</h3>
+              <p className="text-xs text-muted-foreground mb-4">Current risk levels across the organization</p>
+              <div className="space-y-3 stagger-children">
+                {Object.entries(teamData?.risk_distribution || {}).map(([level, count]) => (
+                  <div key={level} className="flex items-center gap-3">
+                    <span className={`w-20 text-xs font-medium rounded-md px-2 py-0.5 ${getRiskBadgeClass(level)}`}>
+                      {level}
+                    </span>
+                    <div className="flex-1 h-1.5 rounded-full bg-muted">
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-500 ${getBarColor(level)}`}
+                        style={{ width: `${(count / (teamData?.metrics?.total_members || 1)) * 100}%` }}
+                      />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <span className="w-8 text-right text-sm font-mono tabular-nums text-muted-foreground">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Team Health Narrative */}
             {teamData?.team?.manager_hash && (
@@ -420,239 +438,195 @@ function TeamPageContent() {
               />
             )}
 
-             <Alert>
-              <Shield className="h-4 w-4" />
-              <AlertTitle>Privacy-First Analytics</AlertTitle>
-              <AlertDescription>
-                Viewing anonymized data for whole organization. Individual identities are protected unless explicitly shared.
-              </AlertDescription>
-            </Alert>
+            <div className="glass-subtle rounded-lg p-3 flex items-start gap-3">
+              <Shield className="h-4 w-4 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-medium">Privacy-First Analytics</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Viewing anonymized data for the organization. Individual identities are protected unless explicitly shared.
+                </p>
+              </div>
+            </div>
           </TabsContent>
 
           {/* MEMBERS TAB */}
-          <TabsContent value="members" className="space-y-6">
-
+          <TabsContent value="members" className="mt-0 space-y-5">
             {selectedMember && memberDetails && (
-              <Card className="border-primary mb-6">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {selectedMember.is_identified ? (
-                          <>
-                            <User className="h-5 w-5" />
-                            {selectedMember.pseudonym} (Identified)
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="h-5 w-5" />
-                            {selectedMember.pseudonym} (Anonymous)
-                          </>
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        {memberDetails.access === "granted" 
-                          ? "Detailed metrics available" 
-                          : "Limited to anonymized summary"}
-                      </CardDescription>
+              <div className="glass-card-elevated rounded-xl p-5 border-l-2 border-l-[hsl(var(--primary))] mb-1">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      {selectedMember.is_identified ? (
+                        <User className="h-4 w-4 text-[hsl(var(--primary))]" />
+                      ) : (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <h3 className="text-sm font-semibold">{selectedMember.pseudonym}</h3>
+                      <span className={`text-[10px] rounded px-1.5 py-0.5 font-medium ${
+                        selectedMember.is_identified
+                          ? "bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {selectedMember.is_identified ? "Identified" : "Anonymous"}
+                      </span>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedMember(null)}>
-                      Close
-                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {memberDetails.access === "granted"
+                        ? "Detailed metrics available"
+                        : "Limited to anonymized summary"}
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {memberDetails.access === "granted" ? (
-                    <div className="space-y-6">
-                      {memberDetails.risk && (
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">Risk Level</p>
-                            <Badge className={getRiskColor(memberDetails.risk.current_level)}>
-                              {memberDetails.risk.current_level}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">Velocity</p>
-                            <p className="text-lg font-semibold">{memberDetails.risk.velocity?.toFixed(2) || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">Confidence</p>
-                            <p className="text-lg font-semibold">{(memberDetails.risk.confidence * 100).toFixed(0)}%</p>
-                          </div>
-                          {memberDetails.employee?.monitoring_paused && (
-                            <Alert className="col-span-3 border-amber-200 bg-amber-50">
-                              <AlertTriangle className="h-4 w-4 text-amber-600" />
-                              <AlertTitle className="text-amber-800">Monitoring Paused</AlertTitle>
-                              <AlertDescription className="text-amber-700">
-                                This employee has temporarily paused monitoring.
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </div>
-                      )}
-                      
-                      {memberDetails.skills && (
-                        <div className="mt-6">
-                          <Separator className="mb-4" />
-                          <h4 className="text-sm font-medium mb-4">Skills Profile</h4>
-                          <SkillsRadar data={memberDetails.skills} height={280} />
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 rounded-lg border bg-muted/50 p-4">
-                        <EyeOff className="h-8 w-8 text-muted-foreground" />
+                  <Button variant="ghost" size="sm" onClick={() => { setSelectedMember(null); setMemberDetails(null); }}>
+                    Close
+                  </Button>
+                </div>
+
+                {memberDetails.access === "granted" ? (
+                  <div className="space-y-4">
+                    {memberDetails.risk && (
+                      <div className="grid gap-3 sm:grid-cols-3">
                         <div>
-                          <p className="font-medium">Access Limited</p>
-                          <p className="text-sm text-muted-foreground">
-                            {memberDetails.reason}
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Risk Level</p>
+                          <span className={`inline-block text-xs font-medium rounded px-2 py-0.5 ${getRiskBadgeClass(memberDetails.risk.current_level)}`}>
+                            {memberDetails.risk.current_level}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Velocity</p>
+                          <p className="text-lg font-semibold font-mono tabular-nums">
+                            {memberDetails.risk.velocity?.toFixed(2) || "N/A"}
                           </p>
                         </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Confidence</p>
+                          <p className="text-lg font-semibold font-mono tabular-nums">
+                            {(memberDetails.risk.confidence * 100).toFixed(0)}%
+                          </p>
+                        </div>
+                        {memberDetails.employee?.monitoring_paused && (
+                          <div className="col-span-3 glass-card rounded-lg p-3 border-l-2 border-l-[hsl(var(--sentinel-elevated))]">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-3.5 w-3.5 text-[hsl(var(--sentinel-elevated))]" />
+                              <p className="text-xs font-medium text-[hsl(var(--sentinel-elevated))]">Monitoring Paused</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              This employee has temporarily paused monitoring.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        This employee has not consented to share detailed wellbeing data. 
+                    )}
+
+                    {memberDetails.skills && (
+                      <div>
+                        <Separator className="mb-4" />
+                        <h4 className="text-xs font-medium mb-3">Skills Profile</h4>
+                        <SkillsRadar data={memberDetails.skills} height={280} />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="glass-card rounded-lg p-4 flex items-start gap-3">
+                    <EyeOff className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Access Limited</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {memberDetails.reason}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
                         Consider having a conversation about how wellbeing support could help them.
                       </p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                )}
+              </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
               {teamData?.team?.members?.map((member) => (
-                <Card 
+                <button
                   key={member.pseudonym}
-                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                  className="glass-card rounded-xl p-4 text-left w-full cursor-pointer"
                   onClick={() => fetchMemberDetails(member)}
                 >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          member.is_identified ? "bg-primary text-primary-foreground" : "bg-muted"
-                        }`}>
-                          {member.is_identified ? (
-                            <User className="h-5 w-5" />
-                          ) : (
-                            <EyeOff className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">{member.pseudonym}</CardTitle>
-                          <CardDescription className="text-xs">
-                            {(member as any).department ? (member as any).department : (member.is_identified ? "Identified" : "Anonymous")}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <Badge className={getRiskColor(member.risk_level)}>
-                        {member.risk_level}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Consent</span>
-                      {member.has_consent ? (
-                        <span className="flex items-center gap-1 text-green-600">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Granted
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-amber-600">
-                          <EyeOff className="h-4 w-4" />
-                          Not granted
-                        </span>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="flex items-start justify-between mb-3">
+                    <PseudonymDisplay member={member} />
+                    <span className={`text-[10px] font-medium rounded px-1.5 py-0.5 ${getRiskBadgeClass(member.risk_level)}`}>
+                      {member.risk_level}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Consent</span>
+                    {member.has_consent ? (
+                      <span className="flex items-center gap-1 text-[hsl(var(--sentinel-healthy))]">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Granted
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[hsl(var(--sentinel-elevated))]">
+                        <EyeOff className="h-3.5 w-3.5" />
+                        Not granted
+                      </span>
+                    )}
+                  </div>
+                </button>
               ))}
             </div>
-
           </TabsContent>
 
           {/* ANALYTICS TAB */}
-          <TabsContent value="analytics" className="space-y-6">
+          <TabsContent value="analytics" className="mt-0 space-y-5">
             {analytics && (
               <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Team Velocity Trend
-                    </CardTitle>
-                    <CardDescription>
-                      Average work intensity over the last {analytics.period_days} days
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {analytics.trends.slice(-7).map((day, idx) => (
-                        <div key={idx} className="flex items-center gap-4">
-                          <div className="w-20 text-sm text-muted-foreground">
-                            {new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </div>
-                          <div className="flex-1">
-                            <div className="h-2 rounded-full bg-muted">
-                              <div
-                                className={`h-2 rounded-full ${
-                                  day.avg_velocity > 2.5 ? "bg-red-500" :
-                                  day.avg_velocity > 1.5 ? "bg-amber-500" : "bg-green-500"
-                                }`}
-                                style={{ width: `${Math.min(day.avg_velocity * 20, 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                          <div className="w-16 text-right text-sm font-medium">
-                            {day.avg_velocity.toFixed(2)}
-                          </div>
+                <div className="glass-card rounded-xl p-5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <BarChart3 className="h-4 w-4 text-[hsl(var(--primary))]" />
+                    <h3 className="text-sm font-semibold">Team Velocity Trend</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Average work intensity over the last {analytics.period_days} days
+                  </p>
+                  <div className="space-y-3 stagger-children">
+                    {analytics.trends.slice(-7).map((day, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <span className="w-16 text-xs text-muted-foreground font-mono tabular-nums">
+                          {new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                        <div className="flex-1 h-1.5 rounded-full bg-muted">
+                          <div
+                            className={`h-1.5 rounded-full transition-all duration-500 ${getVelocityColor(day.avg_velocity)}`}
+                            style={{ width: `${Math.min(day.avg_velocity * 20, 100)}%` }}
+                          />
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-                {/* ... (Metrics Grid - Same as before) */}
-                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Average Velocity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {analytics.current_metrics.avg_velocity.toFixed(2)}
+                        <span className="w-12 text-right text-xs font-mono tabular-nums text-muted-foreground">
+                          {day.avg_velocity.toFixed(2)}
+                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">Team work intensity</p>
-                    </CardContent>
-                  </Card>
+                    ))}
+                  </div>
+                </div>
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Healthy Members</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-green-600">
-                        {analytics.current_metrics.healthy_count}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Low risk level</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Need Attention</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-red-600">
-                        {analytics.current_metrics.critical_count + analytics.current_metrics.elevated_count}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {analytics.current_metrics.critical_count} critical, {analytics.current_metrics.elevated_count} elevated
-                      </p>
-                    </CardContent>
-                  </Card>
+                <div className="grid gap-3 sm:grid-cols-3 stagger-children">
+                  <MetricCard
+                    label="Avg Velocity"
+                    value={analytics.current_metrics.avg_velocity.toFixed(2)}
+                    sublabel="Team work intensity"
+                    icon={Activity}
+                  />
+                  <MetricCard
+                    label="Healthy"
+                    value={analytics.current_metrics.healthy_count}
+                    sublabel="Low risk level"
+                    icon={CheckCircle2}
+                    accentColor="[color:hsl(var(--sentinel-healthy))]"
+                  />
+                  <MetricCard
+                    label="Attention"
+                    value={analytics.current_metrics.critical_count + analytics.current_metrics.elevated_count}
+                    sublabel={`${analytics.current_metrics.critical_count} critical, ${analytics.current_metrics.elevated_count} elevated`}
+                    icon={AlertTriangle}
+                    accentColor="[color:hsl(var(--sentinel-critical))]"
+                  />
                 </div>
               </>
             )}

@@ -73,18 +73,27 @@ export function IndividualInsights({
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case "CRITICAL": return "text-red-500 border-red-500/50 bg-red-500/10"
-      case "ELEVATED": return "text-amber-500 border-amber-500/50 bg-amber-500/10"
-      case "LOW": return "text-emerald-500 border-emerald-500/50 bg-emerald-500/10"
+      case "CRITICAL": return "border-[hsl(var(--sentinel-critical))]/50 bg-[hsl(var(--sentinel-critical))]/10"
+      case "ELEVATED": return "border-[hsl(var(--sentinel-elevated))]/50 bg-[hsl(var(--sentinel-elevated))]/10"
+      case "LOW": return "border-[hsl(var(--sentinel-healthy))]/50 bg-[hsl(var(--sentinel-healthy))]/10"
       default: return "text-muted-foreground border-border bg-muted/10"
+    }
+  }
+
+  const getRiskColorStyle = (level: string): React.CSSProperties => {
+    switch (level) {
+      case "CRITICAL": return {color: 'hsl(var(--sentinel-critical))'}
+      case "ELEVATED": return {color: 'hsl(var(--sentinel-elevated))'}
+      case "LOW": return {color: 'hsl(var(--sentinel-healthy))'}
+      default: return {}
     }
   }
 
   const getInsightIcon = (type: string) => {
     switch (type) {
-      case "risk": return <AlertTriangle className="h-4 w-4 text-red-500" />
-      case "pattern": return <BrainCircuit className="h-4 w-4 text-purple-500" />
-      case "positive": return <Zap className="h-4 w-4 text-amber-500" />
+      case "risk": return <AlertTriangle className="h-4 w-4" style={{color: 'hsl(var(--sentinel-critical))'}} />
+      case "pattern": return <BrainCircuit className="h-4 w-4" style={{color: 'hsl(var(--primary))'}} />
+      case "positive": return <Zap className="h-4 w-4" style={{color: 'hsl(var(--sentinel-elevated))'}} />
       default: return <Activity className="h-4 w-4 text-muted-foreground" />
     }
   }
@@ -106,9 +115,9 @@ export function IndividualInsights({
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-3">
                 {displayName}
-                <Badge variant="outline" className={`${getRiskColor(employee.risk_level)}`}>
+                <Badge variant="outline" className={`${getRiskColor(employee.risk_level)}`} style={getRiskColorStyle(employee.risk_level)}>
                   {employee.risk_level || "UNKNOWN"} RISK
                 </Badge>
               </h2>
@@ -140,7 +149,7 @@ export function IndividualInsights({
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(employee.confidence * 100).toFixed(0)}%</div>
+            <div className="text-xl font-semibold">{(employee.confidence * 100).toFixed(0)}%</div>
             <Progress value={employee.confidence * 100} className={`h-2 mt-2 bg-muted [&>div]:${employee.confidence > 0.7 ? "bg-red-500" : "bg-primary"}`} />
             <p className="text-xs text-muted-foreground mt-2">+12% from last week</p>
           </CardContent>
@@ -152,10 +161,10 @@ export function IndividualInsights({
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{employee.velocity?.toFixed(1) || "0.0"}</div>
+            <div className="text-xl font-semibold">{employee.velocity?.toFixed(1) || "0.0"}</div>
              <p className="text-xs text-muted-foreground mt-1">Story points / week</p>
              <div className="h-2 w-full bg-muted rounded-full mt-2 overflow-hidden">
-                <div className="h-full bg-emerald-500 w-[75%]" />
+                 <div className="h-full w-[75%]" style={{backgroundColor: 'hsl(var(--sentinel-healthy))'}} />
              </div>
           </CardContent>
         </Card>
@@ -166,9 +175,9 @@ export function IndividualInsights({
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42.5h</div>
+            <div className="text-xl font-semibold">42.5h</div>
             <p className="text-xs text-muted-foreground mt-1">Avg. active time</p>
-            <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+            <p className="text-xs mt-1 flex items-center gap-1" style={{color: 'hsl(var(--sentinel-elevated))'}}>
                <AlertCircle className="h-3 w-3" /> Overtime detected
             </p>
           </CardContent>
@@ -180,10 +189,10 @@ export function IndividualInsights({
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(employee.belongingness_score * 100).toFixed(0)}/100</div>
+            <div className="text-xl font-semibold">{(employee.belongingness_score * 100).toFixed(0)}/100</div>
              <p className="text-xs text-muted-foreground mt-1">Sentiment analysis score</p>
              <div className="h-2 w-full bg-muted rounded-full mt-2 overflow-hidden">
-                <div className="h-full bg-blue-500 w-[65%]" />
+                 <div className="h-full w-[65%]" style={{backgroundColor: 'hsl(var(--sentinel-info))'}} />
              </div>
           </CardContent>
         </Card>
@@ -209,18 +218,18 @@ export function IndividualInsights({
              </div>
              
              <div className="grid grid-cols-3 gap-4 mt-6">
-                <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
-                   <p className="text-xs font-semibold text-red-400 uppercase tracking-widest mb-1">Risk Factor 1</p>
+                 <div className="p-4 rounded-lg border" style={{backgroundColor: 'hsl(var(--sentinel-critical) / 0.05)', borderColor: 'hsl(var(--sentinel-critical) / 0.2)'}}>
+                   <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{color: 'hsl(var(--sentinel-critical))'}}>Risk Factor 1</p>
                    <p className="text-sm font-medium text-foreground">Late Night Activity</p>
                    <p className="text-xs text-muted-foreground mt-1">Consistently active between 11 PM - 2 AM.</p>
                 </div>
-                 <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                   <p className="text-xs font-semibold text-amber-400 uppercase tracking-widest mb-1">Risk Factor 2</p>
+                 <div className="p-4 rounded-lg border" style={{backgroundColor: 'hsl(var(--sentinel-elevated) / 0.05)', borderColor: 'hsl(var(--sentinel-elevated) / 0.2)'}}>
+                   <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{color: 'hsl(var(--sentinel-elevated))'}}>Risk Factor 2</p>
                    <p className="text-sm font-medium text-foreground">Weekend Commitments</p>
                    <p className="text-xs text-muted-foreground mt-1">Code pushes on 3 consecutive weekends.</p>
                 </div>
-                 <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
-                   <p className="text-xs font-semibold text-blue-400 uppercase tracking-widest mb-1">Positive Signal</p>
+                 <div className="p-4 rounded-lg border" style={{backgroundColor: 'hsl(var(--sentinel-info) / 0.05)', borderColor: 'hsl(var(--sentinel-info) / 0.2)'}}>
+                   <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{color: 'hsl(var(--sentinel-info))'}}>Positive Signal</p>
                    <p className="text-sm font-medium text-foreground">Strong Collaboration</p>
                    <p className="text-xs text-muted-foreground mt-1">High participation in code reviews.</p>
                 </div>
@@ -232,7 +241,7 @@ export function IndividualInsights({
         <Card className="col-span-1 border-border bg-card/50 backdrop-blur-sm flex flex-col">
            <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                 <BrainCircuit className="h-5 w-5 text-purple-500" />
+                  <BrainCircuit className="h-5 w-5" style={{color: 'hsl(var(--primary))'}} />
                  AI Insights
               </CardTitle>
               <CardDescription>Generated observations based on telemetry.</CardDescription>

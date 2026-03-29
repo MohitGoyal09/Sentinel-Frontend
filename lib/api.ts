@@ -445,6 +445,76 @@ export async function chatWithSentinel(request: ChatRequest): Promise<ChatRespon
   return handleResponse(api.post<ChatResponse>(`/ai/chat`, request));
 }
 
+/**
+ * Stream a chat response from the AI endpoint via SSE
+ * POST /ai/chat/stream
+ */
+export async function chatWithSentinelStream(
+  request: ChatRequest,
+  onToken: (token: string) => void,
+  onDone: (metadata: {
+    role: string;
+    conversation_id?: string;
+    context_used: ChatContextUsed;
+    generated_at: string;
+  }) => void,
+  onError?: (error: Error) => void,
+): Promise<void> {
+  const authHeaders = await getAuthHeaders();
+  const url = `${API_BASE_URL}/ai/chat/stream/`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Stream request failed: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No readable stream");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "token") {
+              onToken(data.content);
+            } else if (data.type === "done") {
+              onDone(data);
+            }
+          } catch {
+            // Skip malformed JSON lines
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if (onError) {
+      onError(error instanceof Error ? error : new Error(String(error)));
+    } else {
+      throw error;
+    }
+  }
+}
+
 // ============================================
 // AI Narrative Reports API
 // ============================================

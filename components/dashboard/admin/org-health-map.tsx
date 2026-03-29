@@ -16,27 +16,27 @@ const DEPARTMENTS = [
 
 export function OrgHealthMap() {
   return (
-    <Card className="col-span-1 lg:col-span-2 bg-background border-white/10">
+    <Card className="col-span-1 lg:col-span-2 bg-background border-border">
       <CardHeader>
         <CardTitle className="flex justify-between items-center text-foreground">
           <span>Organization Map</span>
-          <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-400">
+          <Badge variant="outline" className="text-xs" style={{borderColor: 'hsl(var(--sentinel-elevated) / 0.5)', color: 'hsl(var(--sentinel-elevated))'}}>
             Heatmap View
           </Badge>
         </CardTitle>
-        <CardDescription className="text-gray-400">
+        <CardDescription className="text-muted-foreground">
           Visualize risk distribution across departments.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="relative w-full h-[300px] flex items-center justify-center p-4">
           {/* Central Hub */}
-          <div className="absolute w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center z-10 shadow-xl shadow-black/50">
-            <span className="font-bold text-slate-300">HQ</span>
+          <div className="absolute w-24 h-24 rounded-full bg-card border-2 border-border flex items-center justify-center z-10 shadow-xl shadow-black/50">
+            <span className="font-bold text-foreground">HQ</span>
           </div>
 
           {/* Department Orbits */}
-          <div className="absolute w-[80%] h-[80%] border border-dashed border-slate-700 rounded-full animate-pulse-slow opacity-30"></div>
+          <div className="absolute w-[80%] h-[80%] border border-dashed border-border rounded-full animate-pulse-slow opacity-30"></div>
           
           {/* Department Nodes */}
           <div className="grid grid-cols-4 gap-8 w-full h-full relative z-20">
@@ -63,7 +63,7 @@ export function OrgHealthMap() {
                    >
                       <span className="font-bold text-xs text-foreground">{dept.members}</span>
                    </div>
-                   <div className="mt-2 text-xs font-medium text-slate-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10">
+                    <div className="mt-2 text-xs font-medium text-foreground bg-black/60 px-2 py-0.5 rounded-full border border-border">
                       {dept.name}
                    </div>
                 </div>

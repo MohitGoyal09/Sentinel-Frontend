@@ -397,70 +397,53 @@ function DashboardContent() {
       />
 
       <ScrollArea className="flex-1">
-        <main className="flex flex-col gap-6 p-5 lg:p-8 pb-20">
-          
-          {/* ==================== 1. DEFAULT DASHBOARD (Employee View) ==================== */}
+        <main className="flex flex-col gap-6 p-6 lg:p-10 pb-20">
+
+          {/* ==================== 1. DEFAULT DASHBOARD ==================== */}
           {activeView === "dashboard" && (
-            <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">My Dashboard</h2>
-                  <p className="text-sm text-slate-400">Personal wellness insights and team activity feed.</p>
+                  <h2 className="text-xl font-semibold tracking-tight text-foreground mb-1">My Dashboard</h2>
+                  <p className="text-sm text-muted-foreground">Personal wellness insights and activity feed.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                   <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="gap-2 border-white/10 hover:bg-white/5">
-                      <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                      {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                   <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="gap-2 rounded-lg">
+                      <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      {isRefreshing ? 'Refreshing' : 'Refresh'}
                    </Button>
                    <AskSentinelWidget />
                 </div>
               </div>
 
-              {/* AI Executive Summary */}
               <ExecutiveSummary metrics={mappedTeamMetrics} />
-
-              {/* Top Stats Cards */}
               <StatCards metrics={mappedTeamMetrics} />
 
-              {/* Main Grid Layout */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                
-                {/* Left Column - Risk & Metrics */}
-                <Card className="col-span-4 bg-card/50 border-border backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                       <Shield className="h-5 w-5 text-emerald-400" />
-                       Risk Factors
-                    </CardTitle>
-                    <CardDescription>Real-time analysis of work patterns and wellbeing indicators.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RiskAssessment employee={currentEmployee as any} />
-                  </CardContent>
-                </Card>
+                <div className="col-span-4 glass-card rounded-xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                     <Shield className="h-4.5 w-4.5 text-primary" />
+                     <h3 className="text-sm font-semibold text-foreground">Risk Factors</h3>
+                  </div>
+                  <RiskAssessment employee={currentEmployee as any} />
+                </div>
 
-                {/* Right Column - Activity Feed */}
-                <Card className="col-span-3 bg-card/50 border-border backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                       <Activity className="h-5 w-5 text-blue-400" />
-                       Recent Activity
-                    </CardTitle>
-                    <CardDescription>Latest system events and alerts.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[400px]">
+                <div className="col-span-3 glass-card rounded-xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                     <Activity className="h-4.5 w-4.5 text-primary" />
+                     <h3 className="text-sm font-semibold text-foreground">Recent Activity</h3>
+                  </div>
+                  <div className="h-[400px]">
                     <ActivityFeed events={mappedEvents} />
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
 
-              {/* Burnout Prediction */}
               <BurnoutPrediction riskData={riskData ?? undefined} history={history} />
 
-              {/* Secondary Grid */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                 <div className="col-span-4 bg-[#111827]/50 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold mb-4 text-foreground">Velocity Trend</h3>
+                 <div className="col-span-4 metric-card">
+                    <h3 className="text-sm font-semibold mb-4 text-foreground">Velocity Trend</h3>
                     <div className="h-[300px]">
                        <VelocityChart history={history} />
                     </div>
@@ -472,39 +455,32 @@ function DashboardContent() {
             </div>
           )}
 
-          {/* ==================== 2. ADMIN DASHBOARD (Global Command Center) ==================== */}
+          {/* ==================== 2. ADMIN DASHBOARD ==================== */}
           {activeView === "admin" && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-               <div className="flex items-center justify-between border-b border-white/10 pb-6">
+            <div className="space-y-8 animate-in fade-in duration-300">
+               <div className="flex items-center justify-between border-b border-border pb-6">
                   <div>
-                     <h1 className="text-3xl font-bold tracking-tight text-white mb-2 bg-gradient-to-r from-amber-200 to-yellow-500 bg-clip-text text-transparent">
-                        Platform Command Center
+                     <h1 className="text-xl font-semibold tracking-tight text-foreground mb-1">
+                        Admin Dashboard
                      </h1>
-                     <p className="text-slate-400">Global system status, organizational health, and security controls.</p>
+                     <p className="text-sm text-muted-foreground">System health, organizational overview, and controls.</p>
                   </div>
                   <div className="flex gap-3">
-                     <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/10 px-3 py-1">
-                        <Shield className="w-3 h-3 mr-2" /> Admin Access
+                     <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1">
+                        <Shield className="w-3 h-3 mr-2" /> Admin
                      </Badge>
-                     <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold">
-                        System Report
-                     </Button>
                   </div>
                </div>
 
                <GlobalStatsCards />
 
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="col-span-2 space-y-8">
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="col-span-2 space-y-6">
                      <OrgHealthMap />
-                     <Card className="bg-card/80 border-border">
-                        <CardHeader>
-                           <CardTitle className="text-foreground">Recent System Events</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                           <AuditLogFeed />
-                        </CardContent>
-                     </Card>
+                     <div className="glass-card rounded-xl p-5">
+                        <h3 className="text-sm font-semibold text-foreground mb-4">Recent Events</h3>
+                        <AuditLogFeed />
+                     </div>
                   </div>
                   <div className="col-span-1">
                      <AdminQuickActions />
@@ -513,105 +489,82 @@ function DashboardContent() {
             </div>
           )}
 
-          {/* ==================== 3. MANAGER DASHBOARD (Team Overview) ==================== */}
+          {/* ==================== 3. MANAGER DASHBOARD ==================== */}
           {activeView === "team" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-6 animate-in fade-in duration-300">
                <div className="flex items-center justify-between">
                   <div>
-                     <h1 className="text-2xl font-bold text-foreground">Team Dashboard</h1>
-                     <p className="text-slate-400 text-sm">Manage team velocity, burnout risk, and wellbeing.</p>
+                     <h1 className="text-xl font-semibold text-foreground">Team Dashboard</h1>
+                     <p className="text-sm text-muted-foreground">Team velocity, burnout risk, and wellbeing.</p>
                   </div>
                   <div className="flex items-center gap-3">
-                     <AnonymityToggle 
-                        isAnonymized={isAnonymized} 
-                        onToggle={() => setIsAnonymized(!isAnonymized)} 
+                     <AnonymityToggle
+                        isAnonymized={isAnonymized}
+                        onToggle={() => setIsAnonymized(!isAnonymized)}
                      />
                   </div>
                </div>
 
-               {/* Team Stats Row */}
                <TeamStatsRow metrics={mappedTeamMetrics} />
 
-               {/* Main Content Grid */}
                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Team Members List */}
                   <div className="lg:col-span-2">
-                     <Card className="bg-card border-border/50">
-                        <CardHeader>
-                           <CardTitle className="text-lg flex items-center gap-2">
-                              <Users className="h-5 w-5 text-blue-400" />
-                              Team Members ({employees.length})
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                           <TeamGrid employees={employees} isAnonymized={isAnonymized} />
-                        </CardContent>
-                     </Card>
+                     <div className="glass-card rounded-xl p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                           <Users className="h-4.5 w-4.5 text-primary" />
+                           <h3 className="text-sm font-semibold text-foreground">Team Members ({employees.length})</h3>
+                        </div>
+                        <TeamGrid employees={employees} isAnonymized={isAnonymized} />
+                     </div>
                   </div>
 
-                  {/* Right Sidebar */}
                   <div className="space-y-6">
-                     {/* Team Health Summary */}
-                     <Card className="bg-card border-border/50">
-                        <CardHeader>
-                           <CardTitle className="text-lg flex items-center gap-2">
-                              <Shield className="h-5 w-5 text-green-400" />
-                              Team Health
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
+                     <div className="metric-card">
+                        <h3 className="text-sm font-semibold mb-4 text-foreground">Team Health</h3>
+                        <div className="space-y-3">
                            <div className="flex justify-between items-center">
-                              <span className="text-slate-400">Healthy</span>
-                              <span className="text-green-400 font-medium">{mappedTeamMetrics.healthy_count}</span>
+                              <span className="text-xs text-muted-foreground">Healthy</span>
+                              <span className="text-xs font-medium font-mono" style={{color: 'hsl(var(--sentinel-healthy))'}}>{mappedTeamMetrics.healthy_count}</span>
                            </div>
                            <div className="flex justify-between items-center">
-                              <span className="text-slate-400">Elevated</span>
-                              <span className="text-amber-400 font-medium">{mappedTeamMetrics.elevated_count}</span>
+                              <span className="text-xs text-muted-foreground">Elevated</span>
+                              <span className="text-xs font-medium font-mono" style={{color: 'hsl(var(--sentinel-elevated))'}}>{mappedTeamMetrics.elevated_count}</span>
                            </div>
                            <div className="flex justify-between items-center">
-                              <span className="text-slate-400">Critical</span>
-                              <span className="text-red-400 font-medium">{mappedTeamMetrics.critical_count}</span>
+                              <span className="text-xs text-muted-foreground">Critical</span>
+                              <span className="text-xs font-medium font-mono" style={{color: 'hsl(var(--sentinel-critical))'}}>{mappedTeamMetrics.critical_count}</span>
                            </div>
-                           <div className="pt-2 border-t border-white/5">
+                           <div className="pt-2 border-t border-border/50">
                               <div className="flex justify-between items-center">
-                                 <span className="text-slate-400">Avg Velocity</span>
-                                 <span className="text-foreground font-mono">{mappedTeamMetrics.avg_velocity.toFixed(1)}</span>
+                                 <span className="text-xs text-muted-foreground">Avg Velocity</span>
+                                 <span className="text-xs font-mono tabular-nums text-foreground">{mappedTeamMetrics.avg_velocity.toFixed(1)}</span>
                               </div>
                            </div>
-                        </CardContent>
-                     </Card>
+                        </div>
+                     </div>
 
-                     {/* Quick Actions */}
-                     <Card className="bg-card border-border/50">
-                        <CardHeader>
-                           <CardTitle className="text-lg flex items-center gap-2">
-                              <Zap className="h-5 w-5 text-purple-400" />
-                              Quick Actions
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                           <Button variant="outline" className="w-full justify-start border-white/10 text-slate-300 hover:bg-white/5">
-                              <Users className="h-4 w-4 mr-2" />
-                              View Team Roster
+                     <div className="metric-card">
+                        <h3 className="text-sm font-semibold mb-3 text-foreground">Quick Actions</h3>
+                        <div className="space-y-2">
+                           <Button variant="outline" size="sm" className="w-full justify-start rounded-lg text-xs">
+                              <Users className="h-3.5 w-3.5 mr-2" /> Team Roster
                            </Button>
-                           <Button variant="outline" className="w-full justify-start border-white/10 text-slate-300 hover:bg-white/5">
-                              <BarChart3 className="h-4 w-4 mr-2" />
-                              View Analytics
+                           <Button variant="outline" size="sm" className="w-full justify-start rounded-lg text-xs">
+                              <BarChart3 className="h-3.5 w-3.5 mr-2" /> Analytics
                            </Button>
-                           <Button variant="outline" className="w-full justify-start border-white/10 text-slate-300 hover:bg-white/5">
-                              <Sparkles className="h-4 w-4 mr-2" />
-                              Get AI Insights
+                           <Button variant="outline" size="sm" className="w-full justify-start rounded-lg text-xs">
+                              <Sparkles className="h-3.5 w-3.5 mr-2" /> AI Insights
                            </Button>
-                        </CardContent>
-                     </Card>
+                        </div>
+                     </div>
                   </div>
                </div>
             </div>
           )}
 
-          {/* ==================== 4. INDIVIDUAL INSIGHTS (Drill-down) ==================== */}
+          {/* ==================== 4. INDIVIDUAL INSIGHTS ==================== */}
           {activeView === "employee-detail" && (
-             <IndividualInsights 
+             <IndividualInsights
                 employee={detailEmployee}
                 isAnonymized={isAnonymized}
                 onBack={() => router.push("/dashboard?view=team")}
@@ -622,101 +575,104 @@ function DashboardContent() {
           {/* ==================== 5. OTHER VIEWS ==================== */}
           {activeView === "simulation" && <SimulationPanel />}
           {activeView === "network" && <NetworkGraph nodes={networkNodes} edges={networkEdges} />}
-          {/* Safety Valve Engine View */}
+
           {activeView === "safety-valve" && (
-            <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Safety Valve Engine</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-1">Safety Valve Engine</h2>
                 <p className="text-sm text-muted-foreground">IPT-based burnout detection using behavioral signals.</p>
               </div>
               <div className="grid gap-6 md:grid-cols-2">
-                <Card className="bg-card/50 border-border backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-emerald-400" />Risk Assessment</CardTitle>
-                  </CardHeader>
-                  <CardContent><RiskAssessment employee={currentEmployee as any} /></CardContent>
-                </Card>
+                <div className="glass-card rounded-xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-4.5 w-4.5" style={{color: 'hsl(var(--sentinel-healthy))'}} />
+                    <h3 className="text-sm font-semibold text-foreground">Risk Assessment</h3>
+                  </div>
+                  <RiskAssessment employee={currentEmployee as any} />
+                </div>
                 <BurnoutPrediction riskData={riskData ?? undefined} history={history} />
               </div>
-              <Card className="bg-card/50 border-border backdrop-blur-sm">
-                <CardHeader><CardTitle>How Safety Valve Works</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { title: "1. Signal Collection", desc: "Monitors commit times, Slack patterns, Jira velocity, and calendar load to detect behavioral shifts." },
-                      { title: "2. IPT Risk Scoring", desc: "Applies Joiner's Interpersonal-Psychological Theory — measuring thwarted belongingness and perceived burdensomeness." },
-                      { title: "3. Proactive Nudges", desc: "Generates manager nudges: schedule 1:1, adjust workload, or recognize contributions." },
-                    ].map((s) => (
-                      <div key={s.title} className="p-4 rounded-lg bg-muted/30 border border-border">
-                        <h4 className="text-sm font-semibold text-foreground mb-1">{s.title}</h4>
-                        <p className="text-xs text-muted-foreground">{s.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="metric-card">
+                <h3 className="text-sm font-semibold mb-4">How Safety Valve Works</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { title: "Signal Collection", desc: "Monitors commit times, Slack patterns, Jira velocity, and calendar load." },
+                    { title: "IPT Risk Scoring", desc: "Measures thwarted belongingness and perceived burdensomeness via velocity regression." },
+                    { title: "Proactive Nudges", desc: "Generates supportive messages — employees first, managers second." },
+                  ].map((s) => (
+                    <div key={s.title} className="p-3 rounded-lg bg-muted/20 border border-border/50">
+                      <h4 className="text-xs font-semibold text-foreground mb-1">{s.title}</h4>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{s.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
-          {/* Talent Scout Engine View */}
+
           {activeView === "talent-scout" && (
-            <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Talent Scout Engine</h2>
-                <p className="text-sm text-muted-foreground">Graph-based analysis to discover hidden gems and high-impact contributors.</p>
+                <h2 className="text-xl font-semibold text-foreground mb-1">Talent Scout Engine</h2>
+                <p className="text-sm text-muted-foreground">Network analysis to discover hidden gems.</p>
               </div>
               <div className="grid gap-6 md:grid-cols-3">
                 {[
-                  { label: "Betweenness Centrality", desc: "How often a person bridges disconnected groups.", tag: "Identifies: Connectors", color: "text-purple-400" },
-                  { label: "Eigenvector Centrality", desc: "Connected to other important people with outsized influence.", tag: "Identifies: Influencers", color: "text-blue-400" },
-                  { label: "Unblocking Score", desc: "Frequency of unblocking teammates via PR reviews and pair sessions.", tag: "Identifies: Hidden Gems", color: "text-emerald-400" },
+                  { label: "Betweenness Centrality", desc: "How often a person bridges disconnected groups.", tag: "Connectors" },
+                  { label: "Eigenvector Centrality", desc: "Connected to other important people with outsized influence.", tag: "Influencers" },
+                  { label: "Unblocking Score", desc: "Frequency of unblocking teammates via PR reviews.", tag: "Hidden Gems" },
                 ].map((m) => (
-                  <Card key={m.label} className="bg-card/50 border-border">
-                    <CardHeader><CardTitle className={`text-sm ${m.color}`}>{m.label}</CardTitle></CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground mb-2">{m.desc}</p>
-                      <Badge variant="outline" className="text-xs">{m.tag}</Badge>
-                    </CardContent>
-                  </Card>
+                  <div key={m.label} className="metric-card">
+                    <h3 className="text-xs font-semibold text-foreground mb-1">{m.label}</h3>
+                    <p className="text-[11px] text-muted-foreground mb-2">{m.desc}</p>
+                    <Badge variant="outline" className="text-[10px]">{m.tag}</Badge>
+                  </div>
                 ))}
               </div>
-              <Card className="bg-card/50 border-border">
-                <CardHeader><CardTitle>Team Network Graph</CardTitle><CardDescription>Collaboration patterns across the team.</CardDescription></CardHeader>
-                <CardContent className="h-[400px]"><NetworkGraph nodes={networkNodes} edges={networkEdges} /></CardContent>
-              </Card>
+              <div className="glass-card rounded-xl p-5">
+                <h3 className="text-sm font-semibold mb-1">Team Network Graph</h3>
+                <p className="text-xs text-muted-foreground mb-4">Collaboration patterns across the team.</p>
+                <div className="h-[400px]">
+                  <NetworkGraph nodes={networkNodes} edges={networkEdges} />
+                </div>
+              </div>
             </div>
           )}
-          {/* Culture Thermometer Engine View */}
+
           {activeView === "culture" && (
-            <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Culture Thermometer</h2>
-                <p className="text-sm text-muted-foreground">SIR epidemiological model applied to organizational sentiment.</p>
+                <h2 className="text-xl font-semibold text-foreground mb-1">Culture Thermometer</h2>
+                <p className="text-sm text-muted-foreground">SIR epidemiological model for organizational sentiment.</p>
               </div>
               <div className="grid gap-6 md:grid-cols-2">
-                <Card className="bg-card/50 border-border">
-                  <CardHeader><CardTitle>SIR Contagion Forecast</CardTitle><CardDescription>Susceptible → Infected → Recovered dynamics.</CardDescription></CardHeader>
-                  <CardContent className="h-[300px]"><ForecastChart data={forecastData} isLoading={forecastLoading} /></CardContent>
-                </Card>
-                <Card className="bg-card/50 border-border">
-                  <CardHeader><CardTitle>Model Components</CardTitle></CardHeader>
-                  <CardContent className="space-y-3">
+                <div className="glass-card rounded-xl p-5">
+                  <h3 className="text-sm font-semibold mb-1">SIR Contagion Forecast</h3>
+                  <p className="text-xs text-muted-foreground mb-4">Susceptible → Infected → Recovered dynamics.</p>
+                  <div className="h-[300px]">
+                    <ForecastChart data={forecastData} isLoading={forecastLoading} />
+                  </div>
+                </div>
+                <div className="metric-card">
+                  <h3 className="text-sm font-semibold mb-4">Model Components</h3>
+                  <div className="space-y-3">
                     {[
-                      { letter: "S", label: "Susceptible", desc: "Members at risk of morale decline based on proximity to negative patterns.", color: "blue" },
-                      { letter: "I", label: "Infected", desc: "Members showing negative shifts — reduced communication, late-night work.", color: "red" },
-                      { letter: "R", label: "Recovered", desc: "Members who improved after intervention — validates nudges work.", color: "emerald" },
+                      { letter: "S", label: "Susceptible", desc: "Members at risk based on proximity to negative patterns." },
+                      { letter: "I", label: "Infected", desc: "Members showing negative shifts in communication patterns." },
+                      { letter: "R", label: "Recovered", desc: "Members who improved after intervention." },
                     ].map((s) => (
                       <div key={s.letter} className="flex items-start gap-3">
-                        <div className={`h-8 w-8 rounded-full bg-${s.color}-500/10 flex items-center justify-center shrink-0`}>
-                          <span className={`text-xs font-bold text-${s.color}-400`}>{s.letter}</span>
+                        <div className="h-7 w-7 rounded-full bg-primary/8 flex items-center justify-center shrink-0">
+                          <span className="text-[10px] font-bold text-primary">{s.letter}</span>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{s.label}</p>
-                          <p className="text-xs text-muted-foreground">{s.desc}</p>
+                          <p className="text-xs font-medium text-foreground">{s.label}</p>
+                          <p className="text-[11px] text-muted-foreground">{s.desc}</p>
                         </div>
                       </div>
                     ))}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -730,7 +686,7 @@ function DashboardContent() {
 function ViewHeader({ title, description }: { title: string; description: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
+      <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   )

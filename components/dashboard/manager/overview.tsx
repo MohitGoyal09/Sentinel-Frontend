@@ -44,7 +44,7 @@ export function ManagerOverview({
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in zoom-in-95 duration-500">
       
       {/* 1. Skill Graph & Network (Combined View) */}
-      <Card className="col-span-2 lg:col-span-2 row-span-2 border-primary/20 bg-[#0f172a]">
+      <Card className="col-span-2 lg:col-span-2 row-span-2 border-primary/20 bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
            <div className="space-y-1">
               <CardTitle className="text-lg flex items-center gap-2 text-primary">
@@ -68,7 +68,7 @@ export function ManagerOverview({
            />
            
            {/* Overlay Skill Radar (Mini) - Absolute positioned for composite view */}
-           <div className="absolute bottom-4 right-4 w-[200px] h-[200px] bg-[#0f172a]/80 backdrop-blur-md rounded-lg border border-border p-2 pointer-events-none">
+           <div className="absolute bottom-4 right-4 w-[200px] h-[200px] bg-card/80 backdrop-blur-md rounded-lg border border-border p-2 pointer-events-none">
               <div className="text-[10px] text-center text-muted-foreground font-mono mb-1">AGGREGATE SKILLS</div>
               <SkillsRadar data={skillsData} height={160} />
            </div>
@@ -76,7 +76,7 @@ export function ManagerOverview({
       </Card>
 
       {/* 2. Burnout Prediction */}
-      <Card className="border-pink-500/20 bg-[#0f172a]">
+      <Card className="border-pink-500/20 bg-card">
         <CardHeader className="pb-2">
            <CardTitle className="text-sm font-medium flex items-center gap-2 text-pink-400">
               <TrendingUp className="h-4 w-4" /> Burnout Forecast (30 Days)
@@ -88,7 +88,7 @@ export function ManagerOverview({
       </Card>
 
       {/* 3. Actionable AI Insights */}
-      <Card className="border-purple-500/20 bg-[#0f172a]">
+      <Card className="border-purple-500/20 bg-card">
         <CardHeader className="pb-2">
            <CardTitle className="text-sm font-medium flex items-center gap-2 text-purple-400">
               <Sparkles className="h-4 w-4" /> Sentinel Recommendation
@@ -108,14 +108,14 @@ export function ManagerOverview({
       
       {/* 4. Team Velocity & Centrality Summary */}
       <div className="grid grid-cols-2 gap-4">
-         <Card className="border-blue-500/20 bg-[#0f172a]">
+         <Card className="border-blue-500/20 bg-card">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                <Zap className="h-6 w-6 text-blue-400 mb-2" />
                <div className="text-2xl font-bold font-mono text-blue-200">{stats.velocity.toFixed(1)}</div>
                <div className="text-[10px] text-blue-400/70 uppercase tracking-wider">Avg Velocity</div>
             </CardContent>
          </Card>
-         <Card className="border-emerald-500/20 bg-[#0f172a]">
+         <Card className="border-emerald-500/20 bg-card">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                <Target className="h-6 w-6 text-emerald-400 mb-2" />
                <div className="text-2xl font-bold font-mono text-emerald-200">{(stats.total - stats.critical)}/{stats.total}</div>

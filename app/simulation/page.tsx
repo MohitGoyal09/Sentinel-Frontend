@@ -45,7 +45,7 @@ export default function SimulationPage() {
             <div className="p-2 rounded-lg bg-purple-500/10">
               <Cpu className="h-6 w-6 text-purple-500" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Simulation Mode</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Simulation Mode</h1>
           </div>
           <p className="text-muted-foreground ml-12">
             Digital Twin Generator & Event Injection. Use this environment to test engine responses.

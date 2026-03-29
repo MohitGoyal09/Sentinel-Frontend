@@ -66,10 +66,10 @@ export function ExecutiveSummary({ metrics, className }: ExecutiveSummaryProps) 
   if (!metrics) return null
 
   const typeConfig = {
-    critical: { icon: AlertTriangle, border: "border-red-500/20", bg: "bg-red-500/5", text: "text-red-400", iconColor: "text-red-400" },
-    warning: { icon: AlertTriangle, border: "border-amber-500/20", bg: "bg-amber-500/5", text: "text-amber-400", iconColor: "text-amber-400" },
-    positive: { icon: Heart, border: "border-emerald-500/20", bg: "bg-emerald-500/5", text: "text-emerald-400", iconColor: "text-emerald-400" },
-    info: { icon: TrendingUp, border: "border-blue-500/20", bg: "bg-blue-500/5", text: "text-blue-400", iconColor: "text-blue-400" },
+    critical: { icon: AlertTriangle, border: "border-red-500/20", bg: "bg-red-500/5", text: "", iconColor: "", iconStyle: {color: 'hsl(var(--sentinel-critical))'}, textStyle: {color: 'hsl(var(--sentinel-critical))'} },
+    warning: { icon: AlertTriangle, border: "border-amber-500/20", bg: "bg-amber-500/5", text: "", iconColor: "", iconStyle: {color: 'hsl(var(--sentinel-elevated))'}, textStyle: {color: 'hsl(var(--sentinel-elevated))'} },
+    positive: { icon: Heart, border: "border-emerald-500/20", bg: "bg-emerald-500/5", text: "", iconColor: "", iconStyle: {color: 'hsl(var(--sentinel-healthy))'}, textStyle: {color: 'hsl(var(--sentinel-healthy))'} },
+    info: { icon: TrendingUp, border: "border-blue-500/20", bg: "bg-blue-500/5", text: "", iconColor: "", iconStyle: {color: 'hsl(var(--sentinel-info))'}, textStyle: {color: 'hsl(var(--sentinel-info))'} },
   }
 
   const primary = insights[0]
@@ -85,20 +85,20 @@ export function ExecutiveSummary({ metrics, className }: ExecutiveSummaryProps) 
     )}>
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
-          <Sparkles className="h-4 w-4 text-emerald-400" />
+          <Sparkles className="h-4 w-4" style={{color: 'hsl(var(--sentinel-healthy))'}} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-white">AI Executive Summary</h3>
-            <span className="text-[10px] text-slate-500">Auto-generated</span>
+            <span className="text-[10px] text-muted-foreground/70">Auto-generated</span>
           </div>
           <div className="space-y-1.5">
             {insights.map((insight, i) => {
               const Icon = typeConfig[insight.type].icon
               return (
                 <div key={i} className="flex items-start gap-2">
-                  <Icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", typeConfig[insight.type].iconColor)} />
-                  <p className={cn("text-xs leading-relaxed", typeConfig[insight.type].text)}>
+                  <Icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", typeConfig[insight.type].iconColor)} style={typeConfig[insight.type].iconStyle} />
+                  <p className={cn("text-xs leading-relaxed", typeConfig[insight.type].text)} style={typeConfig[insight.type].textStyle}>
                     {insight.text}
                   </p>
                 </div>

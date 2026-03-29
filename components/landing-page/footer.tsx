@@ -8,7 +8,7 @@ export function LandingFooter() {
     Product: [
       { label: "Features", href: "#features" },
       { label: "How it Works", href: "#how-it-works" },
-      { label: "Pricing", href: "#pricing" },
+      { label: "Pricing", href: "#" },
       { label: "Integrations", href: "#" },
     ],
     Company: [
@@ -33,84 +33,57 @@ export function LandingFooter() {
   ]
 
   return (
-    <footer className="bg-slate-950 border-t border-slate-800 pt-16 pb-8">
+    <footer className="border-t border-border/50 py-12">
       <div className="container px-6 mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="h-9 w-9 rounded-lg bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-                <Shield className="h-5 w-5 text-green-500" />
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center gap-2 mb-3">
+              <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 text-primary" />
               </div>
-              <span className="text-xl font-bold text-white">Sentinel</span>
+              <span className="text-sm font-semibold text-foreground">Sentinel</span>
             </Link>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-xs">
-              AI-powered employee insights platform. Predict burnout, uncover hidden talent, and build healthier teams.
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4 max-w-[200px]">
+              Privacy-first burnout detection and talent discovery.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
-                  className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-green-400 hover:border-green-500/50 transition-all"
+                  className="w-7 h-7 rounded-md bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-150"
                   aria-label={social.label}
                 >
-                  <social.icon className="h-4 w-4" />
+                  <social.icon className="h-3.5 w-3.5" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Product Links */}
-          <div>
-            <h3 className="text-white font-semibold mb-4">Product</h3>
-            <ul className="space-y-3">
-              {footerLinks.Product.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-slate-400 hover:text-white transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company Links */}
-          <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
-            <ul className="space-y-3">
-              {footerLinks.Company.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-slate-400 hover:text-white transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div>
-            <h3 className="text-white font-semibold mb-4">Legal</h3>
-            <ul className="space-y-3">
-              {footerLinks.Legal.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-slate-400 hover:text-white transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {Object.entries(footerLinks).map(([title, links]) => (
+            <div key={title}>
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">{title}</h3>
+              <ul className="space-y-2">
+                {links.map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-150">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} Sentinel. All rights reserved.
+        <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p className="text-[11px] text-muted-foreground/60">
+            &copy; {new Date().getFullYear()} Sentinel. All rights reserved.
           </p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-green-500 font-medium">All systems operational</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] text-emerald-500/80 font-medium">All systems operational</span>
           </div>
         </div>
       </div>

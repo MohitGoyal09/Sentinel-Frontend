@@ -83,7 +83,7 @@ function MetricCard({
         </div>
       </div>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground font-mono">
+        <p className="text-xl font-semibold tabular-nums tracking-tight text-foreground font-mono">
           {isNumeric ? (
             <span ref={countRef} />
           ) : (

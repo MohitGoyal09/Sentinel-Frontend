@@ -223,73 +223,71 @@ function TalentContent() {
 
   const getPipelineColor = (level: string) => {
     switch (level) {
-      case "Executive": return "bg-violet-600"
-      case "Senior Lead": return "bg-purple-500"
-      case "Team Lead": return "bg-fuchsia-500"
-      case "High Potential": return "bg-indigo-400"
-      default: return "bg-slate-500"
+      case "Executive": return "bg-[hsl(var(--primary))]"
+      case "Senior Lead": return "bg-[hsl(var(--primary))]/80"
+      case "Team Lead": return "bg-[hsl(var(--primary))]/60"
+      case "High Potential": return "bg-[hsl(var(--primary))]/40"
+      default: return "bg-muted-foreground/30"
     }
   }
 
   return (
     <div className="flex flex-1 flex-col">
       <ScrollArea className="flex-1">
-        <main className="flex flex-col gap-6 p-5 lg:p-8">
+        <main className="flex flex-col gap-8 p-6 lg:p-10">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/20 border border-violet-500/30">
-                <Sparkles className="h-7 w-7 text-violet-500" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[hsl(var(--sentinel-gem))]/15 border border-[hsl(var(--sentinel-gem))]/20">
+                <Sparkles className="h-6 w-6 text-[hsl(var(--sentinel-gem))]" />
               </div>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">Talent Scout</h2>
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">Talent Scout</h2>
                 <p className="text-sm text-muted-foreground">Hidden talent & skill discovery</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-2 border-violet-500/30 text-violet-600 hover:bg-violet-50 hover:border-violet-500/50">
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
           </div>
 
-          {/* Hero Section - Talent Score */}
-          <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-700/50">
-            <div className="absolute inset-0 bg-violet-500/5" />
+          {/* Hero Section */}
+          <div className="glass-card-elevated relative overflow-hidden rounded-2xl">
+            <div className="absolute inset-0 bg-[hsl(var(--sentinel-gem))]/3" />
             
-            <div className="relative grid gap-8 p-8 md:grid-cols-2 lg:gap-12">
+            <div className="relative grid gap-10 p-8 md:grid-cols-2 lg:gap-14">
               {/* Score Display */}
-              <div className="flex flex-col items-center justify-center gap-6">
+              <div className="flex flex-col items-center justify-center gap-5">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-violet-500/20 blur-3xl" />
-                  <div className="relative flex h-48 w-48 items-center justify-center rounded-full border-4 border-slate-700 bg-slate-900/80 shadow-2xl">
+                  <div className="absolute inset-0 rounded-full bg-[hsl(var(--sentinel-gem))]/10 blur-3xl" />
+                  <div className="relative flex h-40 w-40 items-center justify-center rounded-full border border-border bg-background shadow-lg">
                     <div className="flex flex-col items-center">
-                      <span className="text-5xl font-bold tracking-tight text-white font-mono">
+                      <span className="text-4xl font-bold tracking-tight text-foreground font-mono tabular-nums">
                         {hiddenGems.length}
                       </span>
-                      <span className="text-xs font-medium uppercase tracking-widest text-slate-400">
+                      <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground mt-1">
                         Hidden Gems
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {hiddenGems.length >= 3 ? (
                     <>
-                      <Gem className="h-5 w-5 text-violet-400" />
-                      <span className="text-sm font-medium text-violet-400">Exceptional talent density</span>
+                      <Gem className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
+                      <span className="text-sm font-medium text-[hsl(var(--sentinel-gem))]">Exceptional talent density</span>
                     </>
                   ) : hiddenGems.length >= 1 ? (
                     <>
-                      <Sparkles className="h-5 w-5 text-purple-400" />
-                      <span className="text-sm font-medium text-purple-400">Solid talent pipeline</span>
+                      <Sparkles className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
+                      <span className="text-sm font-medium text-[hsl(var(--sentinel-gem))]">Solid talent pipeline</span>
                     </>
                   ) : (
                     <>
-                      <Star className="h-5 w-5 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-400">Building talent pipeline</span>
+                      <Star className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">Building talent pipeline</span>
                     </>
                   )}
                 </div>
@@ -297,69 +295,58 @@ function TalentContent() {
 
               {/* Quick Stats */}
               <div className="flex flex-col justify-center gap-4">
-                <div className="flex flex-col gap-4">
-                  {/* Top Performers */}
-                  <div className="group relative overflow-hidden rounded-xl bg-violet-950/30 p-4 border border-violet-900/30">
-                    <div className="absolute right-0 top-0 h-full w-24 bg-violet-500/10" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/20">
-                          <Award className="h-5 w-5 text-violet-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-violet-400">Top Performers</p>
-                          <p className="text-xs text-violet-500/60">Highest network impact</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-violet-400">{topPerformers.length}</p>
-                        <p className="text-xs text-violet-500/60">Identified</p>
-                      </div>
+                {/* Top Performers */}
+                <div className="metric-card flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--sentinel-gem))]/10">
+                      <Award className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Top Performers</p>
+                      <p className="text-[11px] text-muted-foreground">Highest network impact</p>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold font-mono tabular-nums text-[hsl(var(--sentinel-gem))]">{topPerformers.length}</p>
+                    <p className="text-[10px] text-muted-foreground">Identified</p>
+                  </div>
+                </div>
 
-                  {/* Leadership Pipeline */}
-                  <div className="group relative overflow-hidden rounded-xl bg-purple-950/30 p-4 border border-purple-900/30">
-                    <div className="absolute right-0 top-0 h-full w-24 bg-purple-500/10" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20">
-                          <Crown className="h-5 w-5 text-purple-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-purple-400">Leadership Pipeline</p>
-                          <p className="text-xs text-purple-500/60">Ready for promotion</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-purple-400">{leadershipPipeline[0].count + leadershipPipeline[1].count + leadershipPipeline[2].count}</p>
-                        <p className="text-xs text-purple-500/60">In pipeline</p>
-                      </div>
+                {/* Leadership Pipeline */}
+                <div className="metric-card flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--primary))]/10">
+                      <Crown className="h-4 w-4 text-[hsl(var(--primary))]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Leadership Pipeline</p>
+                      <p className="text-[11px] text-muted-foreground">Ready for promotion</p>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold font-mono tabular-nums text-[hsl(var(--primary))]">{leadershipPipeline[0].count + leadershipPipeline[1].count + leadershipPipeline[2].count}</p>
+                    <p className="text-[10px] text-muted-foreground">In pipeline</p>
+                  </div>
+                </div>
 
-                  {/* Team Skill Avg */}
-                  <div className="group relative overflow-hidden rounded-xl bg-fuchsia-950/30 p-4 border border-fuchsia-900/30">
-                    <div className="absolute right-0 top-0 h-full w-24 bg-fuchsia-500/10" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fuchsia-500/20">
-                          <TrendingUp className="h-5 w-5 text-fuchsia-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-fuchsia-400">Avg Skill Score</p>
-                          <p className="text-xs text-fuchsia-500/60">Team average</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-fuchsia-400">
-                          {skillsDistribution?.length > 0 
-                            ? Math.round(skillsDistribution.reduce((a, b) => a + (b.average || 0), 0) / skillsDistribution.length)
-                            : 0}
-                        </p>
-                        <p className="text-xs text-fuchsia-500/60">/ 100</p>
-                      </div>
+                {/* Team Skill Avg */}
+                <div className="metric-card flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--primary))]/10">
+                      <TrendingUp className="h-4 w-4 text-[hsl(var(--primary))]" />
                     </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Avg Skill Score</p>
+                      <p className="text-[11px] text-muted-foreground">Team average</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold font-mono tabular-nums text-[hsl(var(--primary))]">
+                      {skillsDistribution?.length > 0 
+                        ? Math.round(skillsDistribution.reduce((a, b) => a + (b.average || 0), 0) / skillsDistribution.length)
+                        : 0}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">/ 100</p>
                   </div>
                 </div>
               </div>
@@ -367,40 +354,23 @@ function TalentContent() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center gap-2 border-b border-border">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "overview"
-                  ? "border-violet-500 text-violet-600"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("pipeline")}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "pipeline"
-                  ? "border-violet-500 text-violet-600"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Crown className="h-4 w-4" />
-              Leadership Pipeline
-            </button>
-            <button
-              onClick={() => setActiveTab("gems")}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "gems"
-                  ? "border-violet-500 text-violet-600"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Gem className="h-4 w-4" />
-              Hidden Gems
-            </button>
+          <div className="flex items-center gap-1 border-b border-border">
+            {(["overview", "pipeline", "gems"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab
+                    ? "border-[hsl(var(--primary))] text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab === "overview" && <BarChart3 className="h-4 w-4" />}
+                {tab === "pipeline" && <Crown className="h-4 w-4" />}
+                {tab === "gems" && <Gem className="h-4 w-4" />}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
           </div>
 
           {/* Overview Tab */}
@@ -408,10 +378,10 @@ function TalentContent() {
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Skills Radar */}
               <div className="lg:col-span-2">
-                <Card className="h-full border-violet-200/50 bg-violet-50/50">
+                <div className="glass-card rounded-2xl h-full">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="h-5 w-5 text-violet-500" />
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Target className="h-5 w-5 text-[hsl(var(--primary))]" />
                       Skills Overview
                     </CardTitle>
                     <CardDescription>Team skill distribution analysis</CardDescription>
@@ -420,33 +390,25 @@ function TalentContent() {
                     {selectedProfile ? (
                       <div className="grid gap-6 md:grid-cols-2">
                         <div>
-<SkillsRadar 
-                             data={selectedProfile.skills} 
-                             height={320}
-                           />
+                          <SkillsRadar 
+                            data={selectedProfile.skills} 
+                            height={320}
+                          />
                         </div>
                         <div className="space-y-4">
                           <div>
                             <h4 className="text-sm font-medium mb-3">Network Metrics</h4>
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Betweenness Centrality</span>
-                                <Badge variant="outline" className="bg-violet-50 border-violet-200">
-                                  {(selectedProfile.betweenness * 100).toFixed(1)}%
-                                </Badge>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Eigenvector Score</span>
-                                <Badge variant="outline" className="bg-violet-50 border-violet-200">
-                                  {(selectedProfile.eigenvector * 100).toFixed(1)}%
-                                </Badge>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Unblocking Count</span>
-                                <Badge variant="outline" className="bg-violet-50 border-violet-200">
-                                  {selectedProfile.unblocking}
-                                </Badge>
-                              </div>
+                            <div className="space-y-2.5">
+                              {[
+                                { label: "Betweenness Centrality", value: `${(selectedProfile.betweenness * 100).toFixed(1)}%` },
+                                { label: "Eigenvector Score", value: `${(selectedProfile.eigenvector * 100).toFixed(1)}%` },
+                                { label: "Unblocking Count", value: String(selectedProfile.unblocking) }
+                              ].map((item) => (
+                                <div key={item.label} className="flex items-center justify-between">
+                                  <span className="text-sm text-muted-foreground">{item.label}</span>
+                                  <span className="text-sm font-medium font-mono tabular-nums text-[hsl(var(--primary))]">{item.value}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                           <Separator />
@@ -456,16 +418,16 @@ function TalentContent() {
                               <div>
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-xs text-muted-foreground">Potential</span>
-                                  <span className="text-xs font-medium">{selectedProfile.potential_score.toFixed(0)}%</span>
+                                  <span className="text-xs font-medium font-mono tabular-nums">{selectedProfile.potential_score.toFixed(0)}%</span>
                                 </div>
-                                <Progress value={selectedProfile.potential_score} className="h-2" />
+                                <Progress value={selectedProfile.potential_score} className="h-1.5" />
                               </div>
                               <div>
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-xs text-muted-foreground">Visibility</span>
-                                  <span className="text-xs font-medium">{selectedProfile.visibility_score.toFixed(0)}%</span>
+                                  <span className="text-xs font-medium font-mono tabular-nums">{selectedProfile.visibility_score.toFixed(0)}%</span>
                                 </div>
-                                <Progress value={selectedProfile.visibility_score} className="h-2" />
+                                <Progress value={selectedProfile.visibility_score} className="h-1.5" />
                               </div>
                             </div>
                           </div>
@@ -477,15 +439,15 @@ function TalentContent() {
                       </div>
                     )}
                   </CardContent>
-                </Card>
+                </div>
               </div>
 
               {/* Employee Selector */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-slate-400" />
-                  <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
-                  <Badge variant="secondary" className="ml-2">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-base font-semibold text-foreground">Team Members</h3>
+                  <Badge variant="secondary" className="ml-1 text-[10px]">
                     {talentProfiles.length}
                   </Badge>
                 </div>
@@ -495,30 +457,28 @@ function TalentContent() {
                     <button
                       key={profile.user_hash}
                       onClick={() => setSelectedUserHash(profile.user_hash)}
-                      className={`w-full relative flex items-center gap-4 rounded-xl border p-3 text-left transition-all hover:scale-[1.02] ${
+                      className={`w-full relative flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:shadow-sm ${
                         selectedUserHash === profile.user_hash
-                          ? "bg-violet-50 border-violet-300"
-                          : "border-border bg-card hover:bg-accent"
+                          ? "bg-[hsl(var(--primary))]/5 border-[hsl(var(--primary))]/25 shadow-sm"
+                          : "border-border bg-card hover:bg-accent/50"
                       }`}
                     >
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-9 w-9">
                         <AvatarImage src="" alt={profile.name} />
-                        <AvatarFallback className={profile.is_hidden_gem ? "bg-violet-100 text-violet-600" : "bg-muted"}>
+                        <AvatarFallback className={profile.is_hidden_gem ? "bg-[hsl(var(--sentinel-gem))]/15 text-[hsl(var(--sentinel-gem))]" : "bg-muted"}>
                           {getInitials(profile.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="font-semibold text-foreground truncate">{profile.name}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{profile.name}</p>
                           {profile.is_hidden_gem && (
-                            <Gem className="h-3 w-3 text-violet-500 shrink-0" />
+                            <Gem className="h-3 w-3 text-[hsl(var(--sentinel-gem))] shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-muted-foreground">{profile.role}</span>
-                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{profile.role}</p>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -526,43 +486,35 @@ function TalentContent() {
             </div>
           )}
 
-          {/* Skills Distribution Section */}
+          {/* Skills Distribution */}
           {activeTab === "overview" && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-violet-500" />
-                <h3 className="text-lg font-semibold text-foreground">Skills Distribution Across Team</h3>
+                <TrendingUp className="h-5 w-5 text-[hsl(var(--primary))]" />
+                <h3 className="text-base font-semibold text-foreground">Skills Distribution Across Team</h3>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {skillsDistribution.map((skill) => (
-                  <Card key={skill.skill} className="border-violet-100/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium">{skill.skill}</span>
-                        <Badge variant="secondary" className="bg-violet-100 text-violet-700">
-                          Avg: {skill.average}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 text-xs text-muted-foreground">Max</div>
-                          <Progress value={skill.max} className="h-2 flex-1" />
-                          <span className="text-xs font-medium w-8 text-right">{skill.max}</span>
+                  <div key={skill.skill} className="metric-card rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium">{skill.skill}</span>
+                      <span className="text-[11px] font-mono tabular-nums text-[hsl(var(--primary))]">Avg: {skill.average}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {[
+                        { label: "Max", value: skill.max },
+                        { label: "Avg", value: skill.average },
+                        { label: "Min", value: skill.min }
+                      ].map((row) => (
+                        <div key={row.label} className="flex items-center gap-2">
+                          <div className="w-10 text-[10px] text-muted-foreground">{row.label}</div>
+                          <Progress value={row.value} className="h-1.5 flex-1" />
+                          <span className="text-[11px] font-medium font-mono tabular-nums w-7 text-right">{row.value}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 text-xs text-muted-foreground">Avg</div>
-                          <Progress value={skill.average} className="h-2 flex-1" />
-                          <span className="text-xs font-medium w-8 text-right">{skill.average}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 text-xs text-muted-foreground">Min</div>
-                          <Progress value={skill.min} className="h-2 flex-1" />
-                          <span className="text-xs font-medium w-8 text-right">{skill.min}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -572,26 +524,23 @@ function TalentContent() {
           {activeTab === "pipeline" && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-violet-500" />
-                <h3 className="text-lg font-semibold text-foreground">Leadership Pipeline</h3>
+                <Crown className="h-5 w-5 text-[hsl(var(--primary))]" />
+                <h3 className="text-base font-semibold text-foreground">Leadership Pipeline</h3>
               </div>
 
               <div className="grid gap-4">
-                {leadershipPipeline.map((level, idx) => (
-                  <Card 
-                    key={level.level} 
-                    className={`overflow-hidden border-0 shadow-md`}
-                  >
-                    <div className={`h-2 ${getPipelineColor(level.level)}`} />
-                    <CardContent className="p-6">
+                {leadershipPipeline.map((level) => (
+                  <div key={level.level} className="glass-card rounded-xl overflow-hidden">
+                    <div className={`h-1 ${getPipelineColor(level.level)}`} />
+                    <div className="p-5">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-lg ${getPipelineColor(level.level)}`}>
-                            <Crown className="h-5 w-5 text-white" />
+                            <Crown className="h-4 w-4 text-white" />
                           </div>
                           <div>
-                            <h4 className="font-semibold">{level.level}</h4>
-                            <p className="text-sm text-muted-foreground">
+                            <h4 className="text-sm font-semibold">{level.level}</h4>
+                            <p className="text-[11px] text-muted-foreground">
                               {level.level === "Executive" && "C-Level, VP, Director"}
                               {level.level === "Senior Lead" && "Senior Managers, Tech Leads"}
                               {level.level === "Team Lead" && "Team Leads, Project Managers"}
@@ -601,10 +550,10 @@ function TalentContent() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-3xl font-bold text-violet-600">
+                          <p className="text-2xl font-bold font-mono tabular-nums text-[hsl(var(--primary))]">
                             {level.count}
                           </p>
-                          <p className="text-xs text-muted-foreground">employees</p>
+                          <p className="text-[10px] text-muted-foreground">employees</p>
                         </div>
                       </div>
 
@@ -613,25 +562,25 @@ function TalentContent() {
                           {level.employees.slice(0, 5).map((emp) => (
                             <div 
                               key={emp.user_hash}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50"
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/40"
                             >
-                              <Avatar className="h-6 w-6">
-                                <AvatarFallback className="text-xs bg-violet-100 text-violet-600">
+                              <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-[8px] bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
                                   {getInitials(emp.name)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-sm">{emp.name}</span>
+                              <span className="text-xs">{emp.name}</span>
                             </div>
                           ))}
                           {level.employees.length > 5 && (
-                            <Badge variant="outline" className="ml-2">
+                            <Badge variant="outline" className="text-[10px]">
                               +{level.employees.length - 5} more
                             </Badge>
                           )}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -641,9 +590,9 @@ function TalentContent() {
           {activeTab === "gems" && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Gem className="h-5 w-5 text-violet-500" />
-                <h3 className="text-lg font-semibold text-foreground">Hidden Gems</h3>
-                <Badge variant="secondary" className="bg-violet-100 text-violet-700">
+                <Gem className="h-5 w-5 text-[hsl(var(--sentinel-gem))]" />
+                <h3 className="text-base font-semibold text-foreground">Hidden Gems</h3>
+                <Badge className="ml-1 text-[10px] bg-[hsl(var(--sentinel-gem))]/15 text-[hsl(var(--sentinel-gem))] border-[hsl(var(--sentinel-gem))]/20">
                   {hiddenGems.length} discovered
                 </Badge>
               </div>
@@ -652,139 +601,128 @@ function TalentContent() {
                 High potential employees with low visibility who deserve more recognition and opportunities.
               </p>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {hiddenGems.map((gem) => (
-                  <Card 
-                    key={gem.user_hash} 
-                    className="border-violet-200 bg-violet-50 hover:shadow-lg transition-shadow"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-violet-100 text-violet-600">
-                              {getInitials(gem.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h4 className="font-semibold">{gem.name}</h4>
-                            <p className="text-sm text-muted-foreground">{gem.role}</p>
-                          </div>
-                        </div>
-                        <Gem className="h-5 w-5 text-violet-500" />
-                      </div>
-
-                      <div className="space-y-3 mb-4">
+                  <div key={gem.user_hash} className="glass-card rounded-xl p-5 border border-[hsl(var(--sentinel-gem))]/15">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-[hsl(var(--sentinel-gem))]/15 text-[hsl(var(--sentinel-gem))]">
+                            {getInitials(gem.name)}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-muted-foreground">Potential</span>
-                            <span className="text-xs font-medium">{gem.potential_score.toFixed(0)}%</span>
-                          </div>
-                          <Progress value={gem.potential_score} className="h-2 bg-violet-200" />
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-muted-foreground">Visibility</span>
-                            <span className="text-xs font-medium">{gem.visibility_score.toFixed(0)}%</span>
-                          </div>
-                          <Progress value={gem.visibility_score} className="h-2 bg-violet-200" />
+                          <h4 className="text-sm font-semibold">{gem.name}</h4>
+                          <p className="text-[11px] text-muted-foreground">{gem.role}</p>
                         </div>
                       </div>
+                      <Gem className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
+                    </div>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Zap className="h-3 w-3" />
-                          <span>Unblocked {gem.unblocking} times</span>
+                    <div className="space-y-2.5 mb-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-muted-foreground">Potential</span>
+                          <span className="text-[10px] font-medium font-mono tabular-nums">{gem.potential_score.toFixed(0)}%</span>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs border-violet-300 text-violet-600 hover:bg-violet-100">
-                          View Profile
-                        </Button>
+                        <Progress value={gem.potential_score} className="h-1.5" />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-muted-foreground">Visibility</span>
+                          <span className="text-[10px] font-medium font-mono tabular-nums">{gem.visibility_score.toFixed(0)}%</span>
+                        </div>
+                        <Progress value={gem.visibility_score} className="h-1.5" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Zap className="h-3 w-3" />
+                        <span>Unblocked {gem.unblocking} times</span>
+                      </div>
+                      <Button size="sm" variant="outline" className="h-7 text-[11px] px-3">
+                        View Profile
+                      </Button>
+                    </div>
+                  </div>
                 ))}
 
                 {hiddenGems.length === 0 && (
-                  <Card className="col-span-full border-dashed">
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Sparkles className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                      <p className="text-sm text-muted-foreground">No hidden gems detected yet</p>
-                      <p className="text-xs text-muted-foreground mt-1">Keep monitoring team interactions</p>
-                    </CardContent>
-                  </Card>
+                  <div className="col-span-full glass-card rounded-xl flex flex-col items-center justify-center py-16">
+                    <Sparkles className="h-10 w-10 text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground">No hidden gems detected yet</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">Keep monitoring team interactions</p>
+                  </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Top Performers Section */}
+          {/* Top Performers */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-violet-500" />
-              <h3 className="text-lg font-semibold text-foreground">Top Performers</h3>
-              <Badge variant="secondary" className="ml-2">
-                Highest Impact
-              </Badge>
+              <Award className="h-5 w-5 text-[hsl(var(--sentinel-gem))]" />
+              <h3 className="text-base font-semibold text-foreground">Top Performers</h3>
+              <Badge variant="secondary" className="ml-1 text-[10px]">Highest Impact</Badge>
             </div>
 
-            <Card>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {topPerformers.map((performer, idx) => (
-                    <div 
-                      key={performer.user_hash}
-                      className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500 text-white font-bold text-sm">
-                        {idx + 1}
-                      </div>
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className={performer.is_hidden_gem ? "bg-violet-100 text-violet-600" : "bg-muted"}>
-                          {getInitials(performer.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold truncate">{performer.name}</p>
-                          {performer.is_hidden_gem && (
-                            <Gem className="h-3 w-3 text-violet-500" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{performer.role}</p>
-                      </div>
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="text-center">
-                          <p className="font-medium">{(performer.betweenness * 100).toFixed(0)}%</p>
-                          <p className="text-xs text-muted-foreground">Betweenness</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium">{(performer.eigenvector * 100).toFixed(0)}%</p>
-                          <p className="text-xs text-muted-foreground">Eigenvector</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium">{performer.unblocking}</p>
-                          <p className="text-xs text-muted-foreground">Unblocked</p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="ghost" className="shrink-0">
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Button>
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <div className="divide-y divide-border">
+                {topPerformers.map((performer, idx) => (
+                  <div 
+                    key={performer.user_hash}
+                    className="flex items-center gap-4 p-4 hover:bg-accent/30 transition-colors"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-white font-bold text-xs font-mono tabular-nums">
+                      {idx + 1}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className={performer.is_hidden_gem ? "bg-[hsl(var(--sentinel-gem))]/15 text-[hsl(var(--sentinel-gem))] text-xs" : "bg-muted text-xs"}>
+                        {getInitials(performer.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate">{performer.name}</p>
+                        {performer.is_hidden_gem && (
+                          <Gem className="h-3 w-3 text-[hsl(var(--sentinel-gem))]" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">{performer.role}</p>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="font-medium font-mono tabular-nums">{(performer.betweenness * 100).toFixed(0)}%</p>
+                        <p className="text-[10px] text-muted-foreground">Betweenness</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium font-mono tabular-nums">{(performer.eigenvector * 100).toFixed(0)}%</p>
+                        <p className="text-[10px] text-muted-foreground">Eigenvector</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium font-mono tabular-nums">{performer.unblocking}</p>
+                        <p className="text-[10px] text-muted-foreground">Unblocked</p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="shrink-0">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Footer Info */}
-          <div className="flex items-center justify-center gap-6 py-4 text-xs text-muted-foreground">
+          {/* Footer */}
+          <div className="flex items-center justify-center gap-6 py-3 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Info className="h-4 w-4" />
+              <Info className="h-3.5 w-3.5" />
               <span>Data refreshed every 5 minutes</span>
             </div>
-            <Separator orientation="vertical" className="h-4" />
+            <Separator orientation="vertical" className="h-3" />
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3.5 w-3.5" />
               <span>Last updated: {new Date().toLocaleTimeString()}</span>
             </div>
           </div>
