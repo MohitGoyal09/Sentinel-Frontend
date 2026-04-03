@@ -1,596 +1,315 @@
 "use client"
 
-import { Suspense, useState, useMemo, useEffect } from "react"
+import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-
-import { SkillsRadar } from "@/components/skills-radar"
+import { ProtectedRoute } from "@/components/protected-route"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import {
-  Sparkles,
-  Users,
-  TrendingUp,
-  Award,
-  Gem,
-  RefreshCw,
-  ChevronRight,
-  Star,
-  Crown,
-  ArrowUpRight,
-  BarChart3,
-  Info,
-  Clock,
-  Zap,
-  Play,
-  AlertTriangle,
-  Shield,
-  Target,
-} from "lucide-react"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { SectionCard } from "@/components/dashboard/section-card"
+import { RiskBadge } from "@/components/dashboard/risk-badge"
 import { Spinner } from "@/components/ui/spinner"
-
-import { Employee, RiskLevel, toRiskLevel, NetworkNode } from "@/types"
+import { Sparkles, RefreshCw, Lightbulb, Trophy, MessageSquare } from "lucide-react"
+import { RiskLevel, toRiskLevel, NetworkNode, NetworkEdge } from "@/types"
 import { mapUsersToEmployees } from "@/lib/map-employees"
 import { useGlobalNetworkData } from "@/hooks/useGlobalNetworkData"
-import { useTeamData } from "@/hooks/useTeamData"
 import { useUsers } from "@/hooks/useUsers"
-import { cn, getInitials } from "@/lib/utils"
+import { cn, getInitials, timeAgo } from "@/lib/utils"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ── Types & constants ────────────────────────────────────────────────────────
 
-interface TalentProfile {
-  user_hash: string
-  name: string
-  role: string
-  skills: {
-    technical: number
-    communication: number
-    leadership: number
-    collaboration: number
-    adaptability: number
-    creativity: number
+interface SkillScores {
+  technical: number; communication: number; leadership: number
+  collaboration: number; adaptability: number; creativity: number
+}
+
+interface TalentMember {
+  user_hash: string; name: string; role: string; risk_level: RiskLevel
+  betweenness: number; eigenvector: number; unblocking: number
+  networkScore: number; skills: SkillScores
+}
+
+const SKILL_KEYS: (keyof SkillScores)[] = ["technical", "communication", "leadership", "collaboration", "adaptability", "creativity"]
+const SKILL_LABELS = ["Techn", "Commu", "Leade", "Colla", "Adapt", "Creat"]
+const NODE_CLR: Record<RiskLevel, string> = { LOW: "#10b981", ELEVATED: "#f59e0b", CRITICAL: "#ef4444" }
+
+// ── Pure helpers ─────────────────────────────────────────────────────────────
+
+const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)))
+const netScore = (b: number, e: number, u: number, mx: number) => (b * 0.4 + e * 0.4 + (u / Math.max(mx, 1)) * 0.2) * 100
+const impactScore = (b: number, e: number, u: number, mx: number, r: RiskLevel) =>
+  (b * 0.4 + e * 0.3 + (u / Math.max(mx, 1)) * 0.3) * (r === "CRITICAL" ? 1 : r === "ELEVATED" ? 0.7 : 0.3) * 100
+
+function deriveSkills(b: number, e: number, vel: number, conf: number): SkillScores {
+  return {
+    technical: clamp(conf * 100), communication: clamp(e * 100),
+    leadership: clamp(b * 80 + e * 20), collaboration: clamp((b + e) * 50),
+    adaptability: clamp(vel * 1.2), creativity: clamp(conf * 60 + vel * 0.4),
   }
-  betweenness: number
-  eigenvector: number
-  unblocking: number
-  is_hidden_gem: boolean
-  potential_score: number
-  visibility_score: number
 }
 
-// ─── Talent Quadrant SVG ─────────────────────────────────────────────────────
-
-interface QuadrantProps {
-  profiles: TalentProfile[]
+function gemReason(m: TalentMember): string {
+  if (m.betweenness >= 0.5) return `Bridges multiple teams (betweenness ${(m.betweenness * 100).toFixed(0)}%)`
+  if (m.unblocking >= 5) return `Unblocks ${m.unblocking} people -- removes bottlenecks`
+  if (m.eigenvector >= 0.5) return "Connected to the most influential people"
+  return "High centrality across multiple dimensions"
 }
 
-function TalentQuadrant({ profiles }: QuadrantProps) {
-  const W = 360; const H = 260; const PAD = 40
-  const chartW = W - PAD * 2
-  const chartH = H - PAD * 2
+function skillCell(v: number): { text: string; cls: string } {
+  if (v >= 70) return { text: "Expert", cls: "bg-emerald-500/20 text-emerald-400" }
+  if (v >= 40) return { text: "Prof", cls: "bg-primary/10 text-primary" }
+  if (v >= 20) return { text: "Dev", cls: "bg-amber-500/15 text-amber-400" }
+  return { text: "Gap", cls: "bg-muted text-muted-foreground" }
+}
 
-  // Map performance=betweenness (x), potential=eigenvector (y)
-  const maxB = Math.max(0.001, ...profiles.map(p => p.betweenness))
-  const maxE = Math.max(0.001, ...profiles.map(p => p.eigenvector))
+const isNonMgmt = (role: string) => !["manager", "admin"].includes(role.toLowerCase())
 
-  const cx = (b: number) => PAD + (b / maxB) * chartW
-  const cy = (e: number) => PAD + chartH - (e / maxE) * chartH
+// ── Network SVG ──────────────────────────────────────────────────────────────
 
-  const quadrantLabels = [
-    { x: PAD + chartW * 0.75, y: PAD + chartH * 0.25, label: "Stars", color: "hsl(var(--accent))" },
-    { x: PAD + chartW * 0.25, y: PAD + chartH * 0.25, label: "High Potentials", color: "hsl(var(--primary))" },
-    { x: PAD + chartW * 0.75, y: PAD + chartH * 0.75, label: "Core Players", color: "hsl(var(--sentinel-info))" },
-    { x: PAD + chartW * 0.25, y: PAD + chartH * 0.75, label: "Developing", color: "hsl(var(--muted-foreground))" },
-  ]
+function NetworkGraph({ members, edges }: { members: TalentMember[]; edges: NetworkEdge[] }) {
+  const W = 480, H = 320, CX = W / 2, CY = H / 2, RAD = Math.min(CX, CY) - 46
+  const pos = useMemo(() => members.map((_, i) => {
+    const a = (2 * Math.PI * i) / members.length - Math.PI / 2
+    return { x: CX + RAD * Math.cos(a), y: CY + RAD * Math.sin(a) }
+  }), [members.length, CX, CY, RAD])
+
+  const idx = useMemo(() => new Map(members.map((m, i) => [m.user_hash, i])), [members])
+  const maxE = Math.max(0.01, ...members.map((m) => m.eigenvector))
+  const gems = useMemo(() => new Set(members.filter((m) => m.betweenness > 0.3 && m.eigenvector > 0.3 && isNonMgmt(m.role)).map((m) => m.user_hash)), [members])
+  const avg = members.length > 0 ? (edges.length * 2 / members.length).toFixed(1) : "0"
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
-      {/* Quadrant backgrounds */}
-      <rect x={PAD + chartW / 2} y={PAD} width={chartW / 2} height={chartH / 2} fill="hsl(var(--accent))" fillOpacity="0.04" />
-      <rect x={PAD} y={PAD} width={chartW / 2} height={chartH / 2} fill="hsl(var(--primary))" fillOpacity="0.04" />
-      <rect x={PAD + chartW / 2} y={PAD + chartH / 2} width={chartW / 2} height={chartH / 2} fill="hsl(var(--sentinel-info))" fillOpacity="0.03" />
-      <rect x={PAD} y={PAD + chartH / 2} width={chartW / 2} height={chartH / 2} fill="hsl(var(--muted))" fillOpacity="0.03" />
-      {/* Grid lines */}
-      <line x1={PAD + chartW / 2} y1={PAD} x2={PAD + chartW / 2} y2={PAD + chartH} stroke="hsl(var(--border))" strokeWidth="1" strokeDasharray="4 4" />
-      <line x1={PAD} y1={PAD + chartH / 2} x2={PAD + chartW} y2={PAD + chartH / 2} stroke="hsl(var(--border))" strokeWidth="1" strokeDasharray="4 4" />
-      {/* Axes */}
-      <line x1={PAD} y1={PAD + chartH} x2={PAD + chartW} y2={PAD + chartH} stroke="hsl(var(--border))" strokeWidth="1" />
-      <line x1={PAD} y1={PAD} x2={PAD} y2={PAD + chartH} stroke="hsl(var(--border))" strokeWidth="1" />
-      {/* Axis labels */}
-      <text x={PAD + chartW / 2} y={H - 4} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">Performance</text>
-      <text x={8} y={PAD + chartH / 2} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))" transform={`rotate(-90,8,${PAD + chartH / 2})`}>Potential</text>
-      {/* Quadrant labels */}
-      {quadrantLabels.map((q) => (
-        <text key={q.label} x={q.x} y={q.y} textAnchor="middle" fontSize="8" fill={q.color} fontWeight="600" opacity="0.7">
-          {q.label}
-        </text>
-      ))}
-      {/* Employee dots */}
-      {profiles.map((p) => {
-        const x = cx(p.betweenness)
-        const y = cy(p.eigenvector)
-        const color = p.is_hidden_gem
-          ? "hsl(var(--sentinel-gem))"
-          : p.betweenness > maxB * 0.5 && p.eigenvector > maxE * 0.5
-          ? "hsl(var(--accent))"
-          : p.betweenness > maxB * 0.5
-          ? "hsl(var(--sentinel-info))"
-          : p.eigenvector > maxE * 0.5
-          ? "hsl(var(--primary))"
-          : "hsl(var(--muted-foreground))"
-        return (
-          <g key={p.user_hash}>
-            <circle cx={x} cy={y} r="7" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" />
-            <text x={x} y={y + 3.5} textAnchor="middle" fontSize="6" fill={color} fontWeight="700">
-              {getInitials(p.name)}
-            </text>
-          </g>
-        )
-      })}
-    </svg>
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+        {edges.map((e, i) => {
+          const s = idx.get(e.source), t = idx.get(e.target)
+          return s !== undefined && t !== undefined ? (
+            <line key={i} x1={pos[s].x} y1={pos[s].y} x2={pos[t].x} y2={pos[t].y} stroke="hsl(var(--border))" strokeWidth={Math.max(0.5, e.weight * 2)} opacity={0.5} />
+          ) : null
+        })}
+        {members.map((m, i) => {
+          const p = pos[i], sz = 12 + (m.eigenvector / maxE) * 14, isGem = gems.has(m.user_hash)
+          return (
+            <g key={m.user_hash}>
+              {isGem && <circle cx={p.x} cy={p.y} r={sz + 4} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="3 2" />}
+              <circle cx={p.x} cy={p.y} r={sz} fill={NODE_CLR[m.risk_level]} fillOpacity={0.25} stroke={NODE_CLR[m.risk_level]} strokeWidth={1.5} />
+              <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="8" fill="hsl(var(--foreground))" fontWeight="600">{getInitials(m.name)}</text>
+              <text x={p.x} y={p.y + sz + 11} textAnchor="middle" fontSize="7" fill="hsl(var(--muted-foreground))">{m.name.split(" ")[0]}</text>
+            </g>
+          )
+        })}
+      </svg>
+      <p className="text-xs text-muted-foreground mt-2 text-center">{members.length} members &middot; {edges.length} connections &middot; Avg {avg} per person</p>
+    </div>
   )
 }
 
-// ─── Skill Coverage Heatmap ───────────────────────────────────────────────────
-
-const SKILLS_COLS = ["Technical", "Leadership", "Collab", "Communication", "Innovation"]
-
-function getCellClass(value: number): string {
-  if (value > 70) return "bg-accent/60 text-accent"
-  if (value > 45) return "bg-primary/40 text-primary"
-  if (value > 20) return "bg-[hsl(var(--sentinel-elevated))]/40 text-[hsl(var(--sentinel-elevated))]"
-  return "bg-white/5 text-muted-foreground"
-}
-
-function getCellLabel(value: number): string {
-  if (value > 70) return "Expert"
-  if (value > 45) return "Prof"
-  if (value > 20) return "Dev"
-  return "Gap"
-}
-
-// ─── Talent Content ───────────────────────────────────────────────────────────
+// ── Main page ────────────────────────────────────────────────────────────────
 
 function TalentContent() {
   const router = useRouter()
-  const [selectedUserHash, setSelectedUserHash] = useState<string | null>(null)
-
-  const { users, isLoading: usersLoading } = useUsers()
-
-  useEffect(() => {
-    if (!selectedUserHash && users.length > 0) {
-      setSelectedUserHash(users[0].user_hash)
-    }
-  }, [users, selectedUserHash])
-
+  const { users, isLoading: uLoad, refetch: rU } = useUsers()
+  const { data: net, isLoading: nLoad, refetch: rN } = useGlobalNetworkData()
   const employees = useMemo(() => mapUsersToEmployees(users), [users])
 
-  const { data: networkData, isLoading } = useGlobalNetworkData()
-  const { data: teamData } = useTeamData()
-
-  const talentProfiles = useMemo((): TalentProfile[] => {
-    const clamp = (v: number) => Math.max(0, Math.min(100, v))
-
-    if (!networkData?.nodes || networkData.nodes.length === 0) {
-      return employees.map((emp) => ({
-        user_hash: emp.user_hash,
-        name: emp.name,
-        role: emp.role,
-        skills: { technical: 0, communication: 0, leadership: 0, collaboration: 0, adaptability: 0, creativity: 0 },
-        betweenness: 0, eigenvector: 0, unblocking: 0,
-        is_hidden_gem: false, potential_score: 0, visibility_score: 0,
-      }))
+  const members = useMemo((): TalentMember[] => {
+    const nodes: NetworkNode[] = net?.nodes ?? []
+    const mxU = Math.max(1, ...nodes.map((n) => n.unblocking_count ?? 0))
+    if (nodes.length > 0) {
+      return nodes.map((nd, i) => {
+        const emp = employees.find((e) => e.user_hash === nd.id) ?? employees[i % Math.max(employees.length, 1)]
+        const b = nd.betweenness ?? 0, e = nd.eigenvector ?? 0, u = nd.unblocking_count ?? 0
+        return { user_hash: nd.id || `n${i}`, name: nd.label || emp?.name || `User ${i + 1}`, role: emp?.role || "Employee", risk_level: toRiskLevel(nd.risk_level), betweenness: b, eigenvector: e, unblocking: u, networkScore: netScore(b, e, u, mxU), skills: deriveSkills(b, e, emp?.velocity ?? 50, emp?.confidence ?? 0.5) }
+      })
     }
-
-    const maxUnblocking = Math.max(1, ...networkData.nodes.map((n: NetworkNode) => n.unblocking_count ?? 0))
-
-    return networkData.nodes.map((node: NetworkNode, idx: number) => {
-      const betweenness = node.betweenness ?? 0
-      const eigenvector = node.eigenvector ?? 0
-      const unblocking = node.unblocking_count ?? 0
-      const technical = clamp(betweenness * 100)
-      const leadership = clamp(eigenvector * 100)
-      const collaboration = clamp((unblocking / maxUnblocking) * 100)
-      const potential_score = clamp((betweenness * 0.6 + eigenvector * 0.4) * 100)
-      const visibility_score = clamp(betweenness * 100)
-
-      return {
-        user_hash: node.id || `user_${idx}`,
-        name: node.label || `User ${idx + 1}`,
-        role: employees[idx % Math.max(employees.length, 1)]?.role || "Engineer",
-        skills: { technical, communication: 0, leadership, collaboration, adaptability: 0, creativity: 0 },
-        betweenness, eigenvector, unblocking,
-        is_hidden_gem: node.is_hidden_gem ?? false,
-        potential_score, visibility_score,
-      }
+    return employees.map((emp) => {
+      const b = emp.confidence, e = emp.velocity / 100
+      return { user_hash: emp.user_hash, name: emp.name, role: emp.role, risk_level: emp.risk_level, betweenness: b, eigenvector: e, unblocking: 0, networkScore: netScore(b, e, 0, 1), skills: deriveSkills(b, e, emp.velocity, emp.confidence) }
     })
-  }, [networkData, employees])
+  }, [net, employees])
 
-  const selectedProfile = useMemo(() =>
-    talentProfiles.find(p => p.user_hash === selectedUserHash) || talentProfiles[0] || null,
-    [talentProfiles, selectedUserHash]
-  )
+  const edges: NetworkEdge[] = net?.edges ?? []
+  const mxUnblock = useMemo(() => Math.max(1, ...members.map((m) => m.unblocking)), [members])
 
-  const hiddenGems = useMemo(() =>
-    talentProfiles.filter(p => p.is_hidden_gem).sort((a, b) => b.potential_score - a.potential_score).slice(0, 6),
-    [talentProfiles]
-  )
+  const hiddenGems = useMemo(() => members.filter((m) => m.betweenness > 0.3 && m.eigenvector > 0.3 && isNonMgmt(m.role)).sort((a, b) => b.networkScore - a.networkScore).slice(0, 5), [members])
+  const topConn = useMemo(() => members.filter((m) => m.betweenness > 0.5), [members])
+  const flightRisks = useMemo(() => members.filter((m) => (m.risk_level === "ELEVATED" || m.risk_level === "CRITICAL") && (m.betweenness + m.eigenvector) / 2 > 0.3).slice(0, 5), [members])
+  const avgNet = useMemo(() => members.length === 0 ? 0 : Math.round(members.reduce((s, m) => s + (m.betweenness + m.eigenvector) / 2, 0) / members.length * 100), [members])
+  const ranked = useMemo(() => [...members].sort((a, b) => b.networkScore - a.networkScore), [members])
+  const retRisks = useMemo(() => members.filter((m) => m.risk_level === "ELEVATED" || m.risk_level === "CRITICAL").map((m) => ({ ...m, impact: impactScore(m.betweenness, m.eigenvector, m.unblocking, mxUnblock, m.risk_level) })).sort((a, b) => b.impact - a.impact).slice(0, 5), [members, mxUnblock])
 
-  const topPerformers = useMemo(() =>
-    [...talentProfiles].sort((a, b) => {
-      const sA = a.betweenness * 0.4 + a.eigenvector * 0.3 + a.unblocking * 0.3
-      const sB = b.betweenness * 0.4 + b.eigenvector * 0.3 + b.unblocking * 0.3
-      return sB - sA
-    }).slice(0, 8),
-    [talentProfiles]
-  )
+  const insights = useMemo(() => {
+    const out: { text: string; type: "gem" | "risk" | "skill" }[] = []
+    if (hiddenGems[0]) out.push({ text: `${hiddenGems[0].name} has high network centrality (betweenness: ${(hiddenGems[0].betweenness * 100).toFixed(0)}%) but no management title -- consider recognition.`, type: "gem" })
+    if (retRisks[0]) out.push({ text: `${retRisks[0].name} is at ${retRisks[0].risk_level} risk and unblocks ${retRisks[0].unblocking} people -- losing them would impact throughput.`, type: "risk" })
+    const gapPct = members.length > 0 ? Math.round(members.filter((m) => m.skills.leadership < 40).length / members.length * 100) : 0
+    if (gapPct > 30) out.push({ text: `${gapPct}% of members score below proficiency in Leadership -- consider development programs.`, type: "skill" })
+    if (out.length === 0) out.push({ text: "Collect more data to generate insights about hidden talent and network dynamics.", type: "skill" })
+    return out.slice(0, 3)
+  }, [hiddenGems, retRisks, members])
 
-  // Flight risk: employees with elevated risk level
-  const flightRisks = useMemo(() =>
-    employees
-      .filter(e => e.risk_level === "ELEVATED" || e.risk_level === "CRITICAL")
-      .map(e => ({
-        ...e,
-        risk_pct: e.risk_level === "CRITICAL" ? 82 : 54,
-      }))
-      .slice(0, 5),
-    [employees]
-  )
+  const lastUp = useMemo(() => {
+    const t = employees.reduce((b, e) => (e.updated_at > b ? e.updated_at : b), "")
+    return t ? timeAgo(t) : "N/A"
+  }, [employees])
 
-  const skillsDistribution = useMemo(() => {
-    const skills = ["technical", "communication", "leadership", "collaboration", "adaptability", "creativity"]
-    return skills.map(skill => {
-      const values = talentProfiles.map(p => p.skills[skill as keyof typeof p.skills])
-      const avg = values.reduce((a, b) => a + b, 0) / Math.max(values.length, 1)
-      const max = Math.max(...values, 0)
-      const min = Math.min(...values, 0)
-      return { skill: skill.charAt(0).toUpperCase() + skill.slice(1), average: Math.round(avg), max: Math.round(max), min: Math.round(min) }
-    })
-  }, [talentProfiles])
-
-  const avgPerfScore = skillsDistribution.length > 0
-    ? Math.round(skillsDistribution.reduce((a, b) => a + (b.average || 0), 0) / skillsDistribution.length)
-    : 0
-
-  if (usersLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8" />
-      </div>
-    )
-  }
+  if (uLoad || nLoad) return <div className="flex items-center justify-center h-64"><Spinner className="h-8 w-8" /></div>
 
   return (
     <ScrollArea className="flex-1">
-      <main className="flex flex-col gap-5 p-4 lg:p-6">
-
-        {/* ── Page Header ─────────────────────────────────────────────────── */}
+      <main className="flex flex-col gap-6 p-4 lg:p-6 max-w-[1400px] mx-auto">
+        {/* Row 1 -- Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-[hsl(var(--sentinel-gem))]/15 border border-[hsl(var(--sentinel-gem))]/20 flex items-center justify-center shrink-0">
-              <Sparkles className="h-5 w-5 text-[hsl(var(--sentinel-gem))]" />
-            </div>
+            <Sparkles className="h-5 w-5 text-emerald-400 shrink-0" />
             <div>
-              <h1 className="text-2xl font-bold font-['Manrope',sans-serif] text-foreground">Talent Engine</h1>
-              <p className="text-sm text-muted-foreground">Hidden talent &amp; skill discovery</p>
+              <h1 className="text-2xl font-semibold text-foreground">Talent Scout</h1>
+              <p className="text-sm text-muted-foreground">Hidden talent and network impact discovery</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-muted-foreground bg-white/5 border border-white/5 rounded-full px-3 py-1">
-              Last analyzed 3 hours ago
-            </span>
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]"
-            >
-              <Play className="h-3.5 w-3.5 mr-1.5" />
-              Run Analysis
-            </Button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-white/10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]">
-              <RefreshCw className="h-3.5 w-3.5" />
-              Refresh
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Last analyzed: {lastUp}</span>
+            <button onClick={() => { rU(); rN() }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-white/[0.12] transition-colors duration-150 cursor-pointer active:scale-[0.97]">
+              <RefreshCw className="h-3.5 w-3.5" /> Refresh
             </button>
           </div>
         </div>
 
-        {/* ── Stats Row ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            {
-              label: "High Performers",
-              value: topPerformers.length,
-              sub: "Highest network impact",
-              color: "text-accent",
-              icon: Award,
-              badge: null,
-            },
-            {
-              label: "Hidden Gems",
-              value: hiddenGems.length,
-              sub: "Undiscovered talent",
-              color: "text-[hsl(var(--sentinel-gem))]",
-              icon: Gem,
-              badge: hiddenGems.length > 0 ? "New" : null,
-            },
-            {
-              label: "Flight Risks",
-              value: flightRisks.length,
-              sub: "Elevated/critical risk",
-              color: "text-destructive",
-              icon: AlertTriangle,
-              badge: null,
-            },
-            {
-              label: "Avg Performance",
-              value: avgPerfScore,
-              sub: "Team skill average",
-              color: "text-primary",
-              icon: BarChart3,
-              badge: null,
-            },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-card border border-white/5 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <stat.icon className={cn("h-4 w-4", stat.color)} />
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
-                {stat.badge && (
-                  <span className="ml-auto text-[9px] bg-accent/15 text-accent border border-accent/20 rounded-full px-1.5 py-0.5">
-                    {stat.badge}
-                  </span>
-                )}
-              </div>
-              <p className={cn("text-3xl font-bold font-mono", stat.color)}>{stat.value}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">{stat.sub}</p>
-            </div>
-          ))}
+        {/* Row 2 -- KPI */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="HIDDEN GEMS" value={hiddenGems.length} description="High centrality, non-management" valueClassName="text-emerald-400" />
+          <StatCard label="TOP CONNECTORS" value={topConn.length} description="Betweenness > 50%" valueClassName="text-emerald-400" />
+          <StatCard label="FLIGHT RISK" value={flightRisks.length} description="Elevated+ risk, high impact" valueClassName={flightRisks.length > 0 ? "text-red-400" : "text-amber-400"} />
+          <StatCard label="AVG NETWORK SCORE" value={`${avgNet}%`} description="Mean centrality across team" />
         </div>
 
-        {/* ── Main Grid 2 cols ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Row 3 -- Network + Gems (55/45) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4">
+          <SectionCard title="Network Impact" subtitle={`${members.length} members`}>
+            {members.length > 0 ? <NetworkGraph members={members} edges={edges} /> : <p className="text-sm text-muted-foreground text-center py-12">No network data available yet</p>}
+          </SectionCard>
 
-          {/* ─ Left col ─────────────────────────────────────────────────── */}
-          <div className="space-y-5">
-
-            {/* Talent Quadrant */}
-            <div className="bg-card border border-white/5 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  Talent Quadrant
-                </h3>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[hsl(var(--sentinel-gem))]" />Gem</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Star</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" />Potential</span>
-                </div>
-              </div>
-              {talentProfiles.length > 0 ? (
-                <TalentQuadrant profiles={talentProfiles} />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-40 gap-2">
-                  <Target className="h-8 w-8 text-muted-foreground/20" />
-                  <p className="text-sm text-muted-foreground">No talent data available yet</p>
-                </div>
-              )}
-            </div>
-
-            {/* Hidden Gems */}
-            <div className="bg-card border border-white/5 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Gem className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
-                Hidden Gems
-                {hiddenGems.length > 0 && (
-                  <Badge className="text-[9px] bg-[hsl(var(--sentinel-gem))]/15 text-[hsl(var(--sentinel-gem))] border-[hsl(var(--sentinel-gem))]/20 ml-1">
-                    {hiddenGems.length} found
-                  </Badge>
-                )}
-              </h3>
-              {hiddenGems.length > 0 ? (
-                <div className="space-y-2">
-                  {hiddenGems.map((gem) => (
-                    <div key={gem.user_hash} className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--sentinel-gem))]/5 border border-[hsl(var(--sentinel-gem))]/10">
-                      <div className="h-8 w-8 rounded-full bg-[hsl(var(--sentinel-gem))]/15 flex items-center justify-center shrink-0">
-                        <Gem className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
+          <SectionCard title="Hidden Gems" action={hiddenGems.length > 0 ? <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">{hiddenGems.length} found</span> : null}>
+            {hiddenGems.length > 0 ? (
+              <div className="space-y-3">
+                {hiddenGems.map((g) => (
+                  <div key={g.user_hash} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                    <Avatar className="h-8 w-8 shrink-0"><AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-[10px]">{getInitials(g.name)}</AvatarFallback></Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{g.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{gemReason(g)}</p>
+                      <div className="flex gap-3 mt-1.5 text-[11px] text-muted-foreground tabular-nums">
+                        <span>B: {(g.betweenness * 100).toFixed(0)}%</span>
+                        <span>E: {(g.eigenvector * 100).toFixed(0)}%</span>
+                        <span>Unblocked: {g.unblocking}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{gem.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{gem.role} · Potential: {gem.potential_score.toFixed(0)}%</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[10px] px-2 border-white/10 hover:border-accent/30 transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]"
-                        onClick={() => router.push(`/search?q=${gem.user_hash}`)}
-                      >
-                        Recognize &amp; Retain
-                      </Button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-24 gap-2 border border-dashed border-border rounded-lg">
-                  <Sparkles className="h-6 w-6 text-muted-foreground/20" />
-                  <p className="text-xs text-muted-foreground">No hidden gems detected yet</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ─ Right col ────────────────────────────────────────────────── */}
-          <div className="space-y-5">
-
-            {/* Skill Coverage Heatmap */}
-            <div className="bg-card border border-white/5 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-[hsl(var(--sentinel-info))]" />
-                Skill Coverage Heatmap
-              </h3>
-              <div className="overflow-x-auto">
-                {/* Column headers */}
-                <div className="flex items-center gap-0.5 mb-1">
-                  <div className="w-24 shrink-0" />
-                  {SKILLS_COLS.map((s) => (
-                    <div key={s} className="flex-1 text-[9px] text-muted-foreground text-center font-medium px-0.5">{s}</div>
-                  ))}
-                </div>
-                {/* Rows */}
-                {talentProfiles.slice(0, 8).map((profile) => {
-                  const skillValues = [
-                    profile.skills.technical,
-                    profile.skills.leadership,
-                    profile.skills.collaboration,
-                    profile.skills.communication,
-                    profile.skills.creativity,
-                  ]
-                  return (
-                    <div key={profile.user_hash} className="flex items-center gap-0.5 mb-0.5">
-                      <div className="w-24 shrink-0 text-[10px] text-muted-foreground truncate pr-2">{profile.name}</div>
-                      {skillValues.map((v, si) => (
-                        <div
-                          key={si}
-                          className={cn("flex-1 rounded-sm py-1 text-center text-[9px] font-medium transition-colors", getCellClass(v))}
-                          title={`${SKILLS_COLS[si]}: ${v.toFixed(0)}%`}
-                        >
-                          {getCellLabel(v)}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                })}
-                {talentProfiles.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-24 gap-2">
-                    <p className="text-xs text-muted-foreground">No skill data available</p>
+                    <button onClick={() => router.push(`/search?q=${g.user_hash}`)} className="shrink-0 text-xs text-emerald-400 hover:text-emerald-300 cursor-pointer transition-colors">Schedule 1:1</button>
                   </div>
-                )}
-                <div className="flex items-center gap-3 mt-3 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-accent/60" />Expert (&gt;70)</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-primary/40" />Prof</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-[hsl(var(--sentinel-elevated))]/40" />Dev</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-white/5" />Gap</span>
-                </div>
+                ))}
               </div>
-            </div>
-
-            {/* Retention Risk */}
-            <div className="bg-card border border-white/5 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-destructive" />
-                Retention Risk
-              </h3>
-              {flightRisks.length > 0 ? (
-                <div className="space-y-3">
-                  {flightRisks.map((emp) => (
-                    <div key={emp.user_hash} className="flex items-center gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="bg-destructive/15 text-destructive text-[10px]">
-                          {getInitials(emp.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-foreground truncate">{emp.name}</span>
-                          <span className="text-[10px] font-mono text-destructive ml-2 shrink-0">{emp.risk_pct}%</span>
-                        </div>
-                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-destructive rounded-full transition-all duration-500" style={{ width: `${emp.risk_pct}%` }} />
-                        </div>
-                      </div>
-                      <button
-                        className="shrink-0 text-[10px] border border-white/10 rounded px-2 py-1 text-muted-foreground hover:text-foreground hover:border-white/20 transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]"
-                        onClick={() => router.push(`/search?q=${emp.user_hash}`)}
-                      >
-                        Schedule Talk
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-24 gap-2 border border-dashed border-border rounded-lg">
-                  <Shield className="h-6 w-6 text-muted-foreground/20" />
-                  <p className="text-xs text-muted-foreground">No significant flight risks detected</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Top Performers ───────────────────────────────────────────────── */}
-        <div className="bg-card border border-white/5 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Award className="h-4 w-4 text-[hsl(var(--sentinel-gem))]" />
-              Top Performers
-            </h3>
-            <Badge variant="secondary" className="text-[10px]">Highest Network Impact</Badge>
-          </div>
-          <div className="divide-y divide-white/5">
-            {topPerformers.map((performer, idx) => (
-              <div
-                key={performer.user_hash}
-                className="flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors"
-              >
-                <div className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-full text-white font-bold text-xs font-mono shrink-0",
-                  idx === 0 ? "bg-[hsl(var(--sentinel-gem))]" : idx === 1 ? "bg-muted-foreground/50" : idx === 2 ? "bg-[hsl(var(--sentinel-elevated))]/70" : "bg-muted"
-                )}>
-                  {idx + 1}
-                </div>
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarFallback className={cn(
-                    "text-xs",
-                    performer.is_hidden_gem ? "bg-[hsl(var(--sentinel-gem))]/15 text-[hsl(var(--sentinel-gem))]" : "bg-muted"
-                  )}>
-                    {getInitials(performer.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium truncate">{performer.name}</p>
-                    {performer.is_hidden_gem && <Gem className="h-3 w-3 text-[hsl(var(--sentinel-gem))] shrink-0" />}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">{performer.role}</p>
-                </div>
-                <div className="hidden md:flex items-center gap-6 text-sm">
-                  <div className="text-center">
-                    <p className="font-medium font-mono text-xs text-foreground">{(performer.betweenness * 100).toFixed(0)}%</p>
-                    <p className="text-[10px] text-muted-foreground">Betweenness</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-medium font-mono text-xs text-foreground">{(performer.eigenvector * 100).toFixed(0)}%</p>
-                    <p className="text-[10px] text-muted-foreground">Eigenvector</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-medium font-mono text-xs text-foreground">{performer.unblocking}</p>
-                    <p className="text-[10px] text-muted-foreground">Unblocked</p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="shrink-0 transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]"
-                  onClick={() => router.push(`/search?q=${performer.user_hash}`)}
-                >
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            {topPerformers.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-10 gap-2">
-                <Award className="h-8 w-8 text-muted-foreground/20" />
-                <p className="text-sm text-muted-foreground">No performer data available yet</p>
+            ) : (
+              <div className="py-6 text-center">
+                <p className="text-sm text-muted-foreground">No employees currently meet all hidden gem criteria (betweenness &gt; 30%, eigenvector &gt; 30%, non-management).</p>
+                <p className="text-xs text-muted-foreground mt-2">This can mean your team is well-recognized, or more data is needed.</p>
               </div>
             )}
-          </div>
+          </SectionCard>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-center gap-4 py-2 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5"><Info className="h-3 w-3" />Refreshed every 5 minutes</span>
-          <span className="h-3 border-l border-border" />
-          <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />Last updated: {new Date().toLocaleTimeString()}</span>
+        {/* Row 4 -- Skills + Retention (50/50) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SectionCard title="Skill Coverage" subtitle="6 dimensions">
+            <div className="overflow-x-auto">
+              <div className="flex items-center gap-0.5 mb-1">
+                <div className="w-24 shrink-0" />
+                {SKILL_LABELS.map((s) => <div key={s} className="flex-1 text-[10px] text-muted-foreground text-center font-medium uppercase tracking-wider">{s}</div>)}
+              </div>
+              {members.slice(0, 5).map((m) => (
+                <div key={m.user_hash} className="flex items-center gap-0.5 mb-0.5">
+                  <div className="w-24 shrink-0 text-xs text-muted-foreground truncate pr-2">{m.name}</div>
+                  {SKILL_KEYS.map((sk) => { const { text, cls } = skillCell(m.skills[sk]); return <div key={sk} className={cn("flex-1 rounded-sm py-1 text-center text-[9px] font-medium", cls)} title={`${sk}: ${m.skills[sk]}`}>{text}</div> })}
+                </div>
+              ))}
+              {members.length > 5 && <p className="text-xs text-muted-foreground mt-2">+{members.length - 5} more</p>}
+              {members.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No skill data available</p>}
+              <div className="flex gap-3 mt-3 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-500/20" />Expert</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-primary/10" />Prof</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-amber-500/15" />Dev</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-muted" />Gap</span>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Retention Risk" subtitle="Impact-weighted">
+            {retRisks.length > 0 ? (
+              <div className="space-y-3">
+                {retRisks.map((m) => (
+                  <div key={m.user_hash} className="flex items-center gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                    <Avatar className="h-8 w-8 shrink-0"><AvatarFallback className={cn("text-[10px]", m.risk_level === "CRITICAL" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400")}>{getInitials(m.name)}</AvatarFallback></Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2"><span className="text-sm font-medium text-foreground truncate">{m.name}</span><RiskBadge level={m.risk_level} /></div>
+                        <span className="text-xs font-medium tabular-nums text-muted-foreground ml-2 shrink-0">{m.impact.toFixed(0)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full transition-all duration-500", m.risk_level === "CRITICAL" ? "bg-red-500" : "bg-amber-500")} style={{ width: `${Math.min(m.impact, 100)}%` }} />
+                      </div>
+                    </div>
+                    <button onClick={() => router.push(`/search?q=${m.user_hash}`)} className="shrink-0 text-xs border border-border rounded-md px-2.5 py-1 text-muted-foreground hover:text-foreground hover:border-white/[0.12] transition-colors duration-150 cursor-pointer active:scale-[0.97]">Schedule Talk</button>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-sm text-muted-foreground text-center py-8">No high-impact flight risks detected</p>}
+          </SectionCard>
+        </div>
+
+        {/* Row 5 -- Leaderboard */}
+        <SectionCard title="Top Network Contributors" subtitle="Ranked by network impact">
+          <div className="overflow-x-auto">
+            <div className="flex items-center text-[11px] uppercase tracking-wider text-muted-foreground font-medium border-b border-border pb-2 mb-1">
+              <div className="w-12 shrink-0 text-center">Rank</div>
+              <div className="flex-[2] min-w-0">Member</div>
+              <div className="flex-1 hidden md:block">Role</div>
+              <div className="w-20 text-right hidden md:block">Between.</div>
+              <div className="w-20 text-right hidden md:block">Eigen.</div>
+              <div className="w-20 text-right hidden md:block">Unblocked</div>
+              <div className="w-24 text-right">Score</div>
+            </div>
+            {ranked.map((m, i) => (
+              <div key={m.user_hash} onClick={() => router.push(`/search?q=${m.user_hash}`)} className="flex items-center py-2.5 border-b border-white/[0.04] hover:bg-muted/50 cursor-pointer transition-colors duration-150">
+                <div className="w-12 shrink-0 text-center">
+                  {i < 3 ? <Trophy className={cn("h-4 w-4 mx-auto", i === 0 ? "text-amber-400" : i === 1 ? "text-gray-400" : "text-amber-600")} /> : <span className="text-sm tabular-nums text-muted-foreground">{i + 1}</span>}
+                </div>
+                <div className="flex-[2] min-w-0 flex items-center gap-2">
+                  <Avatar className="h-7 w-7 shrink-0"><AvatarFallback className="text-[10px] bg-muted">{getInitials(m.name)}</AvatarFallback></Avatar>
+                  <span className="text-sm font-medium text-foreground truncate">{m.name}</span>
+                </div>
+                <div className="flex-1 text-sm text-muted-foreground hidden md:block truncate">{m.role}</div>
+                <div className="w-20 text-right text-sm tabular-nums hidden md:block">{(m.betweenness * 100).toFixed(0)}%</div>
+                <div className="w-20 text-right text-sm tabular-nums hidden md:block">{(m.eigenvector * 100).toFixed(0)}%</div>
+                <div className="w-20 text-right text-sm tabular-nums hidden md:block">{m.unblocking}</div>
+                <div className="w-24 text-right text-sm font-medium tabular-nums text-emerald-400">{m.networkScore.toFixed(1)}</div>
+              </div>
+            ))}
+            {ranked.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No contributor data available yet</p>}
+          </div>
+        </SectionCard>
+
+        {/* Row 6 -- AI Insights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {insights.map((ins, i) => (
+            <div key={i} className="bg-card border border-border rounded-lg p-5">
+              <div className="flex items-start gap-3">
+                {ins.type === "gem" ? <Sparkles className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> : ins.type === "risk" ? <Lightbulb className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> : <MessageSquare className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />}
+                <div>
+                  <p className="text-sm text-foreground leading-relaxed">{ins.text}</p>
+                  <button onClick={() => router.push(`/ask-sentinel?q=${encodeURIComponent(ins.text.slice(0, 80))}`)} className="text-xs text-primary hover:text-primary/80 mt-2 cursor-pointer transition-colors">Ask Copilot</button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </main>
     </ScrollArea>
@@ -598,5 +317,9 @@ function TalentContent() {
 }
 
 export default function TalentEnginePage() {
-  return <TalentContent />
+  return (
+    <ProtectedRoute allowedRoles={["manager", "admin"]}>
+      <TalentContent />
+    </ProtectedRoute>
+  )
 }

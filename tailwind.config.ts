@@ -64,13 +64,14 @@ const config: Config = {
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        /* Design system: sm=6px, md=8px (base), lg=12px, full=9999px */
+        lg: 'calc(var(--radius) + 4px)',  /* 12px */
+        md: 'var(--radius)',              /* 8px  */
+        sm: 'calc(var(--radius) - 2px)', /* 6px  */
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-jetbrains-mono)', 'monospace'],
+        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'monospace'],
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',

@@ -11,10 +11,11 @@ interface AskSentinelPageProps {
 function AskSentinelContent({ searchParams }: AskSentinelPageProps) {
   const params = use(searchParams)
   const query = typeof params.q === "string" ? params.q : undefined
+  const session = typeof params.session === "string" ? params.session : undefined
 
   return (
-    <div className="flex h-screen bg-background">
-      <ChatInterface initialQuery={query} />
+    <div className="flex flex-1 h-full bg-background">
+      <ChatInterface initialQuery={query} initialSessionId={session} />
     </div>
   )
 }
@@ -22,7 +23,7 @@ function AskSentinelContent({ searchParams }: AskSentinelPageProps) {
 export default function AskSentinelPage({ searchParams }: AskSentinelPageProps) {
   return (
     <ProtectedRoute>
-      <Suspense fallback={<div className="flex h-screen bg-background" />}>
+      <Suspense fallback={<div className="flex flex-1 h-full bg-background" />}>
         <AskSentinelContent searchParams={searchParams} />
       </Suspense>
     </ProtectedRoute>

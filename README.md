@@ -1,6 +1,8 @@
 # Sentinel Frontend
 
-Next.js 15 dashboard for the Sentinel AI-powered employee insight engine. Provides real-time risk monitoring, network visualization, AI chat, and team health analytics.
+Next.js 16 + React 19 dashboard for the Sentinel AI-powered employee insight engine. Provides real-time risk monitoring, network visualization, Ask Sentinel AI chat with persistent sessions and SSE streaming, and team health analytics.
+
+**Design system:** `docs/DESIGN.md` documents the full visual language — dark-first palette, Geist font, semantic color tokens, and component patterns.
 
 ---
 
@@ -8,6 +10,7 @@ Next.js 15 dashboard for the Sentinel AI-powered employee insight engine. Provid
 
 - [Frontend Architecture](#frontend-architecture)
 - [Pages and Routing](#pages-and-routing)
+- [Ask Sentinel Chat](#ask-sentinel-chat)
 - [Key Components](#key-components)
 - [State Management](#state-management)
 - [Environment Variables](#environment-variables)
@@ -23,7 +26,9 @@ Next.js 15 dashboard for the Sentinel AI-powered employee insight engine. Provid
 |---|---|---|
 | Framework | Next.js 16 (App Router) | File-system routing, Server Components where appropriate |
 | Language | TypeScript 5 | Strict mode |
+| Font | Geist (by Vercel) | Display and body; Geist Mono for code — loaded via `next/font` |
 | Styling | Tailwind CSS 4 | Utility-first; CSS variables for theming |
+| Themes | next-themes | Dark (default) and light mode; toggle in sidebar user dropdown |
 | UI components | Radix UI + shadcn/ui | Headless primitives with accessible defaults |
 | Charts | Recharts | Risk timelines, velocity charts, forecasts |
 | Network graph | D3.js v7 | Force-directed social graph |
@@ -33,7 +38,7 @@ Next.js 15 dashboard for the Sentinel AI-powered employee insight engine. Provid
 | Forms | React Hook Form + Zod v4 | Validated forms throughout |
 | Table | TanStack Table v8 | Employee directory and audit log views |
 | Drag and drop | dnd-kit | Workflow canvas drag ordering |
-| AI streaming | `ai` SDK (Vercel AI SDK v6) | Token streaming from `/ai/chat/stream` |
+| AI streaming | Native `fetch` + `ReadableStream` | SSE token streaming from `/ai/chat/stream` |
 | Markdown | react-markdown + streamdown | AI response rendering |
 | Notifications | Sonner | Toast notifications |
 
@@ -48,7 +53,9 @@ frontend/
 │   ├── favicon.ico
 │   ├── error.tsx               # Root error boundary
 │   ├── admin/                  # /admin — Admin panel
-│   ├── ask-sentinel/           # /ask-sentinel — AI chat interface
+│   ├── ask-sentinel/           # /ask-sentinel — Ask Sentinel AI chat
+│   │   ├── page.tsx            # Main chat page (?conv= session URL param)
+│   │   └── history/            # /ask-sentinel/history — conversation list + search
 │   ├── audit-log/              # /audit-log — Audit trail viewer
 │   ├── auth/                   # /auth/sso — SSO callback handler
 │   ├── dashboard/              # /dashboard — Main risk dashboard
@@ -63,7 +70,7 @@ frontend/
 │   ├── login/                  # /login — Authentication page
 │   ├── me/                     # /me — Employee self-service
 │   ├── notifications/          # /notifications — Notification center
-│   ├── onboarding/             # /onboarding — New user wizard
+│   ├── onboarding/             # /onboarding — New user wizard (invite flow)
 │   ├── privacy/                # /privacy — Privacy policy
 │   ├── profile/                # /profile — User profile settings
 │   ├── search/                 # /search — Global people search
@@ -75,7 +82,7 @@ frontend/
 ├── components/                 # Reusable React components
 │   ├── ai/                     # AI-specific UI elements
 │   ├── ai-elements/            # AI response rendering primitives
-│   ├── chat/                   # Chat input and message list
+│   ├── chat/                   # ChatInterface (SSE streaming, AbortController)
 │   ├── copilot/                # Manager copilot / agenda components
 │   ├── dashboard/              # Dashboard-specific widgets
 │   ├── landing-page/           # Marketing/landing page sections
@@ -115,7 +122,7 @@ frontend/
 │   ├── auth-context.tsx        # AuthContext — current user, tokens
 │   └── tenant-context.tsx      # TenantContext — active workspace
 ├── hooks/
-│   ├── useChatHistory.ts       # Persist chat history per user
+│   ├── useChatHistory.ts       # API-backed chat history (GET /ai/chat/history)
 │   ├── useCountUp.ts           # Animated counter
 │   ├── useForecast.ts          # Fetch SIR contagion forecast
 │   ├── use-mobile.tsx          # Responsive breakpoint detection
@@ -151,23 +158,40 @@ All protected pages check the Supabase session via the edge middleware (`middlew
 
 ### `/dashboard`
 
-Main landing page after login. Shows:
-- Role-filtered dashboard summary (total users, risk distribution, avg velocity)
+Main landing page after login. The layout adapts per role — no tab switching required. Content rendered per role:
+
+**Employee view** — personal risk score, velocity trend, nudge card, own audit trail shortcuts.
+
+**Manager view** — team risk distribution, members at risk, team energy heatmap, SIR forecast, copilot agenda shortcut.
+
+**Admin view** — organization-wide stats, total users, risk distribution across all teams, pipeline health indicator, audit log shortcut.
+
+All views share:
 - Stat cards with animated counters
-- Risk velocity chart (30-day trend)
-- Team energy heatmap
-- Executive summary panel
-- Active nudge card (if applicable)
+- 30-day risk velocity chart
 - Real-time activity feed (WebSocket)
+- Active nudge card (if applicable)
 
 ### `/ask-sentinel`
 
-Full AI chat interface. Features:
+Full Ask Sentinel AI chat interface. Features:
 - Role-aware system prompt (employee / manager / admin)
 - Multi-turn conversation with history
 - Streaming token-by-token responses via SSE
 - Auto-suggested follow-up questions extracted from `<suggestions>` tags
-- Chat history persistence per user hash
+- Session continuity via `?conv=<session_id>` URL parameter; session UUID is embedded in the SSE `done` event
+- Chat history backed by the API (not localStorage)
+- Input card with toolbar (attach, model selector) and suggestion carousel
+- Workflows section shortcuts beneath the input card (KaraX-inspired layout)
+- New Chat button creates a fresh session and navigates to `/ask-sentinel`
+
+### `/ask-sentinel/history`
+
+Conversation history browser. Features:
+- Lists sessions fetched from `GET /ai/chat/sessions`
+- Client-side search/filter across session titles
+- Inline context menu per session: rename, delete, toggle favorite
+- Click any session to resume it at `/ask-sentinel?conv=<session_id>`
 
 ### `/engines/safety`
 
@@ -227,11 +251,71 @@ Global full-text search across employees, surfacing name, role, and risk level.
 
 ---
 
+## Ask Sentinel Chat
+
+Built on KaraX streaming patterns with full session persistence.
+
+### SSE streaming
+
+`lib/api.ts` exports `chatWithSentinelStream(message, sessionId, signal)` which opens a native `fetch` stream to `POST /ai/chat/stream` and yields parsed SSE event objects. The `AbortController` signal is forwarded so the user can cancel mid-stream.
+
+```typescript
+// Simplified call signature
+chatWithSentinelStream(
+  message: string,
+  sessionId: string | undefined,
+  signal: AbortSignal
+): AsyncGenerator<SentinelSSEEvent>
+```
+
+The SSE `done` event payload includes `session_id` so the frontend can set `?conv=<session_id>` in the URL after the first response, making sessions bookmarkable and refreshable.
+
+### `ChatInterface` component
+
+`components/chat/chat-interface.tsx` — the main chat UI. Responsibilities:
+- Renders message list with streaming deltas appended in real time
+- Manages `AbortController` lifecycle (cancel button shown while streaming)
+- Accepts `initialSessionId` prop to resume a session
+- Sets `?conv=<session_id>` URL param after the first response
+- Input card with file-attach button, model indicator toolbar, and suggestion carousel
+- Workflows section below the input card for quick-action shortcuts
+
+### Session management hooks
+
+`hooks/useChatHistory.ts` — fetches session summaries from the backend.
+
+```typescript
+const { sessions, isLoading, error, refetch } = useChatHistory({ limit: 20 })
+```
+
+- Calls `GET /ai/chat/sessions?limit=N`
+- Returns `ChatSession[]` (id, title, is_favorite, created_at, updated_at)
+- Used by the sidebar session list and the `/ask-sentinel/history` page
+
+Additional session API calls (all in `lib/api.ts`):
+
+| Function | Endpoint | Description |
+|---|---|---|
+| `createChatSession(title)` | `POST /ai/chat/sessions` | Create a new named session |
+| `renameChatSession(id, title)` | `PUT /ai/chat/sessions/:id` | Rename session |
+| `deleteChatSession(id)` | `DELETE /ai/chat/sessions/:id` | Soft-delete session |
+| `toggleSessionFavorite(id)` | `POST /ai/chat/sessions/:id/favorite` | Toggle pin/favorite |
+| `getChatSession(id)` | `GET /ai/chat/sessions/:id` | Full session + turns |
+
+---
+
 ## Key Components
 
 ### `app-sidebar.tsx`
 
-Primary navigation sidebar using Radix UI primitives. Collapses to icon-only on small screens. Navigation items are filtered by role.
+Primary navigation sidebar using Radix UI primitives. There is no separate header bar — all global controls (theme toggle, user menu, tenant switcher) live in the sidebar's footer section.
+
+Key sidebar features:
+- Collapse toggle (full → icon-only); state persisted in `localStorage`
+- New Chat button at the top of the chat section
+- Chat session list with inline context menu (rename, delete, favorite) per session
+- User dropdown at the bottom: theme toggle (dark/light), profile link, sign out
+- Navigation items are filtered by role (employees do not see admin routes)
 
 ### `employee-table.tsx`
 
@@ -247,7 +331,7 @@ D3.js force-directed graph. Nodes represent employees (sized by betweenness cent
 
 ### `ask-sentinel-widget.tsx`
 
-Floating chat widget that appears on any page. Opens a slide-over panel with the full Ask Sentinel chat interface. Persists conversation history in localStorage keyed by user hash.
+Floating chat widget that appears on any page. Opens a slide-over panel with the full Ask Sentinel chat interface. Uses `useChatHistory` to surface recent conversations from the backend.
 
 ### `nudge-card.tsx`
 
@@ -330,7 +414,7 @@ Key hooks:
 | `useNudge` | `GET /engines/users/{hash}/nudge` | Current nudge message |
 | `useRecentEvents` | `GET /engines/events` | Activity stream |
 | `useSimulation` | Multiple engine endpoints | Persona and event injection |
-| `useChatHistory` | localStorage | Per-user conversation history |
+| `useChatHistory` | `GET /ai/chat/sessions` | API-backed session list (title, favorite, timestamps) |
 | `useOrchestrator` | AI orchestration endpoints | Agent task execution |
 
 ### Real-Time Updates
@@ -429,11 +513,15 @@ docker run -p 3000:3000 \
 
 ### Theming
 
-The application supports light and dark mode via `next-themes`. The active theme is persisted in `localStorage`. Toggle using the `ThemeToggle` component in the sidebar.
+The application supports dark (default) and light mode via `next-themes`. The active theme is persisted in `localStorage`. Toggle using the `ThemeToggle` component inside the sidebar's user dropdown.
 
-Colors are defined as CSS custom properties in `globals.css` and extended in `tailwind.config.ts`. Risk-level semantic colors:
+Colors are defined as CSS custom properties in `globals.css` and extended in `tailwind.config.ts`. See `docs/DESIGN.md` for the complete design system including the full token palette, Geist type scale, and component patterns.
 
-| Token | Light value | Usage |
+The primary accent color is **emerald green** (`#10b981`). The dark theme background is near-black (`#0a0a0a`); the light theme uses standard white surfaces.
+
+Risk-level semantic colors:
+
+| Token | Value | Usage |
 |---|---|---|
 | Risk LOW | `#22c55e` (green-500) | Healthy badges, chart fills |
 | Risk ELEVATED | `#f59e0b` (amber-400) | Warning badges |

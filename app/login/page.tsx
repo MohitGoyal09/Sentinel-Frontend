@@ -78,10 +78,9 @@ function SentinelGlyph({ size = 20 }: { size?: number }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 function LoginContent() {
-  const { signIn, signUp } = useAuth()
+  const { signIn } = useAuth()
 
   // Form state
-  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -101,12 +100,8 @@ function LoginContent() {
   useEffect(() => {
     const ssoSuccess = searchParams.get('sso')
     const provider = searchParams.get('provider')
-    const registered = searchParams.get('registered')
     if (ssoSuccess === 'success') {
       setSuccess(`Successfully signed in with ${provider || 'SSO'}. Please sign in with your credentials.`)
-    }
-    if (registered === 'true') {
-      toast.success('Check your email to verify your account')
     }
   }, [searchParams])
 
@@ -145,8 +140,7 @@ function LoginContent() {
     setLoading(true)
     setError(null)
     try {
-      if (activeTab === 'signin') await signIn(email, password)
-      else await signUp(email, password)
+      await signIn(email, password)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid credentials'
       setError(message)
@@ -276,34 +270,6 @@ function LoginContent() {
             </div>
           )}
 
-          {/* Tab switcher */}
-          <div className="flex bg-muted/30 rounded-lg p-1 mb-6 border border-white/5">
-            <button
-              type="button"
-              onClick={() => { setActiveTab('signin'); setError(null) }}
-              className={[
-                'flex-1 text-xs font-medium py-2 rounded-md transition-[color,background-color,box-shadow] duration-150 ease-out',
-                activeTab === 'signin'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              ].join(' ')}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => { setActiveTab('signup'); setError(null) }}
-              className={[
-                'flex-1 text-xs font-medium py-2 rounded-md transition-[color,background-color,box-shadow] duration-150 ease-out',
-                activeTab === 'signup'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              ].join(' ')}
-            >
-              Sign Up
-            </button>
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} noValidate>
             <div className="space-y-4">
@@ -346,25 +312,22 @@ function LoginContent() {
                   >
                     Password
                   </label>
-                  {activeTab === 'signin' && (
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      disabled={loading}
-                      className="text-sm text-primary hover:text-primary/80 hover:underline transition-[color] duration-150 ease-out disabled:opacity-50"
-                    >
-                      Forgot password?
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-sm text-primary hover:text-primary/80 hover:underline transition-[color] duration-150 ease-out disabled:opacity-50"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
                 <div className="relative">
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder={activeTab === 'signup' ? 'Min 8 characters' : '••••••••'}
-                    autoComplete={activeTab === 'signin' ? 'current-password' : 'new-password'}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
                     required
-                    minLength={activeTab === 'signup' ? 8 : undefined}
                     disabled={loading}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -419,7 +382,7 @@ function LoginContent() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      {activeTab === 'signin' ? 'Sign In' : 'Create Account'}
+                      Sign In
                       <ArrowRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
                     </>
                   )}

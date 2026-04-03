@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
+import { ProtectedRoute } from "@/components/protected-route"
 import {
   LayoutDashboard,
   Users,
@@ -27,7 +28,7 @@ import { mapUsersToEmployees } from "@/lib/map-employees"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 
-export default function EnginesPage() {
+function EnginesContent() {
   const router = useRouter()
   const [selectedUserHash, setSelectedUserHash] = useState<string | null>(null)
   
@@ -122,5 +123,13 @@ export default function EnginesPage() {
 
       </main>
     </div>
+  )
+}
+
+export default function EnginesPage() {
+  return (
+    <ProtectedRoute allowedRoles={["manager", "admin"]}>
+      <EnginesContent />
+    </ProtectedRoute>
   )
 }

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase'
 const supabase = createClient()
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { api } from '@/lib/api'
+import { api, setCachedAccessToken } from '@/lib/api'
 
 interface UserRole {
   user_hash: string
@@ -22,7 +22,6 @@ interface AuthContextType {
   userRole: UserRole | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -61,15 +60,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // onAuthStateChange fires INITIAL_SESSION synchronously on mount,
     // so a separate getSession() call is unnecessary and causes a double-fetch race.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, newSession) => {
+        // Ignore token refresh failures — keep the existing session alive.
+        // Only clear state on explicit SIGNED_OUT, not on transient refresh errors.
+        if (!newSession && event !== 'SIGNED_OUT' && event !== 'INITIAL_SESSION') {
+          setLoading(false)
+          return
+        }
+
+        // Push access token to API module immediately (before any API calls)
+        setCachedAccessToken(newSession?.access_token ?? null)
+
         setSession(prev => {
-          // Only update if the access_token actually changed — prevents
-          // downstream re-renders (TenantContext) on identical sessions.
-          if (prev?.access_token === session?.access_token) return prev
-          return session
+          if (prev?.access_token === newSession?.access_token) return prev
+          return newSession
         })
-        setUser(session?.user ?? null)
-        if (session) {
+        setUser(newSession?.user ?? null)
+        if (newSession) {
           await fetchUserRole()
         } else {
           setUserRole(null)
@@ -95,37 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/dashboard')
   }
 
-  const signUp = async (email: string, password: string) => {
-    try {
-      const raw = await api.post<any>('/auth/register', { email, password })
-      const result = raw?.data ?? raw
-
-      if (!result?.access_token) {
-        throw new Error('Registration failed. Please try again.')
-      }
-
-      // Set the Supabase session from backend tokens
-      await supabase.auth.setSession({
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-      })
-
-      router.push('/dashboard')
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        throw error
-      }
-      throw new Error('Registration failed. Please try again.')
-    }
-  }
-
   const signOut = async () => {
+    setCachedAccessToken(null)
     await supabase.auth.signOut()
     router.push('/login')
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, userRole, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )

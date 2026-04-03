@@ -1,147 +1,36 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from 'react'
+import { listChatSessions, ChatSessionSummary } from '@/lib/api'
 
-export interface ChatMessage {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: string
+export type { ChatSessionSummary }
+
+export interface UseChatHistoryOptions {
+  limit?: number
+  enabled?: boolean
 }
 
-export interface Chat {
-  id: string
-  title: string
-  messages: ChatMessage[]
-  createdAt: string
-  updatedAt: string
-}
-
-const STORAGE_KEY = "ask-sentinel-chats"
-
-function getStoredChats(): Chat[] {
-  if (typeof window === "undefined") return []
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
-
-function saveChats(chats: Chat[]): void {
-  if (typeof window === "undefined") return
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats))
-  } catch (e) {
-    console.error("Failed to save chats:", e)
-  }
-}
-
-export function useChatHistory() {
-  const [chats, setChats] = useState<Chat[]>([])
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null)
+export function useChatHistory(options: UseChatHistoryOptions = {}) {
+  const { limit = 20, enabled = true } = options
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const stored = getStoredChats()
-    setChats(stored)
-    if (stored.length > 0) {
-      const sorted = [...stored].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      )
-      setCurrentChatId(sorted[0].id)
+  const fetchSessions = useCallback(async () => {
+    if (!enabled) return
+    try {
+      setIsLoading(true)
+      const data = await listChatSessions(limit)
+      setSessions(data.sessions || [])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load sessions')
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
-  }, [])
+  }, [limit, enabled])
 
-  const createNewChat = useCallback(() => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      title: "New Chat",
-      messages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    const updated = [newChat, ...chats]
-    setChats(updated)
-    setCurrentChatId(newChat.id)
-    saveChats(updated)
-    return newChat
-  }, [chats])
+  useEffect(() => { fetchSessions() }, [fetchSessions])
 
-  const loadChat = useCallback((chatId: string) => {
-    setCurrentChatId(chatId)
-  }, [])
-
-  const updateCurrentChat = useCallback(
-    (messages: ChatMessage[], title?: string) => {
-      if (!currentChatId) return
-
-      setChats((prev) => {
-        const existingChat = prev.find((c) => c.id === currentChatId)
-        
-        const newTitle =
-          title ||
-          (existingChat?.title === "New Chat"
-            ? messages.length > 0 && messages[0].role === "user"
-              ? messages[0].content.slice(0, 40) +
-                (messages[0].content.length > 40 ? "..." : "")
-              : "New Chat"
-            : existingChat?.title) ||
-          "New Chat"
-
-        const updated = prev.map((chat) => {
-          if (chat.id === currentChatId) {
-            return {
-              ...chat,
-              title: newTitle,
-              messages,
-              updatedAt: new Date().toISOString(),
-            }
-          }
-          return chat
-        })
-        
-        if (!existingChat) {
-          const newChat: Chat = {
-            id: currentChatId,
-            title: newTitle,
-            messages,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-          updated.unshift(newChat)
-        }
-        
-        saveChats(updated)
-        return updated
-      })
-    },
-    [currentChatId]
-  )
-
-  const deleteChat = useCallback((chatId: string) => {
-    setChats((prev) => {
-      const updated = prev.filter((c) => c.id !== chatId)
-      saveChats(updated)
-      if (currentChatId === chatId) {
-        setCurrentChatId(updated.length > 0 ? updated[0].id : null)
-      }
-      return updated
-    })
-  }, [currentChatId])
-
-  const currentChat = chats.find((c) => c.id === currentChatId) || null
-
-  return {
-    chats,
-    currentChat,
-    currentChatId,
-    isLoading,
-    createNewChat,
-    loadChat,
-    updateCurrentChat,
-    deleteChat,
-  }
+  return { sessions, isLoading, error, refetch: fetchSessions }
 }

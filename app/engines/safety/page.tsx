@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useMemo, useEffect } from "react"
 
+import { ProtectedRoute } from "@/components/protected-route"
 import { RiskAssessment } from "@/components/risk-assessment"
 import { StatCards } from "@/components/stat-cards"
 import { NudgeCard } from "@/components/nudge-card"
@@ -585,5 +586,9 @@ function SafetyContent() {
 }
 
 export default function SafetyValvePage() {
-  return <SafetyContent />
+  return (
+    <ProtectedRoute allowedRoles={["manager", "admin"]}>
+      <SafetyContent />
+    </ProtectedRoute>
+  )
 }

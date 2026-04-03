@@ -1,6 +1,7 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import { AuthProvider } from '@/contexts/auth-context'
 import { TenantProvider } from '@/contexts/tenant-context'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -11,23 +12,13 @@ import { Toaster } from '@/components/ui/sonner'
 
 import './globals.css'
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
-})
-
 export const metadata: Metadata = {
   title: 'Sentinel — AI-Powered Employee Insights',
   description: 'Privacy-first burnout detection, talent discovery, and team health monitoring.',
 }
 
 export const viewport: Viewport = {
-  themeColor: '#121520',
+  themeColor: '#0a0a0a',
 }
 
 export default function RootLayout({
@@ -37,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <AmbientBackground />
           <RouteProgressBar />

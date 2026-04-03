@@ -114,11 +114,12 @@ const TRIGGER_ICONS: Record<string, React.ElementType> = {
   "Team Threshold": Users,
 }
 
-const ACTION_ICONS: Record<string, React.ElementType> = {
-  "Send Slack Message": MessageSquare,
-  "Send Email": Mail,
-  "Create Jira Ticket": CheckCircle2,
-  "Webhook": Zap,
+// Color class per trigger type — maps to the design system semantic palette
+const TRIGGER_COLORS: Record<string, string> = {
+  "Risk Level Change": "text-red-400",
+  "New Alert": "text-amber-400",
+  "Weekly Schedule": "text-primary",
+  "Team Threshold": "text-info",
 }
 
 // ============================================================================
@@ -186,7 +187,7 @@ function CreateWorkflowDialog({ onCreated }: CreateWorkflowDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90">
+        <button className="flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90 active:scale-[0.97]">
           <Plus className="h-4 w-4" />
           Create Workflow
         </button>
@@ -205,23 +206,27 @@ function CreateWorkflowDialog({ onCreated }: CreateWorkflowDialogProps) {
         <div className="space-y-4 pt-2">
           {/* Name */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-medium text-foreground">Workflow Name</label>
+            <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Workflow Name
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Critical Risk → Slack Alert"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
           {/* Trigger */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-medium text-foreground">Trigger</label>
+            <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Trigger
+            </label>
             <select
               value={trigger}
               onChange={(e) => setTrigger(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full cursor-pointer rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {TRIGGER_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
@@ -233,11 +238,13 @@ function CreateWorkflowDialog({ onCreated }: CreateWorkflowDialogProps) {
 
           {/* Action */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-medium text-foreground">Action</label>
+            <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Action
+            </label>
             <select
               value={action}
               onChange={(e) => setAction(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full cursor-pointer rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {ACTION_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
@@ -248,15 +255,17 @@ function CreateWorkflowDialog({ onCreated }: CreateWorkflowDialogProps) {
           </div>
 
           {/* Preview */}
-          <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
-            <p className="text-[11px] text-muted-foreground mb-2">Preview</p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="text-[11px] gap-1">
+          <div className="rounded-md border border-border bg-card px-4 py-3">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Preview
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="gap-1 text-[11px]">
                 <AlertTriangle className="h-3 w-3" />
                 {trigger}
               </Badge>
-              <span className="text-muted-foreground text-[11px]">→</span>
-              <Badge variant="secondary" className="text-[11px] gap-1">
+              <span className="text-[11px] text-muted-foreground">→</span>
+              <Badge variant="secondary" className="gap-1 text-[11px]">
                 <Zap className="h-3 w-3" />
                 {action}
               </Badge>
@@ -267,14 +276,14 @@ function CreateWorkflowDialog({ onCreated }: CreateWorkflowDialogProps) {
           <div className="flex justify-end gap-2 pt-1">
             <button
               onClick={() => setOpen(false)}
-              className="rounded-lg border border-border px-4 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent"
+              className="cursor-pointer rounded-md border border-border px-4 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent active:scale-[0.97]"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving || !name.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               Save Workflow
@@ -298,33 +307,53 @@ interface WorkflowCardProps {
 
 function WorkflowCard({ workflow, onToggle, isToggling }: WorkflowCardProps) {
   const TriggerIcon = TRIGGER_ICONS[workflow.trigger] ?? Zap
-  const ActionIcon = ACTION_ICONS[workflow.action] ?? Zap
+  const iconColorClass = TRIGGER_COLORS[workflow.trigger] ?? "text-muted-foreground"
 
   return (
-    <div className="glass-card rounded-2xl p-5 flex flex-col gap-4 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10">
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <Zap className="h-4 w-4 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-[14px] font-semibold text-foreground">{workflow.name}</p>
-            {workflow.isTemplate && (
-              <Badge variant="secondary" className="mt-0.5 text-[9px] px-1.5 py-0 bg-primary/10 text-primary">
-                Template
-              </Badge>
-            )}
-          </div>
+    <div className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors duration-150 hover:border-border/80 hover:bg-card/80">
+      {/* Left: trigger icon */}
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background">
+        <TriggerIcon className={`h-4 w-4 ${iconColorClass}`} />
+      </div>
+
+      {/* Center: name + trigger description */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-[14px] font-medium text-foreground">
+            {workflow.name}
+          </p>
+          {workflow.isTemplate && (
+            <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              Template
+            </span>
+          )}
         </div>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          {workflow.triggerLabel} → {workflow.actionLabel}
+        </p>
+        {workflow.lastTriggered && (
+          <p className="mt-0.5 text-[11px] text-muted-foreground/60">
+            Last run: {workflow.lastTriggered}
+          </p>
+        )}
+      </div>
+
+      {/* Right: run count, toggle, run button */}
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex">
+          <Play className="h-3 w-3" />
+          <span className="font-mono tabular-nums font-medium text-foreground">
+            {workflow.runCount}
+          </span>
+        </span>
 
         {/* Toggle */}
         <button
           onClick={() => onToggle(workflow.id, !workflow.enabled)}
           disabled={isToggling}
-          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
             workflow.enabled
-              ? "border-[hsl(var(--sentinel-healthy))] bg-[hsl(var(--sentinel-healthy))]"
+              ? "border-primary bg-primary"
               : "border-border bg-muted"
           }`}
           aria-label={workflow.enabled ? "Disable workflow" : "Enable workflow"}
@@ -335,60 +364,14 @@ function WorkflowCard({ workflow, onToggle, isToggling }: WorkflowCardProps) {
             }`}
           />
         </button>
-      </div>
 
-      {/* Trigger → Action pipeline */}
-      <div className="flex items-stretch gap-2">
-        {/* Trigger */}
-        <div className="flex flex-1 flex-col gap-1.5 rounded-xl border border-border bg-muted/20 px-3 py-2.5">
-          <p className="text-[9px] font-medium uppercase tracking-widest text-muted-foreground">
-            Trigger
-          </p>
-          <div className="flex items-center gap-2">
-            <TriggerIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <p className="text-[12px] text-foreground leading-snug">{workflow.triggerLabel}</p>
-          </div>
-        </div>
-
-        {/* Arrow */}
-        <div className="flex items-center text-muted-foreground/50">
-          <span className="text-lg">→</span>
-        </div>
-
-        {/* Action */}
-        <div className="flex flex-1 flex-col gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
-          <p className="text-[9px] font-medium uppercase tracking-widest text-primary/60">
-            Action
-          </p>
-          <div className="flex items-center gap-2">
-            <ActionIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
-            <p className="text-[12px] text-foreground leading-snug">{workflow.actionLabel}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          {workflow.enabled ? (
-            <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--sentinel-healthy))]" />
-          ) : (
-            <XCircle className="h-3.5 w-3.5 text-muted-foreground/50" />
-          )}
-          <span>{workflow.enabled ? "Active" : "Paused"}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {workflow.lastTriggered && (
-            <span>
-              Last run:{" "}
-              <span className="font-medium text-foreground">{workflow.lastTriggered}</span>
-            </span>
-          )}
-          <span className="flex items-center gap-1">
-            <Play className="h-3 w-3" />
-            <span className="font-mono tabular-nums font-medium text-foreground">{workflow.runCount}</span> runs
-          </span>
-        </div>
+        {/* Run button */}
+        <button
+          className="cursor-pointer rounded-md border border-border px-3 py-1.5 text-[12px] font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary active:scale-[0.97]"
+          aria-label={`Run ${workflow.name}`}
+        >
+          Run
+        </button>
       </div>
     </div>
   )
@@ -461,65 +444,67 @@ function WorkflowsContent() {
   }
 
   const activeCount = workflows.filter((w) => w.enabled).length
+  const totalRuns = workflows.reduce((acc, w) => acc + w.runCount, 0)
 
   return (
     <div className="flex flex-1 flex-col">
       <ScrollArea className="flex-1">
         <main className="flex flex-col gap-8 p-6 lg:p-10">
-          {/* Header */}
+
+          {/* Page header */}
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-primary/10">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-foreground">
-                  Automated Workflows
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Set up triggers that automatically take action when Sentinel detects patterns
-                </p>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                Automated Workflows
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Set up triggers that automatically take action when Sentinel detects patterns.
+              </p>
             </div>
             <CreateWorkflowDialog onCreated={handleCreated} />
           </div>
 
-          {/* Stats banner */}
-          <div className="glass-card-elevated relative overflow-hidden rounded-2xl p-6">
-            <div className="absolute inset-0 bg-primary/3" />
-            <div className="relative flex flex-wrap items-center gap-6 md:gap-10">
-              <div className="text-center">
-                <p className="text-3xl font-bold font-mono tabular-nums text-primary">
-                  {activeCount}
-                </p>
-                <p className="text-[11px] text-muted-foreground">Active</p>
-              </div>
-              <Separator orientation="vertical" className="hidden h-10 md:block" />
-              <div className="text-center">
-                <p className="text-3xl font-bold font-mono tabular-nums text-foreground">
-                  {workflows.length}
-                </p>
-                <p className="text-[11px] text-muted-foreground">Total</p>
-              </div>
-              <Separator orientation="vertical" className="hidden h-10 md:block" />
-              <div className="text-center">
-                <p className="text-3xl font-bold font-mono tabular-nums text-[hsl(var(--sentinel-healthy))]">
-                  {workflows.reduce((acc, w) => acc + w.runCount, 0)}
-                </p>
-                <p className="text-[11px] text-muted-foreground">Total Runs</p>
-              </div>
+          {/* Stats strip */}
+          <div className="flex flex-wrap items-center gap-6 rounded-lg border border-border bg-card px-6 py-4">
+            <div>
+              <p className="text-2xl font-semibold tabular-nums text-primary">
+                {activeCount}
+              </p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Active
+              </p>
+            </div>
+            <Separator orientation="vertical" className="hidden h-8 md:block" />
+            <div>
+              <p className="text-2xl font-semibold tabular-nums text-foreground">
+                {workflows.length}
+              </p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Total
+              </p>
+            </div>
+            <Separator orientation="vertical" className="hidden h-8 md:block" />
+            <div>
+              <p className="text-2xl font-semibold tabular-nums text-foreground">
+                {totalRuns}
+              </p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Total Runs
+              </p>
             </div>
           </div>
 
-          {/* Workflow cards */}
-          <section className="space-y-4">
+          {/* Workflow list */}
+          <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-foreground">Your Workflows</h3>
-              <Badge variant="outline" className="text-[10px]">
+              <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Your Workflows
+              </h3>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                 {workflows.length}
-              </Badge>
+              </span>
             </div>
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="flex flex-col gap-2">
               {workflows.map((workflow) => (
                 <WorkflowCard
                   key={workflow.id}
@@ -532,8 +517,8 @@ function WorkflowsContent() {
           </section>
 
           {/* How it works */}
-          <section className="glass-card rounded-2xl p-6 space-y-4">
-            <h3 className="text-base font-semibold text-foreground">How Workflows Work</h3>
+          <section className="rounded-lg border border-border bg-card p-5 space-y-4">
+            <h3 className="text-[14px] font-medium text-foreground">How Workflows Work</h3>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 {
@@ -542,7 +527,8 @@ function WorkflowsContent() {
                   description:
                     "Select what event starts the workflow — a risk level change, schedule, or threshold breach.",
                   icon: AlertTriangle,
-                  color: "hsl(var(--sentinel-elevated))",
+                  iconClass: "text-warning",
+                  bgClass: "bg-warning/10",
                 },
                 {
                   step: "2",
@@ -550,7 +536,8 @@ function WorkflowsContent() {
                   description:
                     "Pick what happens automatically — Slack message, email, Jira ticket, or custom webhook.",
                   icon: Zap,
-                  color: "hsl(var(--primary))",
+                  iconClass: "text-primary",
+                  bgClass: "bg-primary/10",
                 },
                 {
                   step: "3",
@@ -558,37 +545,39 @@ function WorkflowsContent() {
                   description:
                     "Sentinel monitors for the trigger 24/7 and executes the action the moment it fires.",
                   icon: Gem,
-                  color: "hsl(var(--sentinel-gem))",
+                  iconClass: "text-info",
+                  bgClass: "bg-info/10",
                 },
-              ].map(({ step, title, description, icon: Icon, color }) => (
-                <div key={step} className="flex flex-col gap-3 rounded-xl border border-border bg-muted/20 p-4">
+              ].map(({ step, title, description, icon: Icon, iconClass, bgClass }) => (
+                <div
+                  key={step}
+                  className="flex flex-col gap-3 rounded-md border border-border bg-background p-4"
+                >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: `${color}15` }}
-                    >
-                      <Icon className="h-4 w-4" style={{ color }} />
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${bgClass}`}>
+                      <Icon className={`h-4 w-4 ${iconClass}`} />
                     </div>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                       Step {step}
                     </span>
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-foreground">{title}</p>
-                    <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">{description}</p>
+                    <p className="text-[13px] font-medium text-foreground">{title}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* Footer */}
-          <div className="flex items-center justify-center gap-6 py-3 text-[11px] text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Info className="h-3.5 w-3.5" />
-              <span>Workflows run in real-time as Sentinel processes behavioral signals</span>
-            </div>
+          {/* Footer note */}
+          <div className="flex items-center justify-center gap-2 py-3 text-[11px] text-muted-foreground">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>Workflows run in real-time as Sentinel processes behavioral signals.</span>
           </div>
+
         </main>
       </ScrollArea>
     </div>
