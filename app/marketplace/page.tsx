@@ -63,6 +63,28 @@ const ENGINE_MAPPINGS = [
   { engine: "Network Engine", icon: LinkIcon, tools: ["Slack", "GitHub"], color: "hsl(var(--primary))" },
 ]
 
+/** Validate OAuth/connection URLs — only allow HTTPS to known providers */
+function isValidConnectionUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== "https:") return false
+    const allowedDomains = [
+      "composio.dev",
+      "accounts.google.com",
+      "login.microsoftonline.com",
+      "github.com",
+      "slack.com",
+    ]
+    return allowedDomains.some(
+      (domain) =>
+        parsed.hostname === domain ||
+        parsed.hostname.endsWith(`.${domain}`),
+    )
+  } catch {
+    return false
+  }
+}
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
   useEffect(() => {
@@ -469,6 +491,12 @@ function MarketplaceContent() {
           toast.success("Syncing your data in the background...")
         }).catch(() => {})
         window.dispatchEvent(new CustomEvent("sentinel:tool-connected", { detail: { toolSlug: slug } }))
+        return
+      }
+      // Validate the redirect URL before opening
+      if (!isValidConnectionUrl(data.redirect_url)) {
+        setLoadingSlug(null)
+        toast.error("Invalid connection URL")
         return
       }
       const w = 600, h = 700

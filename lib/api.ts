@@ -513,6 +513,7 @@ export async function chatWithSentinelStream(
 ): Promise<void> {
   const authHeaders = getAuthHeaders();
   const url = `${API_BASE_URL}/ai/chat/stream`;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
 
   try {
     const response = await fetch(url, {
@@ -529,7 +530,7 @@ export async function chatWithSentinelStream(
       throw new Error(`Stream request failed: ${response.status}`);
     }
 
-    const reader = response.body?.getReader();
+    reader = response.body?.getReader();
     if (!reader) throw new Error("No readable stream");
 
     const decoder = new TextDecoder();
@@ -584,11 +585,14 @@ export async function chatWithSentinelStream(
       }
     }
   } catch (error) {
+    try { reader?.cancel(); } catch {}  // Release the stream lock
     if (onError) {
       onError(error instanceof Error ? error : new Error(String(error)));
     } else {
       throw error;
     }
+  } finally {
+    try { reader?.releaseLock(); } catch {}
   }
 }
 

@@ -7,20 +7,9 @@ import { Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { markdownComponents } from "./markdown-components"
 import { MessageActions } from "./message-actions"
+import type { Message } from "@/types/chat"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-interface Message {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-  suggestions?: string[]
-  toolName?: string
-  toolStatus?: "starting" | "processing" | "complete" | "error"
-  toolArgs?: Record<string, unknown>
-  toolResult?: string
-}
 
 interface MessageBubbleProps {
   message: Message

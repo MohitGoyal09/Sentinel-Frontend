@@ -101,9 +101,9 @@ export function AdminView({ employees }: AdminViewProps) {
   }, [employees])
 
   const quickActions = [
-    { title: "User Management", desc: "Manage employee accounts", href: "/admin", icon: UsersIcon, key: "users" },
-    { title: "Team Management", desc: "Configure team structure", href: "/admin", icon: Settings, key: "teams" },
-    { title: "Audit Log", desc: "Review system activity", href: "/admin", icon: ClipboardList, key: "audit" },
+    { title: "User Management", desc: "Manage employee accounts", href: "/admin?tab=members", icon: UsersIcon, key: "users" },
+    { title: "Team Management", desc: "Configure team structure", href: "/admin?tab=teams", icon: Settings, key: "teams" },
+    { title: "Audit Log", desc: "Review system activity", href: "/admin?tab=audit", icon: ClipboardList, key: "audit" },
     { title: "Pipeline Health", desc: "Monitor data ingestion", href: "/data-ingestion", icon: Database, key: "pipeline" },
   ]
 

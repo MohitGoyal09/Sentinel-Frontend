@@ -24,25 +24,9 @@ import {
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 import { notifyChatSessionChanged } from "@/hooks/useChatHistory"
+import type { Message } from "@/types/chat"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-interface Message {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-  suggestions?: string[]
-  /** Grouped tool execution steps (rendered as a single stacked card) */
-  toolSteps?: ToolStep[]
-  connectionLink?: {
-    toolName: string
-    toolSlug: string
-    toolLogo?: string
-    connectionUrl?: string
-    message: string
-  }
-}
 
 interface ChatInterfaceProps {
   initialQuery?: string
@@ -136,6 +120,7 @@ function InputArea({
         <textarea
           ref={textareaRef}
           className="w-full resize-none bg-transparent border-none focus:ring-0 focus:outline-none px-4 pt-3.5 pb-1.5 text-sm placeholder:text-muted-foreground/40 text-foreground leading-relaxed min-h-[24px] max-h-[200px]"
+          aria-label="Chat message"
           placeholder="Ask about team health, burnout risks, or performance..."
           value={input}
           onChange={(e) => {
@@ -198,6 +183,7 @@ function InputArea({
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-muted text-muted-foreground/40 cursor-not-allowed",
                 )}
+                aria-label="Send message"
                 title="Send message"
               >
                 <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -236,6 +222,13 @@ export function ChatInterface({
   const messagesRef = useRef(messages)
   useEffect(() => { messagesRef.current = messages }, [messages])
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Abort in-flight stream on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+    }
+  }, [])
 
   // Helper: update session ID in URL without full page reload (KaraX pattern)
   const setSessionIdInUrl = useCallback((newSessionId: string) => {
@@ -393,10 +386,20 @@ export function ChatInterface({
     }
   }, [input])
 
-  // Auto-scroll
+  // Auto-scroll — only when user is near the bottom (prevents jank & lets users scroll up)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   useEffect(() => {
     if (scrollRef.current && messages.length > 0) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" })
+      const container = scrollRef.current.parentElement
+      if (container) {
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+        if (isNearBottom) {
+          if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+          scrollTimeoutRef.current = setTimeout(() => {
+            scrollRef.current?.scrollIntoView({ behavior: "smooth" })
+          }, 100) // Debounce 100ms during streaming
+        }
+      }
     }
   }, [messages])
 
@@ -667,7 +670,7 @@ export function ChatInterface({
     <div className="flex h-full w-full flex-col bg-background overflow-hidden">
       {/* Messages — scrollable, takes all remaining space */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
+        <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6" role="log" aria-live="polite">
           {messages.map((message, idx) =>
             message.connectionLink ? (
               <ConnectionLinkCard

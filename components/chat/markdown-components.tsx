@@ -215,15 +215,21 @@ export const markdownComponents: Record<
     </a>
   ),
 
-  img: ({ src, alt, ...props }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      className="max-w-full rounded-lg border border-border my-2"
-      src={src}
-      alt={alt ?? ""}
-      {...props}
-    />
-  ),
+  img: ({ src, alt, ...props }) => {
+    // Validate src URL - only allow https and relative paths to prevent XSS, tracking pixels, CSRF-via-image
+    if (src && !src.startsWith('https://') && !src.startsWith('/')) {
+      return <span className="text-muted-foreground text-sm">[Image blocked: invalid URL]</span>
+    }
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        className="max-w-full rounded-lg border border-border my-2"
+        src={src}
+        alt={alt ?? ""}
+        {...props}
+      />
+    )
+  },
 
   code: ({
     inline,

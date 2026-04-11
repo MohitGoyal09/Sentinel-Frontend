@@ -11,25 +11,26 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, userRole, loading } = useAuth()
+  const { user, userRole, loading, roleLoading } = useAuth()
   const router = useRouter()
 
   const role = userRole?.role ?? null
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Wait for both auth and role to finish loading
+    if (loading || roleLoading) return
+
+    if (!user) {
       router.push('/login')
-    }
-    if (!loading && user && !role) {
-      // Role fetch failed or user has no role — redirect to login
+    } else if (!role) {
+      // User is authenticated but role fetch failed after retries
       router.push('/login')
-    }
-    if (!loading && user && allowedRoles && role && !allowedRoles.includes(role)) {
+    } else if (allowedRoles && !allowedRoles.includes(role)) {
       router.push('/dashboard')
     }
-  }, [user, userRole, loading, router, allowedRoles, role])
+  }, [user, userRole, loading, roleLoading, router, allowedRoles, role])
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

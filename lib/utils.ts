@@ -16,6 +16,10 @@ export function getInitials(name?: string | null): string {
     .slice(0, 2)
 }
 
+export function formatToolName(slug: string): string {
+  return slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export function timeAgo(dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()

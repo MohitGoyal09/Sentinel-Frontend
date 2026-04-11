@@ -15,7 +15,7 @@ import {
   Users,
   BarChart3,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatToolName } from "@/lib/utils"
 
 // --- Types -----------------------------------------------------------------
 
@@ -31,10 +31,6 @@ interface ToolCardProps {
 }
 
 // --- Helpers ---------------------------------------------------------------
-
-function formatToolName(slug: string): string {
-  return slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-}
 
 /** Return a tool-specific icon based on the tool name/slug */
 function getToolIcon(toolName: string) {

@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-import { ProtectedRoute } from "@/components/protected-route"
 import {
   LayoutDashboard,
   Users,
@@ -127,9 +126,5 @@ function EnginesContent() {
 }
 
 export default function EnginesPage() {
-  return (
-    <ProtectedRoute allowedRoles={["manager", "admin"]}>
-      <EnginesContent />
-    </ProtectedRoute>
-  )
+  return <EnginesContent />
 }
