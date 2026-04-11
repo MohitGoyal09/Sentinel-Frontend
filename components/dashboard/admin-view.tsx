@@ -101,10 +101,10 @@ export function AdminView({ employees }: AdminViewProps) {
   }, [employees])
 
   const quickActions = [
-    { title: "User Management", desc: "Manage employee accounts", href: "/admin", icon: UsersIcon },
-    { title: "Team Management", desc: "Configure team structure", href: "/admin", icon: Settings },
-    { title: "Audit Log", desc: "Review system activity", href: "/admin", icon: ClipboardList },
-    { title: "Pipeline Health", desc: "Monitor data ingestion", href: "/data-ingestion", icon: Database },
+    { title: "User Management", desc: "Manage employee accounts", href: "/admin", icon: UsersIcon, key: "users" },
+    { title: "Team Management", desc: "Configure team structure", href: "/admin", icon: Settings, key: "teams" },
+    { title: "Audit Log", desc: "Review system activity", href: "/admin", icon: ClipboardList, key: "audit" },
+    { title: "Pipeline Health", desc: "Monitor data ingestion", href: "/data-ingestion", icon: Database, key: "pipeline" },
   ]
 
   return (
@@ -262,7 +262,7 @@ export function AdminView({ employees }: AdminViewProps) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {quickActions.map((action) => (
           <button
-            key={action.href}
+            key={action.key}
             onClick={() => router.push(action.href)}
             className="bg-card border border-border rounded-lg p-5 text-left hover:border-primary/20 transition-all duration-150 cursor-pointer active:scale-[0.97]"
           >
