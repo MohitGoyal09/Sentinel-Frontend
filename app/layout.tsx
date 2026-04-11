@@ -1,5 +1,7 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
+
+export const dynamic = 'force-dynamic'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { AuthProvider } from '@/contexts/auth-context'
