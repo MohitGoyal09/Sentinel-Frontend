@@ -22,14 +22,22 @@ const PROTECTED_ROUTES = ["/me", "/profile", "/team", "/admin", "/dashboard", "/
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // If Supabase env vars are missing, allow all requests through
+  // (build-time or misconfigured deployment — don't crash)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.next()
+  }
+
   // Create a response that we can modify (for cookie refresh)
   let supabaseResponse = NextResponse.next({ request })
 
   // Use createServerClient which handles chunked cookies, base64url decoding,
   // and token refresh automatically — unlike manual cookie parsing
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
