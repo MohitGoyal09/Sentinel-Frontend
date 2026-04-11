@@ -1,9 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase'
 
-// Module-scope singleton — prevents infinite re-renders from useEffect [supabase] dependency
 const supabase = createClient()
 import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
@@ -33,9 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  // supabase is at module scope (singleton)
 
-  // Fetch user role from backend
+  const roleFetchedRef = useRef(false)
+  const isSigningInRef = useRef(false)
+
   const fetchUserRole = async () => {
     try {
       const raw = await api.get<any>('/auth/me')
@@ -48,27 +48,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           consent_share_with_manager: response.consent_share_with_manager ?? false,
           consent_share_anonymized: response.consent_share_anonymized ?? true,
         } as UserRole)
+        roleFetchedRef.current = true
       } else {
-        setUserRole(null)
+        // Only clear role if this isn't a transient network error
+        // (role present but no data could mean token expired mid-refresh)
+        if (!isSigningInRef.current) {
+          // Don't nuke role on transient failures - only clear on explicit sign out
+          // The ProtectedRoute will handle redirect when user becomes null
+        }
+        roleFetchedRef.current = true
       }
-    } catch (error) {
-      setUserRole(null)
+    } catch (error: any) {
+      // On 401 during token refresh, DON'T clear the existing role.
+      // Supabase token refresh can cause a brief window where the old token
+      // is invalid but the new one hasn't been set yet. The onAuthStateChange
+      // will fire again with the new token and re-fetch the role.
+      const status = error?.response?.status
+      if (status === 401) {
+        // Token expired or invalid - don't clear role yet.
+        // The session refresh will trigger a new onAuthStateChange event
+        // which will re-set the token and retry fetchUserRole.
+        // Only clear role if we get explicit SIGNED_OUT event.
+        console.warn('Auth/me returned 401, keeping existing role until session refreshes')
+        roleFetchedRef.current = true
+        return
+      }
+      // For other errors (network, etc.), keep existing role
+      roleFetchedRef.current = true
     }
   }
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION synchronously on mount,
-    // so a separate getSession() call is unnecessary and causes a double-fetch race.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        // Ignore token refresh failures — keep the existing session alive.
-        // Only clear state on explicit SIGNED_OUT, not on transient refresh errors.
+        // Ignore transient refresh failures
         if (!newSession && event !== 'SIGNED_OUT' && event !== 'INITIAL_SESSION') {
           setLoading(false)
           return
         }
 
-        // Push access token to API module immediately (before any API calls)
+        // Push access token to API module immediately
         setCachedAccessToken(newSession?.access_token ?? null)
 
         setSession(prev => {
@@ -76,10 +95,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return newSession
         })
         setUser(newSession?.user ?? null)
+
         if (newSession) {
+          roleFetchedRef.current = false
           await fetchUserRole()
         } else {
+          // Only clear role on explicit sign out
           setUserRole(null)
+          roleFetchedRef.current = true
         }
         setLoading(false)
       }
@@ -98,12 +121,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error(errorMap[error.message] || error.message)
     }
-    // onAuthStateChange listener will fire, calling fetchUserRole() and setting state
+    isSigningInRef.current = true
+    // Wait for role to be fetched
+    await new Promise<void>((resolve) => {
+      const checkRole = () => {
+        if (roleFetchedRef.current) {
+          setTimeout(resolve, 150)
+        } else {
+          setTimeout(checkRole, 50)
+        }
+      }
+      setTimeout(checkRole, 100)
+    })
+    isSigningInRef.current = false
     router.push('/dashboard')
   }
 
   const signOut = async () => {
     setCachedAccessToken(null)
+    roleFetchedRef.current = false
+    setUserRole(null)
     await supabase.auth.signOut()
     router.push('/login')
   }
