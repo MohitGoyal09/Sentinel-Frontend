@@ -452,7 +452,7 @@ function TeamPageContent() {
           {/* MEMBERS TAB */}
           <TabsContent value="members" className="mt-0 space-y-5">
             {selectedMember && memberDetails && (
-              <div className="glass-card-elevated rounded-xl p-5 border-l-2 border-l-[hsl(var(--primary))] mb-1">
+              <div className="glass-card-elevated rounded-xl p-5 bg-primary/5 mb-1">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -504,7 +504,7 @@ function TeamPageContent() {
                           </p>
                         </div>
                         {memberDetails.employee?.monitoring_paused && (
-                          <div className="col-span-3 glass-card rounded-lg p-3 border-l-2 border-l-[hsl(var(--sentinel-elevated))]">
+                          <div className="col-span-3 glass-card rounded-lg p-3 bg-amber-500/5">
                             <div className="flex items-center gap-2">
                               <AlertTriangle className="h-3.5 w-3.5 text-[hsl(var(--sentinel-elevated))]" />
                               <p className="text-xs font-medium text-[hsl(var(--sentinel-elevated))]">Monitoring Paused</p>

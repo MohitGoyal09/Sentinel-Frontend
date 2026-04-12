@@ -132,7 +132,7 @@ export function AgendaGenerator({
               "flex h-10 w-10 items-center justify-center rounded-xl shadow-lg",
               isElevatedOrHigher 
                 ? "bg-amber-500" 
-                : "bg-purple-500"
+                : "bg-primary"
             )}>
               {isElevatedOrHigher ? (
                 <AlertTriangle className="h-5 w-5 text-white" />
@@ -153,7 +153,7 @@ export function AgendaGenerator({
             <Badge variant="outline" className={cn("text-[10px] font-semibold", riskBadgeColor)}>
               {riskLevel}
             </Badge>
-            <Badge variant="outline" className="text-[10px] font-semibold bg-purple-500/10 text-purple-500 border-purple-500/20">
+            <Badge variant="outline" className="text-[10px] font-semibold bg-primary/10 text-primary border-primary/20">
               <Sparkles className="mr-1 h-3 w-3" />
               AI
             </Badge>
@@ -190,7 +190,7 @@ export function AgendaGenerator({
                 "w-full gap-2 shadow-lg",
                 isElevatedOrHigher 
                   ? "bg-amber-500 hover:bg-amber-600 hover:shadow-amber-500/20" 
-                  : "bg-purple-500 hover:bg-purple-600 hover:shadow-purple-500/20"
+                  : "bg-primary hover:bg-primary/90"
               )}
             >
               {isLoading ? (
@@ -243,7 +243,7 @@ export function AgendaGenerator({
                           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium mt-1",
                           isElevatedOrHigher 
                             ? "bg-amber-500/10 text-amber-600" 
-                            : "bg-purple-500/10 text-purple-600"
+                            : "bg-primary/10 text-primary"
                         )}>
                           {point.id}
                         </span>
@@ -279,9 +279,9 @@ export function AgendaGenerator({
                       <li key={point.id || idx} className="flex gap-3">
                         <span className={cn(
                           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
-                          isElevatedOrHigher 
-                            ? "bg-amber-500/10 text-amber-600" 
-                            : "bg-purple-500/10 text-purple-600"
+                          isElevatedOrHigher
+                            ? "bg-amber-500/10 text-amber-600"
+                            : "bg-primary/10 text-primary"
                         )}>
                           {point.id}
                         </span>
@@ -302,12 +302,12 @@ export function AgendaGenerator({
                 "rounded-lg p-4 text-sm",
                 isElevatedOrHigher 
                   ? "bg-amber-500/10 border border-amber-500/20" 
-                  : "bg-purple-500/10 border border-purple-500/20"
+                  : "bg-primary/5 border border-primary/20"
               )}>
                 <div className="flex items-start gap-2">
                   <Heart className={cn(
                     "h-4 w-4 shrink-0 mt-0.5",
-                    isElevatedOrHigher ? "text-amber-500" : "text-purple-500"
+                    isElevatedOrHigher ? "text-amber-500" : "text-primary"
                   )} />
                   <p className="text-muted-foreground">
                     <span className="font-medium text-foreground">Tip: </span>
@@ -346,7 +346,7 @@ export function AgendaGenerator({
                       "flex-1 gap-1",
                       isElevatedOrHigher 
                         ? "bg-emerald-600 hover:bg-emerald-700" 
-                        : "bg-purple-600 hover:bg-purple-700"
+                        : "bg-primary hover:bg-primary/90"
                     )}
                   >
                     <Calendar className="h-3.5 w-3.5" />

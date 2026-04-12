@@ -107,13 +107,13 @@ export function TeamGrid({ employees, isAnonymized }: TeamGridProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name, role, or ID..."
-                className="bg-black/40 border border-border rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary/50 text-foreground w-48 transition-all focus:w-64 placeholder:text-muted-foreground/50"
+                className="bg-background/40 border border-border rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary/50 text-foreground w-48 transition-all focus:w-64 placeholder:text-muted-foreground/50"
               />
             </div>
           </div>
 
           <Table>
-            <TableHeader className="bg-black/20">
+            <TableHeader className="bg-background/20">
               <TableRow className="hover:bg-transparent border-border">
                 <TableHead className="text-muted-foreground font-medium">Member</TableHead>
                 <TableHead className="text-muted-foreground font-medium">Role</TableHead>

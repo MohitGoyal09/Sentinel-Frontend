@@ -70,7 +70,7 @@ export default function Home() {
                 How It Works
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                From data to insight in <span className="text-gradient-primary">minutes</span>
+                From data to insight in <span className="text-primary">minutes</span>
               </h2>
               <p className="text-muted-foreground max-w-lg mx-auto">
                 Four simple steps to transform how you understand your team.

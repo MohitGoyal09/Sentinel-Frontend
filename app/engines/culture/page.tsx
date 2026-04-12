@@ -569,7 +569,7 @@ function CultureContent() {
               {insights.map((insight, i) => {
                 const Icon = insight.icon
                 return (
-                  <div key={i} className="bg-card border border-border rounded-lg p-5 border-l-2 border-l-emerald-500 hover:bg-muted/30 transition-colors duration-150">
+                  <div key={i} className="bg-card border border-border rounded-lg p-5 bg-primary/5 hover:bg-muted/30 transition-colors duration-150">
                     <div className="flex items-center gap-2 mb-3">
                       <Icon className="h-4 w-4 text-emerald-400 shrink-0" />
                       <span className="text-sm font-medium text-foreground">{insight.title}</span>

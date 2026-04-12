@@ -41,7 +41,7 @@ const scenarios: DemoScenario[] = [
     title: "Culture Health",
     description: "Watch how team mood affects everyone",
     personaType: "maria_contagion",
-    color: "from-purple-500/20 to-pink-500/20 border-purple-500/30 hover:border-purple-500/60",
+    color: "from-primary/20 to-primary/10 border-primary/30 hover:border-primary/60",
   },
 ]
 
@@ -121,7 +121,7 @@ export function DemoScenarios() {
                     ? "bg-orange-500"
                     : scenario.id === "talent"
                       ? "bg-amber-500"
-                      : "bg-purple-500"
+                      : "bg-primary"
                 )}
               >
                 <Icon className="h-8 w-8 text-white" />

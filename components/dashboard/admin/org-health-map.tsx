@@ -85,7 +85,7 @@ export function OrgHealthMap() {
                   >
                     <span className="font-bold text-xs text-foreground">{dept.members}</span>
                   </div>
-                  <div className="mt-2 text-xs font-medium text-foreground bg-black/60 px-2 py-0.5 rounded-full border border-border">
+                  <div className="mt-2 text-xs font-medium text-foreground bg-background/60 px-2 py-0.5 rounded-full border border-border">
                     {dept.name}
                   </div>
                 </div>

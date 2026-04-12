@@ -126,7 +126,7 @@ function NotificationItem({
   const inner = (
     <div
       className={[
-        'group relative flex items-start gap-3 rounded-xl bg-card border border-white/5 border-l-4 p-4',
+        'group relative flex items-start gap-3 rounded-xl bg-card border border-white/5 p-4',
         borderAccentClass(notification.priority),
         !notification.read ? '' : 'opacity-60',
         notification.action_url ? 'cursor-pointer hover:border-white/10 hover:bg-card/80' : '',

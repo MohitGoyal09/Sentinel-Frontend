@@ -72,7 +72,7 @@ export default function PrivacyDashboard() {
             { label: "Data Subjects", value: totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
             { label: "Behavioral Events", value: totalEvents.toLocaleString(), icon: Activity, color: "text-[hsl(var(--sentinel-healthy))]", bg: "bg-[hsl(var(--sentinel-healthy))]/10" },
             { label: "Audit Entries", value: totalAuditLogs, icon: FileKey, color: "text-[hsl(var(--sentinel-elevated))]", bg: "bg-[hsl(var(--sentinel-elevated))]/10" },
-            { label: "Consent Rate", value: `${consentRate}%`, icon: CheckCircle2, color: "text-purple-500", bg: "bg-purple-500/10" },
+            { label: "Consent Rate", value: `${consentRate}%`, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/10" },
           ].map((stat) => (
             <Card key={stat.label} className="glass-card">
               <CardContent className="p-4 flex items-center gap-4">
@@ -160,13 +160,13 @@ export default function PrivacyDashboard() {
               </div>
 
               {/* Vault B */}
-              <div className="rounded-xl border-2 border-purple-500/30 bg-purple-500/5 p-5">
+              <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <Lock className="h-5 w-5 text-purple-500" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Lock className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-purple-500">Vault B — Identity</h3>
+                    <h3 className="font-semibold text-primary">Vault B — Identity</h3>
                     <p className="text-xs text-muted-foreground">Schema: identity</p>
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function PrivacyDashboard() {
                     { table: "audit_logs", desc: "Immutable action trail (who did what)" },
                   ].map((t) => (
                     <div key={t.table} className="flex items-center gap-3 rounded-lg bg-background/50 px-3 py-2">
-                      <FileKey className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                      <FileKey className="h-3.5 w-3.5 text-primary/70 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-mono font-medium">{t.table}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{t.desc}</p>
@@ -184,8 +184,8 @@ export default function PrivacyDashboard() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                  <p className="text-xs font-medium text-purple-500">Encryption: AES-256-CBC</p>
+                <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-xs font-medium text-primary">Encryption: AES-256-CBC</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
                     Emails stored as ciphertext. Decryption requires ENCRYPTION_KEY (env var, never in code).
                   </p>
@@ -211,7 +211,7 @@ export default function PrivacyDashboard() {
                 null,
                 { label: "Engine Process", desc: "Safety / Talent / Culture", color: "border-[hsl(var(--sentinel-healthy))]/30 bg-[hsl(var(--sentinel-healthy))]/5", text: "text-[hsl(var(--sentinel-healthy))]" },
                 null,
-                { label: "Dashboard", desc: "Risk + insights", color: "border-purple-500/30 bg-purple-500/5", text: "text-purple-500" },
+                { label: "Dashboard", desc: "Risk + insights", color: "border-primary/30 bg-primary/5", text: "text-primary" },
               ].map((step, i) =>
                 step === null ? (
                   <ArrowRight key={`arrow-${i}`} className="h-4 w-4 text-muted-foreground/40 shrink-0" />

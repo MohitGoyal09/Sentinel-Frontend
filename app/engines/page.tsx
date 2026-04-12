@@ -53,18 +53,18 @@ function EnginesContent() {
   const networkEdges = networkData?.edges || []
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-200 font-sans dark">
+    <div className="flex flex-col min-h-screen bg-background text-foreground font-sans">
 
       {/* ─── Header ────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-sidebar-border bg-slate-950/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-950/50 border border-indigo-500/30">
-              <Cpu className="h-5 w-5 text-indigo-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/5 border border-primary/20">
+              <Cpu className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-slate-100">Manager Console</h1>
-              <p className="text-[11px] text-slate-400 font-medium tracking-wide">SENTINEL INTELLIGENCE SYSTEM</p>
+              <h1 className="text-lg font-bold tracking-tight text-foreground">Manager Console</h1>
+              <p className="text-[11px] text-muted-foreground font-medium tracking-wide">SENTINEL INTELLIGENCE SYSTEM</p>
             </div>
           </div>
           
@@ -75,7 +75,7 @@ function EnginesContent() {
                  onSelect={(e) => setSelectedUserHash(e.user_hash)} 
                  employees={employees}
               />
-              <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                 <Settings className="h-5 w-5" />
               </Button>
            </div>
@@ -86,17 +86,17 @@ function EnginesContent() {
       <main className="container mx-auto px-6 py-8 flex-1">
         
         <Tabs defaultValue="overview" className="space-y-8">
-           <TabsList className="bg-slate-900/50 border border-border p-1 h-auto rounded-lg inline-flex">
+           <TabsList className="bg-muted/50 border border-border p-1 h-auto rounded-lg inline-flex">
               <TabsTrigger 
                  value="overview"
-                 className="px-6 py-2.5 rounded-md data-[state=active]:bg-indigo-600 data-[state=active]:text-slate-50 text-slate-400 transition-all font-medium flex items-center gap-2"
+                 className="px-6 py-2.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground transition-all font-medium flex items-center gap-2"
               >
                  <LayoutDashboard className="h-4 w-4" />
                  Overview
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                  value="team"
-                 className="px-6 py-2.5 rounded-md data-[state=active]:bg-indigo-600 data-[state=active]:text-slate-50 text-slate-400 transition-all font-medium flex items-center gap-2"
+                 className="px-6 py-2.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground transition-all font-medium flex items-center gap-2"
               >
                  <Users className="h-4 w-4" />
                  Team Roster

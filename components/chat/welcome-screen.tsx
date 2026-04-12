@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, Users, CalendarCheck, Heart, FileText, BarChart3, Play, Info, ShieldCheck } from "lucide-react"
+import { AlertTriangle, Heart, Info, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // --- Types -------------------------------------------------------------------
@@ -32,22 +32,6 @@ const SUGGESTION_CARDS = [
     prompt: "Give me a burnout risk summary for the team.",
   },
   {
-    icon: Users,
-    iconColor: "text-slate-400",
-    bgColor: "bg-slate-500/10",
-    title: "At-Risk Team Members",
-    description: "Identify employees who may need attention or support right now.",
-    prompt: "Who are the at-risk team members this month and why?",
-  },
-  {
-    icon: CalendarCheck,
-    iconColor: "text-emerald-400",
-    bgColor: "bg-emerald-400/10",
-    title: "Schedule Check-ins",
-    description: "Recommend who should receive a 1:1 check-in this week.",
-    prompt: "Which employees should I prioritize for check-ins this week?",
-  },
-  {
     icon: Heart,
     iconColor: "text-emerald-400",
     bgColor: "bg-emerald-400/10",
@@ -73,11 +57,6 @@ const SUGGESTION_CARDS = [
   },
 ] as const
 
-const WORKFLOWS = [
-  { icon: AlertTriangle, title: "Burnout Alert", description: "Get Slack alerts when risk changes" },
-  { icon: FileText, title: "Risk Report", description: "Weekly burnout summary via email" },
-  { icon: BarChart3, title: "Team Digest", description: "Auto-generate team health reports" },
-] as const
 
 // --- Helpers -----------------------------------------------------------------
 
@@ -173,34 +152,14 @@ export function WelcomeScreen({ userName, onSuggestionClick, inputSlot }: Welcom
         })}
       </div>
 
-      {/* 6. Suggested workflows */}
-      <div className="w-full animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300 mt-8">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3 text-center">
-          Suggested Workflows
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {WORKFLOWS.map((wf) => {
-            const WfIcon = wf.icon
-            return (
-              <button
-                key={wf.title}
-                onClick={() => router.push("/workflows")}
-                className="bg-card border border-border rounded-lg p-3 text-left hover:border-primary/30 transition-colors duration-150 cursor-pointer group active:scale-[0.97]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <WfIcon className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">{wf.title}</span>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded border border-border text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors duration-150">
-                    Run
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{wf.description}</p>
-              </button>
-            )
-          })}
-        </div>
+      {/* 6. More suggestions link */}
+      <div className="w-full animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300 mt-6 text-center">
+        <button
+          onClick={() => router.push("/workflows")}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors duration-150 cursor-pointer"
+        >
+          More suggestions &rarr;
+        </button>
       </div>
     </div>
   )

@@ -24,7 +24,7 @@ interface UserSummary {
 const AVATAR_GRADIENTS = [
   "from-blue-500/30 to-blue-600/10",
   "from-accent/30 to-accent/10",
-  "from-violet-500/30 to-violet-600/10",
+  "from-primary/30 to-primary/10",
   "from-rose-500/30 to-rose-600/10",
   "from-amber-500/30 to-amber-600/10",
   "from-teal-500/30 to-teal-600/10",

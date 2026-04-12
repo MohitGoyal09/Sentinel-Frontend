@@ -200,7 +200,7 @@ export function AIAssistant({ userHash, userName, riskLevel }: AIAssistantProps)
               AI Assistant
             </CardTitle>
           </div>
-          <Badge variant="outline" className="text-[10px] font-semibold bg-purple-500/10 text-purple-500 border-purple-500/20">
+          <Badge variant="outline" className="text-[10px] font-semibold bg-primary/10 text-primary border-primary/20">
             <Sparkles className="mr-1 h-3 w-3" />
             AI
           </Badge>
@@ -271,7 +271,7 @@ export function AIAssistant({ userHash, userName, riskLevel }: AIAssistantProps)
             className={cn(
               "flex-1 rounded-lg border border-input bg-background px-4 py-2 text-sm",
               "placeholder:text-muted-foreground",
-              "focus:outline-none focus:ring-2 focus:ring-purple-500/20",
+              "focus:outline-none focus:ring-2 focus:ring-primary/20",
               "disabled:opacity-50"
             )}
           />
@@ -279,7 +279,7 @@ export function AIAssistant({ userHash, userName, riskLevel }: AIAssistantProps)
             type="submit"
             disabled={isLoading || !input.trim()}
             size="icon"
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-primary hover:bg-primary/90"
           >
             {isLoading ? (
               <Sparkles className="h-4 w-4 animate-spin" />
@@ -305,7 +305,7 @@ function MessageBubble({ message }: { message: Message }) {
       )}
     >
       <div className="flex items-center gap-2">
-        {!isUser && <Bot className="h-4 w-4 text-purple-500" />}
+        {!isUser && <Bot className="h-4 w-4 text-primary" />}
         {isUser && <User className="h-4 w-4 text-blue-500" />}
         <span className="text-xs text-muted-foreground">
           {isUser ? "You" : "Assistant"}
@@ -322,7 +322,7 @@ function MessageBubble({ message }: { message: Message }) {
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 animate-spin text-purple-500" />
+            <Sparkles className="h-4 w-4 animate-spin text-primary" />
             <span className="text-muted-foreground">Thinking...</span>
           </div>
         ) : (
@@ -381,7 +381,7 @@ function MarkdownContent({ content }: { content: string }) {
         if (trimmed.startsWith("- ")) {
           return (
             <div key={idx} className="flex gap-2">
-              <span className="text-purple-500">•</span>
+              <span className="text-primary">•</span>
               <span>{trimmed.replace("- ", "")}</span>
             </div>
           )
