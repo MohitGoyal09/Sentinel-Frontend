@@ -100,7 +100,7 @@ const connectorIcons: Record<string, React.ComponentType<{ className?: string }>
 const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
   connected: { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400" },
   pending: { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400" },
-  disconnected: { bg: "bg-slate-500/10", text: "text-muted-foreground", dot: "bg-slate-500" },
+  disconnected: { bg: "bg-muted/50", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   error: { bg: "bg-red-500/10", text: "text-red-400", dot: "bg-red-400" },
 }
 
@@ -336,7 +336,7 @@ function DataIngestionContent() {
                 variant="outline"
                 size="sm"
                 onClick={fetchStatus}
-                className="gap-2 border-border/50 hover:bg-white/5"
+                className="gap-2 border-border hover:bg-muted/50"
               >
                 <RefreshCw className="h-4 w-4" />
                 Refresh
@@ -366,7 +366,7 @@ function DataIngestionContent() {
           {status?.last_engine_run && !syncingSource && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
               <Zap className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-              <span className="text-sm text-emerald-300">
+              <span className="text-sm text-primary">
                 Engines recomputed
                 {Object.keys(status.last_engine_run.sources_synced).length > 0 && (
                   <> — {Object.entries(status.last_engine_run.sources_synced)
@@ -385,17 +385,17 @@ function DataIngestionContent() {
           {/* Metrics Bar */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: "Total Events", value: metrics?.total_events?.toLocaleString() || "0", icon: Database, color: "text-blue-400" },
-              { label: "Active Users", value: metrics?.total_users?.toString() || "0", icon: Shield, color: "text-emerald-400" },
-              { label: "Events/hr", value: metrics?.events_per_hour?.toString() || "0", icon: Zap, color: "text-purple-400" },
-              { label: "Avg Latency", value: `${metrics?.avg_latency_ms || 0}ms`, icon: Clock, color: "text-cyan-400" },
-              { label: "Error Rate", value: `${metrics?.error_rate || 0}%`, icon: AlertCircle, color: "text-amber-400" },
-              { label: "Uptime", value: `${metrics?.uptime_hours || 0}h`, icon: Activity, color: "text-emerald-400" },
+              { label: "Total Events", value: metrics?.total_events?.toLocaleString() || "0", icon: Database, color: "text-muted-foreground" },
+              { label: "Active Users", value: metrics?.total_users?.toString() || "0", icon: Shield, color: "text-primary" },
+              { label: "Events/hr", value: metrics?.events_per_hour?.toString() || "0", icon: Zap, color: "text-muted-foreground" },
+              { label: "Avg Latency", value: `${metrics?.avg_latency_ms || 0}ms`, icon: Clock, color: "text-muted-foreground" },
+              { label: "Error Rate", value: `${metrics?.error_rate || 0}%`, icon: AlertCircle, color: "text-muted-foreground" },
+              { label: "Uptime", value: `${metrics?.uptime_hours || 0}h`, icon: Activity, color: "text-muted-foreground" },
             ].map((m) => (
-              <div key={m.label} className="bg-[#111827]/60 border border-border/30 rounded-xl p-4">
+              <div key={m.label} className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <m.icon className={cn("h-4 w-4", m.color)} />
-                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-medium">{m.label}</span>
+                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{m.label}</span>
                 </div>
                 <p className="text-xl font-bold font-mono text-foreground">{m.value}</p>
               </div>
@@ -403,7 +403,7 @@ function DataIngestionContent() {
           </div>
 
           {/* Visual Pipeline Flow */}
-          <Card className="bg-[#111827]/50 border-border/50">
+          <Card className="bg-card border border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Server className="h-5 w-5 text-emerald-400" />
@@ -423,17 +423,17 @@ function DataIngestionContent() {
                         ? "border-emerald-500/30 bg-emerald-500/5"
                         : stage.status === "error"
                           ? "border-red-500/30 bg-red-500/5"
-                          : "border-border/50 bg-white/5"
+                          : "border-border/50 bg-muted/50"
                     )}>
                       <div className="flex items-center gap-2 mb-2">
                         <div className={cn(
                           "h-2 w-2 rounded-full",
-                          stage.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
+                          stage.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground"
                         )} />
                         <span className="text-xs font-semibold text-foreground">{stage.name}</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">{stage.description}</p>
-                      <p className="text-xs font-mono text-emerald-400">{stage.processed.toLocaleString()} processed</p>
+                      <p className="text-xs font-mono text-primary">{stage.processed.toLocaleString()} processed</p>
                     </div>
                     {i < stages.length - 1 && (
                       <ArrowRight className="h-4 w-4 text-muted-foreground/50 mx-1 shrink-0" />
@@ -447,7 +447,7 @@ function DataIngestionContent() {
           {/* Connectors + Upload + Live Feed */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Source Connectors */}
-            <Card className="bg-[#111827]/50 border-border/50">
+            <Card className="bg-card border border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-foreground text-base">
@@ -476,7 +476,7 @@ function DataIngestionContent() {
                   return (
                     <div
                       key={c.name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-border/30 hover:border-border/50 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border hover:border-border/80 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center", colors.bg)}>
@@ -533,7 +533,7 @@ function DataIngestionContent() {
             </Card>
 
             {/* CSV Upload */}
-            <Card className="bg-[#111827]/50 border-border/50">
+            <Card className="bg-card border border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground text-base">
                   <Upload className="h-5 w-5 text-purple-400" />
@@ -548,7 +548,7 @@ function DataIngestionContent() {
                     "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
                     uploading
                       ? "border-purple-500/30 bg-purple-500/5"
-                      : "border-border/50 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                      : "border-border hover:border-emerald-500/30 hover:bg-emerald-500/5"
                   )}
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -580,7 +580,7 @@ function DataIngestionContent() {
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadSample}
-                  className="w-full gap-2 border-border/50 hover:bg-white/5 text-foreground/80"
+                  className="w-full gap-2 border-border hover:bg-muted/50 text-foreground/80"
                 >
                   <Download className="h-4 w-4" />
                   Download Sample CSV
@@ -642,7 +642,7 @@ function DataIngestionContent() {
             </Card>
 
             {/* Live Ingestion Feed */}
-            <Card className="bg-[#111827]/50 border-border/50">
+            <Card className="bg-card border border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground text-base">
                   <Activity className="h-5 w-5 text-cyan-400" />
@@ -663,7 +663,7 @@ function DataIngestionContent() {
                       recentEvents.slice().reverse().map((event) => (
                         <div
                           key={event.id}
-                          className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.02] border border-border/30 animate-in fade-in duration-300"
+                          className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border animate-in fade-in duration-300"
                         >
                           <div className={cn(
                             "h-2 w-2 rounded-full shrink-0",
@@ -671,7 +671,7 @@ function DataIngestionContent() {
                           )} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/50 text-muted-foreground">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
                                 {event.source}
                               </Badge>
                               <span className="text-xs text-foreground truncate">{event.event_type}</span>
@@ -683,7 +683,7 @@ function DataIngestionContent() {
                               </span>
                             </div>
                           </div>
-                          <span className="text-[10px] font-mono text-emerald-400/70 shrink-0">
+                          <span className="text-[10px] font-mono text-primary/70 shrink-0">
                             {event.latency_ms}ms
                           </span>
                         </div>
@@ -696,7 +696,7 @@ function DataIngestionContent() {
           </div>
 
           {/* Data Transparency — What We Collect */}
-          <Card className="border-border/50 bg-card/50">
+          <Card className="border border-border bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Shield className="h-4 w-4 text-emerald-400" />
@@ -710,7 +710,7 @@ function DataIngestionContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border/50">
+                    <tr className="border-b border-border">
                       <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Source</th>
                       <th className="text-left py-2 px-3 text-xs font-medium text-emerald-400 uppercase tracking-wider">What We See</th>
                       <th className="text-left py-2 px-3 text-xs font-medium text-red-400 uppercase tracking-wider">What We Never See</th>
@@ -748,7 +748,7 @@ function DataIngestionContent() {
           </Card>
 
           {/* Privacy Architecture */}
-          <Card className="bg-[#111827]/50 border-border/50">
+          <Card className="bg-card border border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Lock className="h-5 w-5 text-emerald-400" />
