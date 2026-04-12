@@ -42,7 +42,7 @@ interface StatPillProps {
 
 function StatPill({ icon, label }: StatPillProps) {
   return (
-    <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-full px-4 py-2">
+    <div className="flex items-center gap-2 bg-muted/50 border border-border/50 rounded-full px-4 py-2">
       <span className="text-primary flex-shrink-0">{icon}</span>
       <span className="text-sm font-medium text-foreground/90 whitespace-nowrap">{label}</span>
     </div>
@@ -183,9 +183,6 @@ function LoginContent() {
           }}
         />
 
-        {/* Atmospheric glow */}
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent/6 rounded-full blur-[100px] pointer-events-none" />
 
         {/* Top-left wordmark */}
         <div className="relative z-10 flex items-center gap-2.5 p-8">
@@ -243,12 +240,8 @@ function LoginContent() {
       </div>
 
       {/* ── RIGHT PANEL — Auth form ──────────────────────────────────────── */}
-      <div className="flex flex-1 lg:w-1/2 flex-col items-center justify-center bg-card/50 border-l border-white/5 relative px-6 py-12">
+      <div className="flex flex-1 lg:w-1/2 flex-col items-center justify-center bg-card/50 border-l border-border/30 relative px-6 py-12">
 
-        {/* Mobile ambient glow */}
-        <div className="absolute inset-0 lg:hidden pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/6 rounded-full blur-[100px]" />
-        </div>
 
         {/* Form container */}
         <div
@@ -259,7 +252,7 @@ function LoginContent() {
         >
           {/* Logo mark */}
           <div className="flex flex-col items-center mb-8">
-            <div className="inline-flex h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center mb-4 shadow-2xl shadow-black/50">
+            <div className="inline-flex h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center mb-4">
               <Shield className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h2>
@@ -302,7 +295,7 @@ function LoginContent() {
                     'disabled:opacity-50 disabled:cursor-not-allowed',
                     error && error.toLowerCase().includes('email')
                       ? 'border-destructive/60 focus:border-destructive/60 focus:ring-destructive/20'
-                      : 'border-white/10',
+                      : 'border-border/50',
                   ].join(' ')}
                 />
               </div>
@@ -342,7 +335,7 @@ function LoginContent() {
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                       error && error.toLowerCase().includes('password')
                         ? 'border-destructive/60 focus:border-destructive/60 focus:ring-destructive/20'
-                        : 'border-white/10',
+                        : 'border-border/50',
                     ].join(' ')}
                   />
                   <button
@@ -375,11 +368,11 @@ function LoginContent() {
                   disabled={loading}
                   className={[
                     'group w-full flex items-center justify-center gap-2',
-                    'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70',
+                    'bg-primary hover:bg-primary/90',
                     'text-white font-semibold py-3 rounded-lg text-sm',
                     'transition-[color,background-color,transform,box-shadow] duration-150 ease-out',
                     'active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100',
-                    'shadow-2xl shadow-black/50',
+                    '',
                   ].join(' ')}
                 >
                   {loading ? (
@@ -400,11 +393,11 @@ function LoginContent() {
             <div className="mt-6 animate-in fade-in duration-300" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
               {/* Divider */}
               <div className="relative flex items-center my-6">
-                <div className="flex-1 border-t border-white/8" />
+                <div className="flex-1 border-t border-border/50" />
                 <span className="mx-3 text-[11px] uppercase tracking-widest text-muted-foreground/50 select-none">
                   or
                 </span>
-                <div className="flex-1 border-t border-white/8" />
+                <div className="flex-1 border-t border-border/50" />
               </div>
 
               {/* SSO buttons */}
@@ -417,7 +410,7 @@ function LoginContent() {
                     disabled={ssoLoading !== null}
                     className={[
                       'w-full flex items-center justify-center gap-2.5',
-                      'border border-white/10 bg-transparent hover:bg-white/5',
+                      'border border-border/50 bg-transparent hover:bg-white/5',
                       'text-foreground font-medium py-3 rounded-lg text-sm',
                       'transition-[color,background-color,border-color,transform,box-shadow] duration-150 ease-out',
                       'active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',

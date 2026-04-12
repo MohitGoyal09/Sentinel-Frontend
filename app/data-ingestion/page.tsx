@@ -100,7 +100,7 @@ const connectorIcons: Record<string, React.ComponentType<{ className?: string }>
 const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
   connected: { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400" },
   pending: { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400" },
-  disconnected: { bg: "bg-slate-500/10", text: "text-slate-400", dot: "bg-slate-500" },
+  disconnected: { bg: "bg-slate-500/10", text: "text-muted-foreground", dot: "bg-slate-500" },
   error: { bg: "bg-red-500/10", text: "text-red-400", dot: "bg-red-400" },
 }
 
@@ -312,7 +312,7 @@ function DataIngestionContent() {
               <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
                 Data Ingestion Pipeline
               </h1>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Real-time data flow from source connectors through privacy layer to engine processing.
               </p>
             </div>
@@ -336,7 +336,7 @@ function DataIngestionContent() {
                 variant="outline"
                 size="sm"
                 onClick={fetchStatus}
-                className="gap-2 border-white/10 hover:bg-white/5"
+                className="gap-2 border-border/50 hover:bg-white/5"
               >
                 <RefreshCw className="h-4 w-4" />
                 Refresh
@@ -376,7 +376,7 @@ function DataIngestionContent() {
                   </>
                 )}
               </span>
-              <span className="text-xs text-slate-500 ml-auto">
+              <span className="text-xs text-muted-foreground/70 ml-auto">
                 {new Date(status.last_engine_run.timestamp).toLocaleTimeString()}
               </span>
             </div>
@@ -392,10 +392,10 @@ function DataIngestionContent() {
               { label: "Error Rate", value: `${metrics?.error_rate || 0}%`, icon: AlertCircle, color: "text-amber-400" },
               { label: "Uptime", value: `${metrics?.uptime_hours || 0}h`, icon: Activity, color: "text-emerald-400" },
             ].map((m) => (
-              <div key={m.label} className="bg-[#111827]/60 border border-white/5 rounded-xl p-4">
+              <div key={m.label} className="bg-[#111827]/60 border border-border/30 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <m.icon className={cn("h-4 w-4", m.color)} />
-                  <span className="text-[11px] uppercase tracking-wider text-slate-500 font-medium">{m.label}</span>
+                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-medium">{m.label}</span>
                 </div>
                 <p className="text-xl font-bold font-mono text-foreground">{m.value}</p>
               </div>
@@ -403,7 +403,7 @@ function DataIngestionContent() {
           </div>
 
           {/* Visual Pipeline Flow */}
-          <Card className="bg-[#111827]/50 border-white/10">
+          <Card className="bg-[#111827]/50 border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Server className="h-5 w-5 text-emerald-400" />
@@ -423,7 +423,7 @@ function DataIngestionContent() {
                         ? "border-emerald-500/30 bg-emerald-500/5"
                         : stage.status === "error"
                           ? "border-red-500/30 bg-red-500/5"
-                          : "border-white/10 bg-white/5"
+                          : "border-border/50 bg-white/5"
                     )}>
                       <div className="flex items-center gap-2 mb-2">
                         <div className={cn(
@@ -432,11 +432,11 @@ function DataIngestionContent() {
                         )} />
                         <span className="text-xs font-semibold text-foreground">{stage.name}</span>
                       </div>
-                      <p className="text-[10px] text-slate-400 leading-relaxed mb-2">{stage.description}</p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">{stage.description}</p>
                       <p className="text-xs font-mono text-emerald-400">{stage.processed.toLocaleString()} processed</p>
                     </div>
                     {i < stages.length - 1 && (
-                      <ArrowRight className="h-4 w-4 text-slate-600 mx-1 shrink-0" />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground/50 mx-1 shrink-0" />
                     )}
                   </div>
                 ))}
@@ -447,7 +447,7 @@ function DataIngestionContent() {
           {/* Connectors + Upload + Live Feed */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Source Connectors */}
-            <Card className="bg-[#111827]/50 border-white/10">
+            <Card className="bg-[#111827]/50 border-border/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-foreground text-base">
@@ -476,7 +476,7 @@ function DataIngestionContent() {
                   return (
                     <div
                       key={c.name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-border/30 hover:border-border/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center", colors.bg)}>
@@ -484,11 +484,11 @@ function DataIngestionContent() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{c.name}</p>
-                          <p className="text-[10px] text-slate-500">{c.description}</p>
+                          <p className="text-[10px] text-muted-foreground/70">{c.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-slate-400">{c.events_ingested.toLocaleString()}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{c.events_ingested.toLocaleString()}</span>
                         <div className={cn("h-2 w-2 rounded-full", colors.dot)} />
                         {c.status === "connected" && c.name !== "CSV Upload" && c.name !== "Jira" ? (
                           <Button
@@ -533,7 +533,7 @@ function DataIngestionContent() {
             </Card>
 
             {/* CSV Upload */}
-            <Card className="bg-[#111827]/50 border-white/10">
+            <Card className="bg-[#111827]/50 border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground text-base">
                   <Upload className="h-5 w-5 text-purple-400" />
@@ -548,7 +548,7 @@ function DataIngestionContent() {
                     "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
                     uploading
                       ? "border-purple-500/30 bg-purple-500/5"
-                      : "border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                      : "border-border/50 hover:border-emerald-500/30 hover:bg-emerald-500/5"
                   )}
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -562,15 +562,15 @@ function DataIngestionContent() {
                   {uploading ? (
                     <Loader2 className="h-8 w-8 animate-spin text-purple-400 mx-auto mb-2" />
                   ) : (
-                    <FileText className="h-8 w-8 text-slate-500 mx-auto mb-2" />
+                    <FileText className="h-8 w-8 text-muted-foreground/70 mx-auto mb-2" />
                   )}
-                  <p className="text-sm text-slate-300 font-medium">
+                  <p className="text-sm text-foreground/80 font-medium">
                     {uploading ? "Processing..." : "Click to upload CSV"}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-1">
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">
                     Required: timestamp, user_email, event_type, source
                   </p>
-                  <p className="text-[10px] text-slate-600 mt-0.5">
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">
                     Max file size: {MAX_FILE_SIZE_MB}MB
                   </p>
                 </div>
@@ -580,7 +580,7 @@ function DataIngestionContent() {
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadSample}
-                  className="w-full gap-2 border-white/10 hover:bg-white/5 text-slate-300"
+                  className="w-full gap-2 border-border/50 hover:bg-white/5 text-foreground/80"
                 >
                   <Download className="h-4 w-4" />
                   Download Sample CSV
@@ -602,19 +602,19 @@ function DataIngestionContent() {
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
-                            <span className="text-slate-500">Ingested:</span>
+                            <span className="text-muted-foreground/70">Ingested:</span>
                             <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.ingested}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">Hashed:</span>
+                            <span className="text-muted-foreground/70">Hashed:</span>
                             <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.privacy_hashed}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">Errors:</span>
+                            <span className="text-muted-foreground/70">Errors:</span>
                             <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.errors}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">Total:</span>
+                            <span className="text-muted-foreground/70">Total:</span>
                             <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.total_rows}</span>
                           </div>
                         </div>
@@ -642,7 +642,7 @@ function DataIngestionContent() {
             </Card>
 
             {/* Live Ingestion Feed */}
-            <Card className="bg-[#111827]/50 border-white/10">
+            <Card className="bg-[#111827]/50 border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground text-base">
                   <Activity className="h-5 w-5 text-cyan-400" />
@@ -654,7 +654,7 @@ function DataIngestionContent() {
                 <ScrollArea className="h-[360px]">
                   <div className="space-y-2">
                     {recentEvents.length === 0 ? (
-                      <div className="text-center py-8 text-slate-500">
+                      <div className="text-center py-8 text-muted-foreground/70">
                         <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">No recent events</p>
                         <p className="text-xs mt-1">Upload a CSV to see data flow through the pipeline</p>
@@ -663,7 +663,7 @@ function DataIngestionContent() {
                       recentEvents.slice().reverse().map((event) => (
                         <div
                           key={event.id}
-                          className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.02] border border-white/5 animate-in fade-in duration-300"
+                          className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.02] border border-border/30 animate-in fade-in duration-300"
                         >
                           <div className={cn(
                             "h-2 w-2 rounded-full shrink-0",
@@ -671,14 +671,14 @@ function DataIngestionContent() {
                           )} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/10 text-slate-400">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/50 text-muted-foreground">
                                 {event.source}
                               </Badge>
                               <span className="text-xs text-foreground truncate">{event.event_type}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-slate-500 font-mono">{event.user_hash}</span>
-                              <span className="text-[10px] text-slate-600">
+                              <span className="text-[10px] text-muted-foreground/70 font-mono">{event.user_hash}</span>
+                              <span className="text-[10px] text-muted-foreground/50">
                                 {new Date(event.timestamp).toLocaleTimeString()}
                               </span>
                             </div>
@@ -702,7 +702,7 @@ function DataIngestionContent() {
                 <Shield className="h-4 w-4 text-emerald-400" />
                 Data Transparency — What Sentinel Sees
               </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
+              <CardDescription className="text-xs text-muted-foreground">
                 Sentinel analyzes behavioral metadata only. We never access message content, code, or files.
               </CardDescription>
             </CardHeader>
@@ -711,36 +711,36 @@ function DataIngestionContent() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/50">
-                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Source</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Source</th>
                       <th className="text-left py-2 px-3 text-xs font-medium text-emerald-400 uppercase tracking-wider">What We See</th>
                       <th className="text-left py-2 px-3 text-xs font-medium text-red-400 uppercase tracking-wider">What We Never See</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
                     <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><GitBranch className="h-3.5 w-3.5 text-slate-400" /> GitHub</td>
-                      <td className="py-2.5 px-3 text-slate-300">Commit timestamps, file counts, PR review frequency</td>
-                      <td className="py-2.5 px-3 text-slate-500">Code content, PR descriptions, commit messages</td>
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><GitBranch className="h-3.5 w-3.5 text-muted-foreground" /> GitHub</td>
+                      <td className="py-2.5 px-3 text-foreground/80">Commit timestamps, file counts, PR review frequency</td>
+                      <td className="py-2.5 px-3 text-muted-foreground/70">Code content, PR descriptions, commit messages</td>
                     </tr>
                     <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-slate-400" /> Slack</td>
-                      <td className="py-2.5 px-3 text-slate-300">Reply patterns, reaction counts, channel activity</td>
-                      <td className="py-2.5 px-3 text-slate-500">Message text, DMs, file attachments</td>
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-muted-foreground" /> Slack</td>
+                      <td className="py-2.5 px-3 text-foreground/80">Reply patterns, reaction counts, channel activity</td>
+                      <td className="py-2.5 px-3 text-muted-foreground/70">Message text, DMs, file attachments</td>
                     </tr>
                     <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Calendar</td>
-                      <td className="py-2.5 px-3 text-slate-300">Meeting duration, attendee count, time of day</td>
-                      <td className="py-2.5 px-3 text-slate-500">Meeting agenda, notes, attendee names</td>
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Calendar</td>
+                      <td className="py-2.5 px-3 text-foreground/80">Meeting duration, attendee count, time of day</td>
+                      <td className="py-2.5 px-3 text-muted-foreground/70">Meeting agenda, notes, attendee names</td>
                     </tr>
                     <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><ClipboardList className="h-3.5 w-3.5 text-slate-400" /> Jira</td>
-                      <td className="py-2.5 px-3 text-slate-300">Ticket status changes, sprint velocity, overdue count</td>
-                      <td className="py-2.5 px-3 text-slate-500">Ticket descriptions, comments, attachments</td>
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><ClipboardList className="h-3.5 w-3.5 text-muted-foreground" /> Jira</td>
+                      <td className="py-2.5 px-3 text-foreground/80">Ticket status changes, sprint velocity, overdue count</td>
+                      <td className="py-2.5 px-3 text-muted-foreground/70">Ticket descriptions, comments, attachments</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5">
+              <p className="text-xs text-muted-foreground/70 mt-3 flex items-center gap-1.5">
                 <Lock className="h-3 w-3" />
                 All identities are HMAC-SHA256 hashed before storage. Emails are AES-encrypted in a separate vault.
               </p>
@@ -748,7 +748,7 @@ function DataIngestionContent() {
           </Card>
 
           {/* Privacy Architecture */}
-          <Card className="bg-[#111827]/50 border-white/10">
+          <Card className="bg-[#111827]/50 border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Lock className="h-5 w-5 text-emerald-400" />
@@ -762,7 +762,7 @@ function DataIngestionContent() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
                   <h4 className="text-sm font-semibold text-blue-400 mb-2">1. Identity Hashing</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Emails are HMAC-SHA256 hashed with a secure salt. The hash becomes the
                     user identifier throughout the entire analytics pipeline.
                   </p>
@@ -772,7 +772,7 @@ function DataIngestionContent() {
                 </div>
                 <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
                   <h4 className="text-sm font-semibold text-purple-400 mb-2">2. Vault A: Analytics</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Stores behavioral events, risk scores, and engine outputs.
                     Contains only hashed identifiers — no PII.
                   </p>
@@ -782,7 +782,7 @@ function DataIngestionContent() {
                 </div>
                 <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                   <h4 className="text-sm font-semibold text-emerald-400 mb-2">3. Vault B: Identity</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Maps hashes back to encrypted emails for authorized personnel.
                     AES-256-Fernet encryption at rest.
                   </p>

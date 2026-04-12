@@ -202,57 +202,6 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════
-   ELEVATION & GLASS SYSTEM
-   ═══════════════════════════════════════════════════════ */
-
-.glass-card {
-  background: hsl(var(--card) / 0.6);
-  backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid hsl(var(--border) / 0.6);
-  transition: background 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
-}
-
-.glass-card:hover {
-  background: hsl(var(--card) / 0.8);
-  border-color: hsl(var(--border));
-}
-
-.glass-card-elevated {
-  background: hsl(var(--card) / 0.5);
-  backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid hsl(var(--border) / 0.5);
-  box-shadow:
-    0 4px 24px -4px hsl(0 0% 0% / 0.3),
-    0 0 0 1px hsl(0 0% 100% / 0.03) inset;
-}
-
-.glass-subtle {
-  background: hsl(var(--muted) / 0.4);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--border) / 0.4);
-}
-
-/* ═══════════════════════════════════════════════════════
-   GLOW EFFECTS
-   ═══════════════════════════════════════════════════════ */
-
-.glow-primary {
-  box-shadow: 0 0 20px -4px hsl(var(--primary) / 0.3), 0 0 60px -12px hsl(var(--primary) / 0.15);
-}
-
-.glow-healthy {
-  box-shadow: 0 0 20px -4px hsl(var(--sentinel-healthy) / 0.3);
-}
-
-.glow-elevated {
-  box-shadow: 0 0 20px -4px hsl(var(--sentinel-elevated) / 0.3);
-}
-
-.glow-critical {
-  box-shadow: 0 0 20px -4px hsl(var(--sentinel-critical) / 0.3);
-}
-
-/* ═══════════════════════════════════════════════════════
    AMBIENT GRADIENT BACKGROUND
    ═══════════════════════════════════════════════════════ */
 
@@ -342,14 +291,6 @@ body {
 .stagger-children > *:nth-child(7) { animation-delay: 240ms; }
 .stagger-children > *:nth-child(8) { animation-delay: 280ms; }
 
-/* Feature cards — hover lift only on true pointer devices */
-@media (hover: hover) and (pointer: fine) {
-  .feature-card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-  }
-}
-
 /* Popover origin awareness — scales from trigger point */
 [data-radix-popper-content-wrapper] {
   transform-origin: var(--radix-popover-content-transform-origin, center);
@@ -431,31 +372,23 @@ button:not([disabled]):active, [role="button"]:not([disabled]):active {
    ═══════════════════════════════════════════════════════ */
 
 .risk-badge-low {
-  background: hsl(var(--sentinel-healthy) / 0.12);
+  background: hsl(var(--sentinel-healthy) / 0.1);
   color: hsl(var(--sentinel-healthy));
-  border: 1px solid hsl(var(--sentinel-healthy) / 0.2);
 }
 
 .risk-badge-elevated {
-  background: hsl(var(--sentinel-elevated) / 0.12);
+  background: hsl(var(--sentinel-elevated) / 0.1);
   color: hsl(var(--sentinel-elevated));
-  border: 1px solid hsl(var(--sentinel-elevated) / 0.2);
 }
 
 .risk-badge-critical {
-  background: hsl(var(--sentinel-critical) / 0.12);
+  background: hsl(var(--sentinel-critical) / 0.1);
   color: hsl(var(--sentinel-critical));
-  border: 1px solid hsl(var(--sentinel-critical) / 0.2);
 }
 
 /* ═══════════════════════════════════════════════════════
    DESIGN SYSTEM UTILITIES
    ═══════════════════════════════════════════════════════ */
-
-/* Surface hierarchy */
-.surface { background-color: hsl(var(--card)); }
-.surface-nested { background-color: hsl(var(--secondary)); }
-.surface-hover { background-color: hsl(var(--accent)); }
 
 /* KPI Typography — matches design system type scale */
 .kpi-value {
@@ -472,32 +405,6 @@ button:not([disabled]):active, [role="button"]:not([disabled]):active {
   color: hsl(var(--muted-foreground));
 }
 
-/* Easing utility */
-.ease-out-strong { transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
-
-/* Button press feedback */
-.press-scale:active { transform: scale(0.97); }
-
-/* Stagger animation for card entry */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in-up {
-  animation: fadeInUp 300ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-/* Design system card: uses theme-aware variables */
-.ds-card {
-  background-color: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
-  padding: 20px;
-  transition: border-color 150ms ease-out;
-}
-.ds-card:hover {
-  border-color: var(--border-active-raw);
-}
 
 /* ═══════════════════════════════════════════════════════
    METRIC CARD VARIANTS
@@ -505,126 +412,14 @@ button:not([disabled]):active, [role="button"]:not([disabled]):active {
 
 .metric-card {
   position: relative;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
   padding: 1.25rem;
-  border-radius: 0.75rem;
-  background: hsl(var(--card) / 0.5);
-  border: 1px solid hsl(var(--border) / 0.5);
-  transition: transform 200ms var(--ease-out-strong), box-shadow 200ms ease, border-color 200ms ease, background 200ms ease;
-  overflow: hidden;
+  transition: border-color 150ms ease-out;
 }
-
-.metric-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, hsl(var(--border) / 0.2), transparent 60%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .metric-card:hover {
-    border-color: hsl(var(--border));
-    background: hsl(var(--card) / 0.7);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════
-   DOT GRID PATTERN
-   ═══════════════════════════════════════════════════════ */
-
-.dot-grid {
-  background-image: radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.06) 1px, transparent 0);
-  background-size: 24px 24px;
-}
-
-/* ═══════════════════════════════════════════════════════
-   GUAGE / METER STYLES
-   ═══════════════════════════════════════════════════════ */
-
-.gauge-ring {
-  stroke-dasharray: 283;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 1s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-/* ═══════════════════════════════════════════════════════
-   TABS
-   ═══════════════════════════════════════════════════════ */
-
-.tab-trigger {
-  transition: color 200ms ease-out, background 200ms ease-out, box-shadow 200ms ease-out;
-}
-
-.tab-trigger[data-state="active"] {
-  background: hsl(var(--primary) / 0.12);
-  color: hsl(var(--primary));
-}
-
-/* ═══════════════════════════════════════════════════════
-   GRADIENT TEXT
-   ═══════════════════════════════════════════════════════ */
-
-.text-gradient-primary {
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.text-gradient-hero {
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)), hsl(160 84% 60%));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ═══════════════════════════════════════════════════════
-   SENTINEL AMBIENT RADIAL GLOWS
-   ═══════════════════════════════════════════════════════ */
-
-.sentinel-bg-glow {
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 80%, hsl(var(--primary) / 0.07), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, hsl(var(--accent) / 0.05), transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, hsl(var(--primary) / 0.03), transparent 70%);
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ═══════════════════════════════════════════════════════
-   GREEN SENTINEL GLOW EFFECTS
-   ═══════════════════════════════════════════════════════ */
-
-.primary-glow {
-  box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.4);
-}
-
-.primary-glow-sm {
-  box-shadow: 0 0 12px -3px hsl(var(--primary) / 0.3);
-}
-
-/* ═══════════════════════════════════════════════════════
-   CARD HOVER LIFT
-   ═══════════════════════════════════════════════════════ */
-
-.card-hover {
-  transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
-}
-
-.card-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
-  border-color: hsl(var(--primary) / 0.2);
+.metric-card:hover {
+  border-color: hsl(var(--border) / 0.5);
 }
 
 /* Sidebar variables are defined in both :root (light) and .dark scopes above. */
