@@ -76,6 +76,11 @@ interface PipelineStatus {
   pipeline_stages: PipelineStage[]
   metrics: PipelineMetrics
   recent_events: RecentEvent[]
+  last_engine_run?: {
+    timestamp: string
+    user_hash: string
+    sources_synced: Record<string, number>
+  }
 }
 
 // Validation constants
@@ -125,19 +130,63 @@ function DataIngestionContent() {
     setSyncResult(null)
     try {
       const result = await syncConnectedTools(source)
-      setSyncResult(result?.message || "Sync started! Check back in ~30 seconds.")
+      setSyncResult(`Syncing ${source}... watching for results.`)
+      fetchStatus()
     } catch {
       setSyncResult("Sync failed. Please try again.")
-    } finally {
-      setTimeout(() => setSyncingSource(null), 2000)
+      setTimeout(() => setSyncingSource(null), 3000)
     }
-  }, [])
+  }, [fetchStatus])
+
+  const handleConnect = useCallback(async (connectorName: string) => {
+    const toolMap: Record<string, string> = {
+      "Git": "github",
+      "Slack": "slack",
+      "Calendar": "googlecalendar",
+    }
+    const toolSlug = toolMap[connectorName]
+    if (!toolSlug) return
+
+    try {
+      const { initiateConnection } = await import("@/lib/api")
+      const result = await initiateConnection(toolSlug)
+      if (result?.redirect_url) {
+        const popup = window.open(result.redirect_url, "Connect", "width=600,height=700")
+        const pollInterval = setInterval(async () => {
+          if (popup?.closed) {
+            clearInterval(pollInterval)
+            await fetchStatus()
+            handleSync(toolSlug)
+          }
+        }, 2000)
+        setTimeout(() => clearInterval(pollInterval), 120000)
+      }
+    } catch {
+      setSyncResult(`Failed to connect ${connectorName}`)
+    }
+  }, [fetchStatus, handleSync])
 
   useEffect(() => {
     fetchStatus()
-    const interval = setInterval(fetchStatus, 10000) // refresh every 10s
+    const interval = setInterval(fetchStatus, syncingSource ? 2000 : 10000)
     return () => clearInterval(interval)
-  }, [fetchStatus])
+  }, [fetchStatus, syncingSource])
+
+  useEffect(() => {
+    if (syncingSource && status?.last_engine_run) {
+      const runTime = new Date(status.last_engine_run.timestamp).getTime()
+      const now = Date.now()
+      if (now - runTime < 30000) {
+        const sources = status.last_engine_run.sources_synced || {}
+        const total = Object.values(sources).reduce((a: number, b: unknown) => a + (b as number), 0)
+        setSyncResult(`Synced ${total} events. Engines recomputed.`)
+        setTimeout(() => {
+          setSyncingSource(null)
+          setTimeout(() => setSyncResult(null), 5000)
+        }, 3000)
+      }
+    }
+  }, [status?.last_engine_run, syncingSource])
 
   const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -292,6 +341,44 @@ function DataIngestionContent() {
             </div>
           </div>
 
+          {/* Sync Result Banner */}
+          {syncResult && (
+            <div className={cn(
+              "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm animate-in fade-in slide-in-from-top-2 duration-200",
+              syncResult.includes("failed") || syncResult.includes("Failed")
+                ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+            )}>
+              {syncResult.includes("failed") || syncResult.includes("Failed")
+                ? <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                : syncingSource
+                  ? <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                  : <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              }
+              {syncResult}
+            </div>
+          )}
+
+          {/* Engine Recomputation Feedback */}
+          {status?.last_engine_run && !syncingSource && (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+              <Zap className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+              <span className="text-sm text-emerald-300">
+                Engines recomputed
+                {Object.keys(status.last_engine_run.sources_synced).length > 0 && (
+                  <> — {Object.entries(status.last_engine_run.sources_synced)
+                    .filter(([, v]) => (v as number) > 0)
+                    .map(([k, v]) => `${v} from ${k}`)
+                    .join(", ")}
+                  </>
+                )}
+              </span>
+              <span className="text-xs text-slate-500 ml-auto">
+                {new Date(status.last_engine_run.timestamp).toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+
           {/* Metrics Bar */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
@@ -400,7 +487,33 @@ function DataIngestionContent() {
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono text-slate-400">{c.events_ingested.toLocaleString()}</span>
                         <div className={cn("h-2 w-2 rounded-full", colors.dot)} />
-                        {c.status === "connected" && (
+                        {c.status === "connected" && c.name !== "CSV Upload" && c.name !== "Jira" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const sourceMap: Record<string, string> = { "Git": "github", "Slack": "slack", "Calendar": "calendar" }
+                              handleSync(sourceMap[c.name] || c.name.toLowerCase())
+                            }}
+                            disabled={syncingSource !== null}
+                            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 h-8 text-xs"
+                          >
+                            {syncingSource ? (
+                              <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Syncing</>
+                            ) : (
+                              <><RefreshCw className="h-3 w-3 mr-1.5" />Sync Now</>
+                            )}
+                          </Button>
+                        ) : c.status !== "connected" && ["Git", "Slack", "Calendar"].includes(c.name) ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleConnect(c.name)}
+                            className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 h-8 text-xs"
+                          >
+                            Connect
+                          </Button>
+                        ) : c.status === "connected" ? (
                           <button
                             onClick={() => handleSync(c.name.toLowerCase())}
                             disabled={syncingSource !== null}
@@ -408,7 +521,7 @@ function DataIngestionContent() {
                           >
                             {syncingSource === c.name.toLowerCase() ? "Syncing..." : "Sync Now"}
                           </button>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   )
