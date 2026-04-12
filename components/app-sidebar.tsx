@@ -6,6 +6,7 @@ import { SettingsModal } from '@/components/settings-modal'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Activity,
+  Brain,
   ChevronLeft,
   ChevronsUpDown,
   ChevronRight,
@@ -479,6 +480,20 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuItem>
                 </Collapsible>
               )}
+
+              {/* Methodology — all roles */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(pathname, '/methodology')}
+                  tooltip="Methodology"
+                >
+                  <Link href="/methodology">
+                    <Brain />
+                    <span>Methodology</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               {/* Admin — admin only, single link */}
               {isAdmin && (

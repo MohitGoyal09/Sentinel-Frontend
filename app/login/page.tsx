@@ -219,16 +219,16 @@ function LoginContent() {
             {/* Stat pills */}
             <div className="flex flex-wrap gap-3">
               <StatPill
-                icon={<CheckCircle className="h-3.5 w-3.5" />}
-                label="94% Prediction Accuracy"
+                icon={<Shield className="h-3.5 w-3.5" />}
+                label="Metadata Only — Zero Content Access"
               />
               <StatPill
                 icon={<Zap className="h-3.5 w-3.5" />}
-                label="2.3x Faster Intervention"
+                label="6 Behavioral Signals per Employee"
               />
               <StatPill
                 icon={<TrendingUp className="h-3.5 w-3.5" />}
-                label="40% Reduced Turnover"
+                label="30-Day Trend Analysis"
               />
             </div>
           </div>

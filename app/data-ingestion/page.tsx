@@ -321,13 +321,16 @@ function DataIngestionContent() {
                 variant="outline"
                 className={cn(
                   "px-3 py-1",
-                  status?.mode === "simulation"
-                    ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
-                    : "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                  status?.mode === "live"
+                    ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                    : "border-amber-500/30 text-amber-400 bg-amber-500/10"
                 )}
               >
-                <Activity className="h-3 w-3 mr-1.5" />
-                {status?.mode === "simulation" ? "Digital Twin Mode" : "Live Mode"}
+                <span className={cn(
+                  "inline-block h-1.5 w-1.5 rounded-full mr-1.5",
+                  status?.mode === "live" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                )} />
+                {status?.mode === "live" ? "Live Mode" : "Simulation Mode"}
               </Badge>
               <Button
                 variant="outline"
@@ -691,6 +694,58 @@ function DataIngestionContent() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Data Transparency — What We Collect */}
+          <Card className="border-border/50 bg-card/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Shield className="h-4 w-4 text-emerald-400" />
+                Data Transparency — What Sentinel Sees
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-400">
+                Sentinel analyzes behavioral metadata only. We never access message content, code, or files.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Source</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-emerald-400 uppercase tracking-wider">What We See</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-red-400 uppercase tracking-wider">What We Never See</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><GitBranch className="h-3.5 w-3.5 text-slate-400" /> GitHub</td>
+                      <td className="py-2.5 px-3 text-slate-300">Commit timestamps, file counts, PR review frequency</td>
+                      <td className="py-2.5 px-3 text-slate-500">Code content, PR descriptions, commit messages</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-slate-400" /> Slack</td>
+                      <td className="py-2.5 px-3 text-slate-300">Reply patterns, reaction counts, channel activity</td>
+                      <td className="py-2.5 px-3 text-slate-500">Message text, DMs, file attachments</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Calendar</td>
+                      <td className="py-2.5 px-3 text-slate-300">Meeting duration, attendee count, time of day</td>
+                      <td className="py-2.5 px-3 text-slate-500">Meeting agenda, notes, attendee names</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><ClipboardList className="h-3.5 w-3.5 text-slate-400" /> Jira</td>
+                      <td className="py-2.5 px-3 text-slate-300">Ticket status changes, sprint velocity, overdue count</td>
+                      <td className="py-2.5 px-3 text-slate-500">Ticket descriptions, comments, attachments</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5">
+                <Lock className="h-3 w-3" />
+                All identities are HMAC-SHA256 hashed before storage. Emails are AES-encrypted in a separate vault.
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Privacy Architecture */}
           <Card className="bg-[#111827]/50 border-white/10">

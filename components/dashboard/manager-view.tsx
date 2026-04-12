@@ -7,6 +7,7 @@ import {
 } from "recharts"
 import { AlertTriangle, Brain, TrendingUp } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { RiskBadge } from "@/components/dashboard/risk-badge"
 import { SectionCard } from "@/components/dashboard/section-card"
@@ -153,7 +154,14 @@ export function ManagerView({ employees, userName }: ManagerViewProps) {
                   <span className="col-span-3 text-sm text-muted-foreground truncate">
                     {isAnonymized ? "Engineer" : emp.role}
                   </span>
-                  <div className="col-span-2"><RiskBadge level={emp.risk_level} /></div>
+                  <div className="col-span-2 flex items-center">
+                    <RiskBadge level={emp.risk_level} />
+                    {emp.confidence != null && (
+                      <Badge className="bg-slate-500/10 text-slate-400 border-slate-500/20 text-[10px] ml-1.5">
+                        {Math.round(emp.confidence * 100)}% conf
+                      </Badge>
+                    )}
+                  </div>
                   <div className="col-span-2 flex justify-end">
                     <svg width="48" height="16" viewBox="0 0 48 16" className="opacity-50">
                       <polyline

@@ -7,6 +7,7 @@ import {
 } from "recharts"
 import { AlertTriangle, Brain, Activity } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { RiskBadge } from "@/components/dashboard/risk-badge"
 import { SectionCard } from "@/components/dashboard/section-card"
@@ -81,7 +82,14 @@ export function EmployeeView({ employee, events }: EmployeeViewProps) {
               Your personal wellbeing dashboard — insights are private to you.
             </p>
           </div>
-          <RiskBadge level={employee.risk_level} />
+          <div className="flex items-center">
+            <RiskBadge level={employee.risk_level} />
+            {employee.confidence != null && (
+              <Badge className="bg-slate-500/10 text-slate-400 border-slate-500/20 text-[10px] ml-1.5">
+                {Math.round(employee.confidence * 100)}% conf
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 

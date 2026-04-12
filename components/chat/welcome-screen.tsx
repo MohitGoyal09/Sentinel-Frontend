@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, Users, CalendarCheck, Heart, FileText, BarChart3, Play } from "lucide-react"
+import { AlertTriangle, Users, CalendarCheck, Heart, FileText, BarChart3, Play, Info, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // --- Types -------------------------------------------------------------------
@@ -54,6 +54,22 @@ const SUGGESTION_CARDS = [
     title: "Culture Health",
     description: "Get a pulse on team morale, collaboration, and culture signals.",
     prompt: "Give me a culture health overview for the organization.",
+  },
+  {
+    icon: Info,
+    iconColor: "text-violet-400",
+    bgColor: "bg-violet-400/10",
+    title: "How accurate is Sentinel?",
+    description: "Learn about our mathematical methodology and confidence scoring.",
+    prompt: "How accurate is Sentinel's burnout detection?",
+  },
+  {
+    icon: ShieldCheck,
+    iconColor: "text-teal-400",
+    bgColor: "bg-teal-400/10",
+    title: "How does Sentinel protect employee privacy?",
+    description: "Two-vault architecture and metadata-only analysis.",
+    prompt: "How does Sentinel protect employee privacy?",
   },
 ] as const
 
