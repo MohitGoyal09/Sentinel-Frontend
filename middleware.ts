@@ -60,8 +60,14 @@ export async function middleware(request: NextRequest) {
   )
 
   // getUser() verifies the JWT and refreshes tokens if needed.
-  // This also handles chunked cookie reassembly internally.
-  const { data: { user } } = await supabase.auth.getUser()
+  // Wrap in try-catch: stale refresh tokens throw instead of returning null.
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Invalid/expired refresh token — treat as unauthenticated
+  }
 
   // Check if this is a protected route
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
