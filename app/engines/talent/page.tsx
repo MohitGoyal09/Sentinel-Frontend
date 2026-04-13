@@ -96,7 +96,7 @@ function TalentContent() {
       return nodes.map((nd, i) => {
         const emp = employees.find((e) => e.user_hash === nd.id) ?? employees[i % Math.max(employees.length, 1)]
         const b = nd.betweenness ?? 0, e = nd.eigenvector ?? 0, u = nd.unblocking_count ?? 0
-        return { user_hash: nd.id || `n${i}`, name: nd.label || emp?.name || `User ${i + 1}`, role: emp?.role || "Employee", risk_level: toRiskLevel(nd.risk_level), betweenness: b, eigenvector: e, unblocking: u, networkScore: netScore(b, e, u, mxU) }
+        return { user_hash: nd.id || `n${i}`, name: emp?.name || (nd.label?.startsWith('User_') ? undefined : nd.label) || nd.label || `User ${i + 1}`, role: emp?.role || "Employee", risk_level: toRiskLevel(nd.risk_level), betweenness: b, eigenvector: e, unblocking: u, networkScore: netScore(b, e, u, mxU) }
       })
     }
     return employees.map((emp) => {

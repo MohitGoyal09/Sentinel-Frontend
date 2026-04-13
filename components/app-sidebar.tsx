@@ -26,6 +26,7 @@ import {
   Store,
   Thermometer,
   Trash2,
+  Zap,
   User,
   UserCog,
   Users,
@@ -472,6 +473,17 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                             <Link href="/engines/culture">
                               <Thermometer className="size-4" />
                               <span>Culture Thermo</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={isActive(pathname, '/simulation')}
+                          >
+                            <Link href="/simulation">
+                              <Zap className="size-4" />
+                              <span>Simulation</span>
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

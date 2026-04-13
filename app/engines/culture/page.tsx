@@ -405,7 +405,7 @@ function CultureContent() {
               <SectionCard title="Team Connectivity" subtitle="Member risk distribution">
                 <div className="mt-2 grid grid-cols-3 gap-3 mb-4">
                   {[
-                    { val: users.length, label: "Members", cls: "text-foreground" },
+                    { val: teamData?.attrition_forecast?.total_members ?? users.length ?? 0, label: "Members", cls: "text-foreground" },
                     { val: metrics?.critical_members ?? 0, label: "Critical", cls: "text-red-400" },
                     { val: fragPercent != null ? `${100 - fragPercent}%` : "--", label: "Connected", cls: "text-foreground" },
                   ].map(({ val, label, cls }) => (
