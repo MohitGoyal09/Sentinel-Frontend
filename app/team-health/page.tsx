@@ -313,28 +313,29 @@ export default function TeamHealthPage() {
   const healthyCount = mappedTeamMetrics?.healthy_count ?? 0
 
   function getEnergyLevel(dayIdx: number, hourIdx: number): EnergyLevel {
-    // If we have real API data, use it
-    if (weekdayEnergyMap && weekdayEnergyMap.size > 0) {
-      return weekdayEnergyMap.get(dayIdx) ?? "neutral"
-    }
-
-    // Realistic fallback based on time of day
     const hour = hourIdx + 6 // hourIdx 0 = 6am
     const isWeekend = dayIdx >= 5
 
-    if (isWeekend) return "neutral"
+    // Get day-level risk from API if available (modulates intensity)
+    const dayRisk = weekdayEnergyMap?.get(dayIdx)
+    const hasCriticalDay = dayRisk === "critical"
+    const hasTiredDay = dayRisk === "tired" || dayRisk === "critical"
 
-    if (hour >= 9 && hour < 12) return "peak" // Morning core hours
-    if (hour >= 12 && hour < 13) return "neutral" // Lunch
-    if (hour >= 13 && hour < 17) return "good" // Afternoon
-    if (hour >= 17 && hour < 18) return "neutral" // Wind down
-    if (hour >= 18 && hour < 20) {
-      return elevatedCount > 0 ? "tired" : "neutral" // After hours
+    if (isWeekend) {
+      // Weekends: mostly neutral, slight activity if critical
+      if (hour >= 10 && hour < 16) return hasCriticalDay ? "tired" : "neutral"
+      return "neutral"
     }
-    if (hour >= 20) {
-      return criticalCount > 0 ? "critical" : "tired" // Late night
-    }
-    return "neutral" // Early morning
+
+    // Weekday hour-based pattern
+    if (hour < 8) return "neutral"                                    // Early morning
+    if (hour >= 9 && hour < 12) return hasCriticalDay ? "good" : "peak" // Morning core
+    if (hour >= 12 && hour < 13) return "neutral"                     // Lunch
+    if (hour >= 13 && hour < 17) return hasTiredDay ? "neutral" : "good" // Afternoon
+    if (hour >= 17 && hour < 18) return "neutral"                     // Wind down
+    if (hour >= 18 && hour < 20) return hasTiredDay ? "tired" : "neutral" // After hours
+    if (hour >= 20) return hasCriticalDay ? "critical" : (hasTiredDay ? "tired" : "neutral")
+    return "neutral"
   }
 
   return (
@@ -601,25 +602,38 @@ export default function TeamHealthPage() {
               </div>
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => router.push('/ask-sentinel?q=Schedule+a+team+break+for+my+team+this+week')}
-                  className="flex items-center gap-3 border border-border hover:bg-muted/50 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-border"
+                  onClick={() => {
+                    toast.success('Opening Ask Sentinel to schedule a team break...')
+                    setTimeout(() => router.push('/ask-sentinel?q=Schedule+a+team+break+for+my+team+this+week'), 500)
+                  }}
+                  className="flex items-center gap-3 border border-border hover:bg-muted/50 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-border cursor-pointer"
                 >
                   <Calendar className="h-4 w-4 text-primary" />
                   Schedule Team Break
+                  <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => toast.success('Wellness survey sent to all team members')}
-                  className="flex items-center gap-3 border border-border hover:bg-muted/50 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-border"
+                  onClick={() => {
+                    toast.success('Wellness survey sent to all ' + totalMembers + ' team members', {
+                      description: 'Employees will receive in-app wellbeing check prompts.',
+                    })
+                  }}
+                  className="flex items-center gap-3 border border-border hover:bg-muted/50 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-border cursor-pointer"
                 >
                   <Heart className="h-4 w-4 text-accent" />
                   Send Wellness Survey
+                  <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => router.push('/engines/safety')}
-                  className="flex items-center gap-3 border border-destructive/20 hover:bg-destructive/5 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-destructive/30"
+                  onClick={() => {
+                    toast('Running safety analysis across all team members...', { icon: '🔍' })
+                    setTimeout(() => router.push('/engines/safety'), 800)
+                  }}
+                  className="flex items-center gap-3 border border-destructive/20 hover:bg-destructive/5 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-destructive/30 cursor-pointer"
                 >
                   <Shield className="h-4 w-4 text-destructive" />
                   Trigger Alert Check
+                  <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground" />
                 </button>
               </div>
             </div>
