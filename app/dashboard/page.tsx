@@ -27,8 +27,8 @@ function DashboardContent() {
   const employees = useMemo(() => mapUsersToEmployees(users), [users])
 
   const currentEmployee = useMemo(() => {
-    if (!userRole?.user_hash) return employees[0] || null
-    return employees.find(e => e.user_hash === userRole.user_hash) || employees[0] || null
+    if (!userRole?.user_hash) return null
+    return employees.find(e => e.user_hash === userRole.user_hash) || null
   }, [employees, userRole?.user_hash])
 
   const displayName = useMemo(() => {

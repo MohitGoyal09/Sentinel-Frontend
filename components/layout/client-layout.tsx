@@ -7,6 +7,7 @@ import { CommandPalette } from "@/components/command-palette"
 import {
   SidebarProvider,
   SidebarInset,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 const NO_SIDEBAR_PATHS = new Set(["/", "/login", "/register"])
@@ -47,7 +48,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <CommandPalette onNavigate={handleCommandNavigate} />
       <AppSidebar variant="inset" />
       <SidebarInset>
-{/* Sidebar expand trigger moved to sidebar header */}
+        <div className="flex items-center gap-2 p-3 md:hidden border-b border-border">
+          <SidebarTrigger />
+          <span className="text-sm font-semibold text-foreground">Sentinel</span>
+        </div>
         {isFullHeight ? (
           <div className="flex flex-1 flex-col min-h-0 overflow-hidden">{children}</div>
         ) : (

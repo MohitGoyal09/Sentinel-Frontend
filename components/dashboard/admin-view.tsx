@@ -250,7 +250,7 @@ export function AdminView({ employees }: AdminViewProps) {
   return (
     <div className="space-y-6">
       {/* Row 1 -- Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
             {formatDate()}
@@ -310,9 +310,9 @@ export function AdminView({ employees }: AdminViewProps) {
             <div className="space-y-0">
               <div className="grid grid-cols-12 gap-2 text-xs uppercase tracking-wider text-muted-foreground py-2 border-b border-border/50">
                 <span className="col-span-5">Member</span>
-                <span className="col-span-3">Role</span>
+                <span className="col-span-3 hidden md:block">Role</span>
                 <span className="col-span-2">Risk</span>
-                <span className="col-span-2 text-right">Trend</span>
+                <span className="col-span-2 text-right hidden md:block">Trend</span>
               </div>
               {sortedMembers.slice(0, 5).map((emp) => (
                 <div
@@ -326,7 +326,7 @@ export function AdminView({ employees }: AdminViewProps) {
                     </div>
                     <span className="text-sm text-foreground truncate">{emp.name}</span>
                   </div>
-                  <span className="col-span-3 text-sm text-muted-foreground truncate">{emp.persona || emp.role}</span>
+                  <span className="col-span-3 text-sm text-muted-foreground truncate hidden md:block">{emp.persona || emp.role}</span>
                   <div className="col-span-2 flex items-center">
                     <RiskBadge level={emp.risk_level} />
                     {emp.confidence != null && (
@@ -335,7 +335,7 @@ export function AdminView({ employees }: AdminViewProps) {
                       </Badge>
                     )}
                   </div>
-                  <div className="col-span-2 flex justify-end">
+                  <div className="col-span-2 flex justify-end hidden md:flex">
                     <svg width="48" height="16" viewBox="0 0 48 16" className="opacity-50">
                       <polyline
                         points={sparkPoints(emp)}
