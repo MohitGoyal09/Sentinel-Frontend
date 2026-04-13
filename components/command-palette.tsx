@@ -172,9 +172,9 @@ export function CommandPalette({ onNavigate }: CommandPaletteProps) {
     if (!open) return null
 
     const categoryLabels: Record<string, string> = {
-        navigation: '🔍 Navigation',
-        actions: '⚡ Actions',
-        people: '👤 People',
+        navigation: 'Navigation',
+        actions: 'Actions',
+        people: 'People',
     }
 
     return createPortal(
@@ -184,11 +184,11 @@ export function CommandPalette({ onNavigate }: CommandPaletteProps) {
             onClick={(e) => {
                 if (e.target === e.currentTarget) setOpen(false)
             }}
-            style={{ background: 'hsl(222 22% 8% / 0.6)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'hsl(0 0% 0% / 0.5)' }}
         >
-            <div className="command-panel glass-card w-full max-w-lg rounded-2xl shadow-2xl" onKeyDown={handleKeyDown}>
+            <div className="command-panel w-full max-w-lg rounded-xl border border-border bg-card" onKeyDown={handleKeyDown}>
                 {/* Search input */}
-                <div className="flex items-center gap-3 border-b border-[var(--glass-border)] px-4 py-3">
+                <div className="flex items-center gap-3 border-b border-border px-4 py-3">
                     <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <input
                         ref={inputRef}
@@ -198,7 +198,7 @@ export function CommandPalette({ onNavigate }: CommandPaletteProps) {
                         placeholder="Search engines, pages, actions..."
                         className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none font-mono"
                     />
-                    <kbd className="hidden rounded-md border border-[var(--glass-border)] px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/60 sm:inline">
+                    <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/60 sm:inline">
                         ESC
                     </kbd>
                 </div>
@@ -233,7 +233,7 @@ export function CommandPalette({ onNavigate }: CommandPaletteProps) {
                                             <item.icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[hsl(var(--primary))]' : ''}`} />
                                             <span className="flex-1 text-left">{item.label}</span>
                                             {item.shortcut && (
-                                                <kbd className="rounded border border-[var(--glass-border)] px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/40">
+                                                <kbd className="rounded border border-border px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/40">
                                                     {item.shortcut}
                                                 </kbd>
                                             )}
@@ -249,13 +249,13 @@ export function CommandPalette({ onNavigate }: CommandPaletteProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between border-t border-[var(--glass-border)] px-4 py-2">
+                <div className="flex items-center justify-between border-t border-border px-4 py-2">
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground/40">
                         <span className="flex items-center gap-1">
-                            <kbd className="rounded border border-[var(--glass-border)] px-1 py-0.5 font-mono">↑↓</kbd> navigate
+                            <kbd className="rounded border border-border px-1 py-0.5 font-mono">↑↓</kbd> navigate
                         </span>
                         <span className="flex items-center gap-1">
-                            <kbd className="rounded border border-[var(--glass-border)] px-1 py-0.5 font-mono">↵</kbd> select
+                            <kbd className="rounded border border-border px-1 py-0.5 font-mono">↵</kbd> select
                         </span>
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground/40">
