@@ -77,10 +77,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        // Ignore transient refresh failures
+        // Ignore transient refresh failures (e.g. TOKEN_REFRESHED with null session)
         if (!newSession && event !== 'SIGNED_OUT' && event !== 'INITIAL_SESSION') {
           setLoading(false)
           return
+        }
+
+        // Clear stale cookies on initial load with no valid session
+        // This prevents repeated "Refresh Token Not Found" errors
+        if (!newSession && event === 'INITIAL_SESSION') {
+          supabase.auth.signOut().catch(() => {})
         }
 
         // Push access token to API module immediately
