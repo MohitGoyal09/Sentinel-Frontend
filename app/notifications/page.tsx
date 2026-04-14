@@ -139,10 +139,10 @@ function NotificationRow({
   return (
     <div
       className={[
-        'group relative flex items-center gap-3 px-4 py-3 rounded-lg',
+        'group relative flex items-center gap-3 py-4 px-5',
         isUnread ? 'bg-muted/20' : 'bg-transparent',
         notification.action_url ? 'cursor-pointer' : '',
-        'transition-colors duration-150 hover:bg-muted/40',
+        'transition-colors duration-150 hover:bg-muted/30',
       ].join(' ')}
       onClick={
         notification.action_url
@@ -150,7 +150,7 @@ function NotificationRow({
           : undefined
       }
     >
-      {isUnread && <div className="absolute left-1.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary" />}
+      {isUnread && <div className="flex-shrink-0 h-2 w-2 rounded-full bg-primary" />}
       <div className={`flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${iconBgForType(notification.type, notification.priority)}`}>
         <Icon className={`h-4 w-4 ${iconColorForType(notification.type, notification.priority)}`} />
       </div>
@@ -161,10 +161,10 @@ function NotificationRow({
           </h4>
           <PriorityBadge priority={notification.priority} />
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">{notification.message}</p>
-        <span className="mt-1 block text-[10px] text-muted-foreground/50 tabular-nums">{timeAgo(notification.created_at)}</span>
+        <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-1">{notification.message}</p>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">{timeAgo(notification.created_at)}</span>
         {notification.action_url && <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           {isUnread && (
@@ -197,11 +197,10 @@ function NotificationRow({
 
 function DateHeader({ label, isFirst }: { label: string; isFirst: boolean }) {
   return (
-    <div className={`flex items-center gap-3 px-4 pb-1.5 ${isFirst ? 'pt-2' : 'mt-6 pt-2'}`}>
-      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+    <div className={`py-3 px-5 ${isFirst ? '' : 'mt-2'}`}>
+      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
         {label}
       </span>
-      <div className="flex-1 h-px bg-white/[0.04]" />
     </div>
   )
 }
@@ -417,6 +416,7 @@ function NotificationsContent() {
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8 min-h-screen bg-background">
+      <div className="w-full max-w-4xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
@@ -446,8 +446,8 @@ function NotificationsContent() {
         </SheetContent>
       </Sheet>
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 flex-wrap flex-1">
+      <div className="flex items-center justify-between gap-3 mt-6 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {TABS.map(({ key, label }) => {
             const count = counts[key]
             const isActive = activeTab === key
@@ -472,23 +472,25 @@ function NotificationsContent() {
       ) : filteredNotifications.length === 0 ? (
         <EmptyState searchQuery={searchQuery} activeTab={activeTab} />
       ) : (
-        <div className="max-w-3xl rounded-lg border border-white/[0.06] bg-card overflow-hidden p-2">
+        <div className="mt-2 rounded-lg border border-white/[0.06] bg-card overflow-hidden divide-y divide-border/30">
           {dateGroups.map((group, groupIdx) => (
-            <div key={group.label}>
+            <div key={group.label} className={groupIdx > 0 ? 'border-t border-border/30' : ''}>
               <DateHeader label={group.label} isFirst={groupIdx === 0} />
-              {group.items.map((n) => (
-                <NotificationRow
-                  key={n.id}
-                  notification={n}
-                  onMarkRead={handleMarkAsRead}
-                  onDelete={handleDelete}
-                  isProcessing={processingIds.has(n.id)}
-                />
+              {group.items.map((n, nIdx) => (
+                <div key={n.id} className={nIdx > 0 ? 'border-t border-border/30' : ''}>
+                  <NotificationRow
+                    notification={n}
+                    onMarkRead={handleMarkAsRead}
+                    onDelete={handleDelete}
+                    isProcessing={processingIds.has(n.id)}
+                  />
+                </div>
               ))}
             </div>
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

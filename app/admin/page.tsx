@@ -226,9 +226,11 @@ function AdminPageContent() {
     }
   }, [])
 
+  const [teamsLoading, setTeamsLoading] = useState(true)
+
   const fetchTeams = useCallback(async () => {
     try {
-      setLoading(true)
+      setTeamsLoading(true)
       const raw = await api.get<unknown>("/admin/teams")
       const data = (raw && typeof raw === "object" && "data" in raw)
         ? (raw as { data: Team[] }).data
@@ -238,7 +240,7 @@ function AdminPageContent() {
       const msg = err instanceof Error ? err.message : "Failed to load teams"
       toast.error(msg)
     } finally {
-      setLoading(false)
+      setTeamsLoading(false)
     }
   }, [])
 
@@ -274,14 +276,15 @@ function AdminPageContent() {
     if (authLoading || !session) return
     fetchHealth()
     fetchManagers()
-  }, [authLoading, session, fetchHealth, fetchManagers])
+    fetchTeams()
+    fetchUsers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, session])
 
   useEffect(() => {
     if (authLoading || !session) return
-    if (tab === "members") fetchUsers()
-    if (tab === "teams") fetchTeams()
     if (tab === "audit") fetchAuditLogs()
-  }, [tab, authLoading, session, fetchUsers, fetchTeams, fetchAuditLogs])
+  }, [tab, authLoading, session, fetchAuditLogs])
 
   // ---- Filtered members ----
 
@@ -462,6 +465,23 @@ function AdminPageContent() {
   const memberCount = users.length
   const atRiskCount = health?.risk_summary.at_risk_total ?? users.filter(u => u.risk_level === "CRITICAL" || u.risk_level === "ELEVATED").length
   const teamCount = teams.length
+
+  /** Per-team stats derived from user data */
+  const teamStats = useMemo(() => {
+    const statsMap = new Map<string, { avgVelocity: number; atRiskPct: number; memberNames: string[] }>()
+    for (const team of teams) {
+      const members = users.filter(u => u.team_id === team.id)
+      const velocities = members.map(u => u.velocity).filter((v): v is number => v != null)
+      const avgVelocity = velocities.length > 0
+        ? velocities.reduce((a, b) => a + b, 0) / velocities.length
+        : 0
+      const atRiskMembers = members.filter(u => u.risk_level === "CRITICAL" || u.risk_level === "ELEVATED")
+      const atRiskPct = members.length > 0 ? (atRiskMembers.length / members.length) * 100 : 0
+      const memberNames = members.map(u => u.name ?? u.user_hash.slice(0, 8))
+      statsMap.set(team.id, { avgVelocity, atRiskPct, memberNames })
+    }
+    return statsMap
+  }, [teams, users])
 
   // ---- Loading state ----
 
@@ -692,7 +712,7 @@ function AdminPageContent() {
       {/* Tab Content: Teams */}
       {tab === "teams" && (
         <div className="space-y-4">
-          {loading && teams.length === 0 ? (
+          {teamsLoading && teams.length === 0 ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
@@ -704,38 +724,75 @@ function AdminPageContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {teams.map(team => (
+              {teams.map(team => {
+                const stats = teamStats.get(team.id)
+                const riskPct = stats?.atRiskPct ?? 0
+                const riskStatus = riskPct >= 50 ? "High" : riskPct >= 20 ? "Moderate" : "Healthy"
+                const riskStatusClass = riskPct >= 50
+                  ? "bg-red-500/10 text-red-400"
+                  : riskPct >= 20
+                    ? "bg-amber-500/10 text-amber-400"
+                    : "bg-emerald-500/10 text-emerald-400"
+                const managerUser = team.manager_hash
+                  ? users.find(u => u.user_hash === team.manager_hash)
+                  : null
+
+                return (
                 <div key={team.id} className="bg-card border border-border rounded-lg overflow-hidden">
                   <button
                     className="w-full text-left p-5 hover:bg-white/[0.02] transition-colors"
                     onClick={() => handleExpandTeam(team.id)}
                   >
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-medium text-foreground">{team.name}</h3>
+                          <h3 className="text-sm font-medium text-foreground truncate">{team.name}</h3>
                           <span className={cn(
-                            "inline-flex px-2 py-0.5 rounded-md text-xs font-medium",
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium shrink-0",
                             team.member_count === 0 ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
                           )}>
+                            <Users className="h-3 w-3" />
                             {team.member_count}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1.5">
-                          {team.manager_hash
-                            ? `Manager: ${team.manager_hash.slice(0, 8)}...`
-                            : "No manager assigned"}
-                        </p>
-                        <p className="text-xs text-muted-foreground/60 mt-1 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(team.created_at)}
+                          {managerUser
+                            ? `Lead: ${managerUser.name ?? managerUser.user_hash.slice(0, 8)}`
+                            : team.manager_hash
+                              ? `Lead: ${team.manager_hash.slice(0, 8)}...`
+                              : "No lead assigned"}
                         </p>
                       </div>
                       <ChevronRight className={cn(
-                        "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                        "h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ml-2",
                         expandedTeam === team.id && "rotate-90"
                       )} />
                     </div>
+
+                    {/* Stats row */}
+                    {team.member_count > 0 && (
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/[0.04]">
+                        <div className="flex-1">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">Avg Velocity</p>
+                          <p className="text-sm font-mono tabular-nums text-foreground mt-0.5">
+                            {(stats?.avgVelocity ?? 0).toFixed(1)}
+                          </p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">Risk Status</p>
+                          <span className={cn(
+                            "inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium mt-0.5",
+                            riskStatusClass
+                          )}>
+                            {riskStatus}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">Created</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(team.created_at)}</p>
+                        </div>
+                      </div>
+                    )}
                   </button>
 
                   {/* Expanded member list */}
@@ -747,14 +804,28 @@ function AdminPageContent() {
                         </div>
                       ) : teamDetail && teamDetail.members.length > 0 ? (
                         <div className="space-y-1.5">
-                          {teamDetail.members.map(m => (
+                          {teamDetail.members.map(m => {
+                            const memberUser = users.find(u => u.user_hash === m.user_hash)
+                            return (
                             <div key={m.user_hash} className="flex items-center justify-between px-2 py-1.5 rounded-md bg-muted/20">
-                              <span className="font-mono text-xs text-muted-foreground">{m.user_hash.slice(0, 12)}...</span>
-                              <span className={cn("text-[10px] font-medium capitalize px-1.5 py-0.5 rounded", getRoleBadgeClass(m.role))}>
-                                {m.role}
-                              </span>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-xs text-foreground truncate">
+                                  {memberUser?.name ?? m.user_hash.slice(0, 12)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {memberUser && (
+                                  <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded", getRiskBadgeClass(memberUser.risk_level))}>
+                                    {memberUser.risk_level}
+                                  </span>
+                                )}
+                                <span className={cn("text-[10px] font-medium capitalize px-1.5 py-0.5 rounded", getRoleBadgeClass(m.role))}>
+                                  {m.role}
+                                </span>
+                              </div>
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground text-center py-3">No members in this team</p>
@@ -772,7 +843,8 @@ function AdminPageContent() {
                     </div>
                   )}
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

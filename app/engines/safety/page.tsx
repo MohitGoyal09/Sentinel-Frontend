@@ -702,17 +702,19 @@ function SafetyContent() {
                         </span>
                       </div>
                     </div>
-                    <button
-                      type="button"
+                    <div
+                      role="button"
+                      tabIndex={0}
                       aria-label={`View profile for ${displayName(emp)}`}
-                      className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent shrink-0 transition-colors"
+                      className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent shrink-0 transition-colors cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation()
                         setProfileDialogEmployee(emp)
                       }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setProfileDialogEmployee(emp) } }}
                     >
                       <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
+                    </div>
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                   </button>
                 ))}
