@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 export const dynamic = 'force-dynamic'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { Playfair_Display } from 'next/font/google'
 import { AuthProvider } from '@/contexts/auth-context'
 import { TenantProvider } from '@/contexts/tenant-context'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -13,6 +14,12 @@ import { RouteProgressBar } from "@/components/route-progress-bar"
 import { Toaster } from '@/components/ui/sonner'
 
 import './globals.css'
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Sentinel — AI-Powered Employee Insights',
@@ -30,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} ${playfair.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <AmbientBackground />
           <RouteProgressBar />

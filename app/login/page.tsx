@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { AlertCircle, Loader2, Shield, CheckCircle, Zap, TrendingUp, Eye, EyeOff, ArrowRight } from 'lucide-react'
@@ -185,10 +186,10 @@ function LoginContent() {
 
 
         {/* Top-left wordmark */}
-        <div className="relative z-10 flex items-center gap-2.5 p-8">
+        <Link href="/" className="relative z-10 flex items-center gap-2.5 p-8 hover:opacity-80 transition-opacity duration-150">
           <SentinelGlyph size={24} />
           <span className="text-2xl font-bold tracking-tight text-foreground">Sentinel</span>
-        </div>
+        </Link>
 
         {/* Center content */}
         <div className="relative z-10 flex flex-col justify-center flex-1 px-12 pb-16">

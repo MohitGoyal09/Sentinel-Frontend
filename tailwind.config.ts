@@ -72,6 +72,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'monospace'],
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
