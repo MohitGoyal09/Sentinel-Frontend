@@ -51,6 +51,7 @@ import { mapUsersToEmployees } from "@/lib/map-employees"
 import { scheduleBreak } from "@/lib/api"
 import { toast } from "sonner"
 
+import { SentimentChart } from "@/components/sentiment-chart"
 import { useRiskData } from "@/hooks/useRiskData"
 import { useTeamData } from "@/hooks/useTeamData"
 import { useRiskHistory } from "@/hooks/useRiskHistory"
@@ -730,6 +731,10 @@ function SafetyContent() {
               {currentEmployee ? (
                 <div className="space-y-4">
                   <RiskAssessment employee={currentEmployee} />
+
+                  {currentEmployee.sentiment_available && (
+                    <SentimentChart userHash={currentEmployee.user_hash} height={120} />
+                  )}
 
                   {/* Schedule 1:1 */}
                   <Button

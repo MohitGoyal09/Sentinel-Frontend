@@ -32,6 +32,7 @@ import { ProvideContextCard } from "@/components/provide-context-card"
 import { useRiskHistory } from "@/hooks/useRiskHistory"
 import { useNudge } from "@/hooks/useNudge"
 
+import { SentimentChart } from "@/components/sentiment-chart"
 import { api } from "@/lib/api"
 import type { HistoryPoint } from "@/types"
 // ─── Types ────────────────────────────────────────────
@@ -511,6 +512,16 @@ function MePageContent() {
               )}
             </div>
           </section>
+
+          {sentimentAvail && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                Communication Trend
+              </h2>
+              <SentimentChart userHash={data.user.user_hash} height={140} />
+            </section>
+          )}
 
         </div>
 

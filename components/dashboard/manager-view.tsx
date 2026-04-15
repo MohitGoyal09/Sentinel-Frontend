@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import { SentimentChart } from "@/components/sentiment-chart"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { RiskBadge } from "@/components/dashboard/risk-badge"
 import { SectionCard } from "@/components/dashboard/section-card"
@@ -456,6 +457,13 @@ export function ManagerView({ employees, userName }: ManagerViewProps) {
                     </div>
                   </div>
                 </div>
+
+                {emp.sentiment_available && (
+                  <div className="mt-6">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">Sentiment Trend</p>
+                    <SentimentChart userHash={emp.user_hash} height={100} />
+                  </div>
+                )}
 
                 {emp.sentiment_available && emp.sentiment_score != null && (
                   <div className="mt-6 flex items-center gap-3 rounded-lg bg-muted/20 px-4 py-3">
