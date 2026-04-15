@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import type { NudgeData } from "@/types"
 import { cn } from "@/lib/utils"
 import { useRef, useCallback, useState } from "react"
-import { dismissNudge, scheduleBreak } from "@/lib/api"
+import { api, dismissNudge, scheduleBreak } from "@/lib/api"
 
 interface NudgeCardProps {
   nudge: NudgeData | undefined
@@ -24,6 +24,17 @@ export function NudgeCard({ nudge, onDismiss }: NudgeCardProps) {
     setIsProcessing(true)
     try {
       await dismissNudge(nudge.user_hash)
+
+      // Also provide context so the dismiss actually affects risk calculation
+      try {
+        await api.post("/me/provide-context", {
+          explanation_type: "working_by_choice",
+          message: "Employee dismissed wellness nudge — indicated they are fine.",
+        })
+      } catch {
+        // Non-critical: context update is best-effort
+      }
+
       if (onDismiss) {
         onDismiss()
       } else if (cardRef.current) {
@@ -56,7 +67,13 @@ export function NudgeCard({ nudge, onDismiss }: NudgeCardProps) {
       } else if (action === "dismiss") {
         await handleDismiss()
       } else if (action === "request_support") {
-        toast.success("Support request sent. Someone will reach out soon.")
+        await api.post('/notifications', {
+          type: 'team',
+          title: 'Support Requested',
+          message: 'An employee has requested support through a wellness nudge.',
+          priority: 'high',
+        })
+        toast.success("Your support request has been recorded. Your manager will be notified.")
       }
     } catch (err) {
       console.error("Failed to process action:", err)

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { SettingsModal } from '@/components/settings-modal'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -28,6 +28,8 @@ import {
   Thermometer,
   Trash2,
   Zap,
+  Bell,
+  Heart,
   User,
   UserCog,
   Users,
@@ -39,6 +41,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useTenant } from '@/contexts/tenant-context'
 import { useChatHistory } from '@/hooks/useChatHistory'
 import { renameChatSession, deleteChatSession, toggleFavoriteSession } from '@/lib/api'
+import { getUnreadCount } from '@/lib/notifications'
 import { getInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -142,6 +145,16 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       key: 'k', code: 'KeyK', ctrlKey: true, metaKey: true, bubbles: true,
     }))
   }, [])
+
+  // ---- Notification unread count ----
+  const [unreadCount, setUnreadCount] = useState(0)
+  useEffect(() => {
+    if (authLoading || !user) return
+    const fetchCount = () => { getUnreadCount().then(setUnreadCount).catch(() => {}) }
+    fetchCount()
+    const interval = setInterval(fetchCount, 30_000)
+    return () => clearInterval(interval)
+  }, [authLoading, user])
 
   // ---- Settings modal state ----
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -381,6 +394,56 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Personal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+
+              {/* My Wellness — all roles */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(pathname, '/me')}
+                  tooltip="My Wellness"
+                >
+                  <Link href="/me">
+                    <Heart />
+                    <span>My Wellness</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Notifications — all roles, with unread badge */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(pathname, '/notifications')}
+                  tooltip="Notifications"
+                >
+                  <Link href="/notifications">
+                    <Bell />
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
 
               {/* Marketplace — all roles */}
               <SidebarMenuItem>
@@ -639,10 +702,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => router.push('/me')}>
-                      <User className="mr-2 size-4" />
-                      My Profile
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                       <Settings className="mr-2 size-4" />
                       Settings

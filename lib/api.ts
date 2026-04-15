@@ -294,17 +294,32 @@ export async function getNudge(userHash: string): Promise<NudgeData> {
 /**
  * Dismiss an active nudge for a user
  * POST /engines/users/{user_hash}/nudge/dismiss
+ *
+ * NOTE: This endpoint returns a flat { success, message } object (no `data`
+ * wrapper), so we bypass handleResponse which would return `undefined`.
  */
 export async function dismissNudge(userHash: string): Promise<{ success: boolean; message: string }> {
-  return handleResponse(api.post(`/engines/users/${userHash}/nudge/dismiss`));
+  const result = await api.post<{ success: boolean; message: string }>(`/engines/users/${userHash}/nudge/dismiss`);
+  if (result && typeof result === 'object' && 'success' in result && !(result as Record<string, unknown>).success) {
+    throw new Error((result as Record<string, unknown>).error as string || 'Failed to dismiss nudge');
+  }
+  return result;
 }
 
 /**
  * Schedule a break for a user
  * POST /engines/users/{user_hash}/nudge/schedule-break
+ *
+ * NOTE: This endpoint returns a flat { success, message, scheduled_time,
+ * calendar_link } object (no `data` wrapper), so we bypass handleResponse
+ * which would return `undefined`.
  */
-export async function scheduleBreak(userHash: string): Promise<{ success: boolean; message: string; scheduled_time: string }> {
-  return handleResponse(api.post(`/engines/users/${userHash}/nudge/schedule-break`));
+export async function scheduleBreak(userHash: string): Promise<{ success: boolean; message: string; scheduled_time: string; calendar_link: string }> {
+  const result = await api.post<{ success: boolean; message: string; scheduled_time: string; calendar_link: string }>(`/engines/users/${userHash}/nudge/schedule-break`);
+  if (result && typeof result === 'object' && 'success' in result && !(result as Record<string, unknown>).success) {
+    throw new Error((result as Record<string, unknown>).error as string || 'Failed to schedule break');
+  }
+  return result;
 }
 
 /**
@@ -721,6 +736,7 @@ export const createWorkflow = (data: { name: string; trigger: string; actions: u
 export const toggleWorkflow = (id: string, enabled: boolean) =>
   api.patch(`/workflows/${id}`, { enabled })
 export const deleteWorkflow = (id: string) => api.delete(`/workflows/${id}`)
+export const executeWorkflow = (id: string) => api.post(`/workflows/${id}/execute`)
 
 // ============================================
 // AI Feedback API

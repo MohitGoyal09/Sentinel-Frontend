@@ -384,7 +384,10 @@ function NetworkContent() {
                           </div>
                           <button
                             className="shrink-0 text-[10px] border border-white/10 rounded px-2 py-1 text-muted-foreground hover:text-foreground hover:border-white/20 transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]"
-                            onClick={() => toast.info("Coming soon — Composio connection will be available shortly")}
+                            onClick={() => {
+                              const q = encodeURIComponent('How should I support this team member?')
+                              window.location.href = `/ask-sentinel?q=${q}`
+                            }}
                           >
                             Intervene
                           </button>

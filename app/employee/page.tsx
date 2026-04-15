@@ -44,7 +44,8 @@ import { ProtectedRoute } from "@/components/protected-route"
 import { useAuth } from "@/contexts/auth-context"
 import { SkillsRadar } from "@/components/skills-radar"
 import { AskSentinelWidget } from "@/components/ask-sentinel-widget"
-import { api, getRiskHistory, getNetworkAnalysis } from "@/lib/api"
+import { api, getRiskHistory, getNetworkAnalysis, scheduleBreak } from "@/lib/api"
+import { toast } from "sonner"
 import { toRiskLevel, type RiskLevel, type TalentScoutData } from "@/types"
 import { cn, getInitials } from "@/lib/utils"
 import {
@@ -556,6 +557,23 @@ function EmployeeDashboardContent() {
                   <Button
                     size="sm"
                     className="bg-primary hover:bg-primary/90 text-primary-foreground transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97]"
+                    onClick={async () => {
+                      if (!data?.user?.user_hash) return
+                      // Open window synchronously in click handler (before async gap)
+                      const calendarWindow = window.open("about:blank", "_blank")
+                      try {
+                        const result = await scheduleBreak(data.user.user_hash)
+                        if (result?.calendar_link && calendarWindow) {
+                          calendarWindow.location.href = result.calendar_link
+                        } else if (calendarWindow) {
+                          calendarWindow.close()
+                        }
+                        toast.success("Check-in scheduled!")
+                      } catch {
+                        calendarWindow?.close()
+                        toast.error("Failed to schedule check-in")
+                      }
+                    }}
                   >
                     Schedule Check-in
                   </Button>

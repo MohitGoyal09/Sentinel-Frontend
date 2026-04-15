@@ -604,9 +604,20 @@ export default function TeamHealthPage() {
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => {
+                    // Build a Google Calendar link for this Friday 3-4 PM
+                    const now = new Date()
+                    const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7
+                    const friday = new Date(now)
+                    friday.setDate(now.getDate() + daysUntilFriday)
+                    friday.setHours(15, 0, 0, 0)
+                    const end = new Date(friday)
+                    end.setHours(16, 0, 0, 0)
+                    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+                    const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Team Wellness Break')}&dates=${fmt(friday)}/${fmt(end)}&details=${encodeURIComponent('Scheduled via Sentinel.\n\nA team wellness break for all ' + totalMembers + ' team members.\n\nTake this time to recharge, connect informally, or step away from screens.')}`
                     toast.success('Team break scheduled for this Friday 3-4 PM', {
                       description: 'Calendar invites will be sent to all ' + totalMembers + ' team members.',
                     })
+                    window.open(calUrl, '_blank')
                   }}
                   className="flex items-center gap-3 border border-border hover:bg-muted/50 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-border cursor-pointer"
                 >
@@ -616,8 +627,8 @@ export default function TeamHealthPage() {
                 </button>
                 <button
                   onClick={() => {
-                    toast.success('Wellness survey sent to all ' + totalMembers + ' team members', {
-                      description: 'Employees will receive in-app wellbeing check prompts.',
+                    toast.info('Wellness survey feature available with email integration', {
+                      description: 'Direct survey delivery will be available in Phase 2.',
                     })
                   }}
                   className="flex items-center gap-3 border border-border hover:bg-muted/50 rounded-lg py-3 px-4 text-sm w-full text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] text-foreground hover:border-border cursor-pointer"

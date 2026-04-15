@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,16 +16,13 @@ import {
   CheckCheck,
   Trash2,
   AlertTriangle,
-  AlertCircle,
   Info,
   Shield,
   Users,
   Activity,
   Settings,
-  Sparkles,
   Search,
-  Mail,
-  Smartphone,
+  ArrowUpRight,
   Moon,
 } from 'lucide-react'
 import {
@@ -39,13 +36,24 @@ import {
 } from '@/lib/notifications'
 import { timeAgo } from '@/lib/utils'
 
-// ─── Type helpers ─────────────────────────────────────────────────────────────
-const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  auth: Shield,
-  security: AlertTriangle,
-  team: Users,
-  system: Info,
-  activity: Activity,
+const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  auth: Shield, security: AlertTriangle, team: Users, system: Info, activity: Activity,
+}
+
+const PRIORITY_STYLES: Record<string, { color: string; bg: string; label: string }> = {
+  critical: { color: 'text-[hsl(var(--sentinel-critical))]', bg: 'bg-[hsl(var(--sentinel-critical)/0.12)]', label: 'Critical' },
+  high: { color: 'text-[hsl(var(--sentinel-elevated))]', bg: 'bg-[hsl(var(--sentinel-elevated)/0.12)]', label: 'High' },
+  normal: { color: 'text-[hsl(var(--sentinel-healthy))]', bg: 'bg-[hsl(var(--sentinel-healthy)/0.12)]', label: 'AI Insight' },
+}
+
+function iconColorForType(type: string, priority: string): string {
+  return PRIORITY_STYLES[priority]?.color ?? (type === 'activity' ? PRIORITY_STYLES.normal.color : 'text-muted-foreground')
+}
+function iconBgForType(type: string, priority: string): string {
+  if (priority === 'critical') return 'bg-[hsl(var(--sentinel-critical)/0.1)]'
+  if (priority === 'high') return 'bg-[hsl(var(--sentinel-elevated)/0.1)]'
+  if (type === 'activity') return 'bg-[hsl(var(--sentinel-healthy)/0.1)]'
+  return 'bg-white/5'
 }
 
 type FilterTab = 'all' | 'critical' | 'health' | 'insights' | 'system'
@@ -54,83 +62,87 @@ function matchesTab(n: Notification, tab: FilterTab): boolean {
   if (tab === 'all') return true
   if (tab === 'critical') return n.priority === 'critical'
   if (tab === 'health') return n.type === 'team' || n.type === 'activity'
-  if (tab === 'insights') return (n as any).category === 'insight' || n.type === 'activity'
+  if (tab === 'insights') return n.type === 'activity' && n.priority === 'normal'
   if (tab === 'system') return n.type === 'system' || n.type === 'auth'
   return true
 }
 
-// ─── Badge chip ───────────────────────────────────────────────────────────────
-function PriorityBadge({ priority, type }: { priority: string; type: string }) {
-  if (priority === 'critical') {
-    return (
-      <span className="rounded-full bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
-        Critical
-      </span>
-    )
-  }
-  if ((type as any) === 'insight' || priority === 'normal') {
-    return (
-      <span className="rounded-full bg-accent/10 text-accent text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
-        AI Insight
-      </span>
-    )
-  }
+function PriorityBadge({ priority }: { priority: string }) {
+  const style = PRIORITY_STYLES[priority]
+  if (!style) return null
   return (
-    <span className="rounded-full bg-white/5 text-muted-foreground text-[10px] font-medium px-2 py-0.5 capitalize">
-      {type}
+    <span className={`rounded-full ${style.bg} ${style.color} text-[10px] font-semibold px-2 py-0.5 uppercase tracking-wide leading-none`}>
+      {style.label}
     </span>
   )
 }
 
-// ─── Left border color by priority ───────────────────────────────────────────
-function borderAccentClass(priority: string): string {
-  switch (priority) {
-    case 'critical': return 'border-l-destructive'
-    case 'high': return 'border-l-[hsl(var(--sentinel-elevated))]'
-    case 'normal': return 'border-l-accent'
-    default: return 'border-l-border'
+interface DateGroup { label: string; items: Notification[] }
+
+function groupByDate(items: Notification[]): DateGroup[] {
+  const now = new Date()
+  const todayStr = now.toDateString()
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toDateString()
+  const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7)
+  const buckets: Record<string, Notification[]> = { today: [], yesterday: [], week: [], older: [] }
+  for (const item of items) {
+    const d = new Date(item.created_at)
+    const ds = d.toDateString()
+    if (ds === todayStr) buckets.today.push(item)
+    else if (ds === yesterdayStr) buckets.yesterday.push(item)
+    else if (d >= weekAgo) buckets.week.push(item)
+    else buckets.older.push(item)
   }
+  const labels: [string, string][] = [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'Earlier this week'], ['older', 'Older']]
+  return labels.filter(([k]) => buckets[k].length > 0).map(([k, l]) => ({ label: l, items: buckets[k] }))
 }
 
-// ─── Single notification row ──────────────────────────────────────────────────
-function NotificationItem({
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
+      className={[
+        'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+        checked ? 'bg-primary' : 'bg-white/10',
+      ].join(' ')}
+    >
+      <span
+        className={[
+          'inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200',
+          checked ? 'translate-x-[18px]' : 'translate-x-[3px]',
+        ].join(' ')}
+      />
+    </button>
+  )
+}
+
+function NotificationRow({
   notification,
   onMarkRead,
   onDelete,
+  isProcessing,
 }: {
   notification: Notification
   onMarkRead: (id: string) => void
   onDelete: (id: string) => void
+  isProcessing: boolean
 }) {
-  const Icon =
-    notification.priority === 'critical'
-      ? AlertCircle
-      : (notification as any).category === 'insight'
-        ? Sparkles
-        : typeIcons[notification.type] ?? Info
+  const Icon = TYPE_ICONS[notification.type] ?? Info
+  const isUnread = !notification.read
 
-  const iconColor =
-    notification.priority === 'critical'
-      ? 'text-destructive'
-      : (notification as any).category === 'insight'
-        ? 'text-accent'
-        : 'text-muted-foreground'
-
-  const iconBg =
-    notification.priority === 'critical'
-      ? 'bg-destructive/10'
-      : (notification as any).category === 'insight'
-        ? 'bg-accent/10'
-        : 'bg-white/5'
-
-  const inner = (
+  return (
     <div
       className={[
-        'group relative flex items-start gap-3 rounded-xl bg-card border border-white/5 p-4',
-        borderAccentClass(notification.priority),
-        !notification.read ? '' : 'opacity-60',
-        notification.action_url ? 'cursor-pointer hover:border-white/10 hover:bg-card/80' : '',
-        'transition-[background-color,border-color,opacity] duration-150',
+        'group relative flex items-center gap-3 py-4 px-5',
+        isUnread ? 'bg-muted/20' : 'bg-transparent',
+        notification.action_url ? 'cursor-pointer' : '',
+        'transition-colors duration-150 hover:bg-muted/30',
       ].join(' ')}
       onClick={
         notification.action_url
@@ -138,124 +150,144 @@ function NotificationItem({
           : undefined
       }
     >
-      {/* Icon */}
-      <div className={`mt-0.5 flex-shrink-0 h-8 w-8 rounded-lg ${iconBg} flex items-center justify-center`}>
-        <Icon className={`h-4 w-4 ${iconColor}`} />
+      {isUnread && <div className="flex-shrink-0 h-2 w-2 rounded-full bg-primary" />}
+      <div className={`flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${iconBgForType(notification.type, notification.priority)}`}>
+        <Icon className={`h-4 w-4 ${iconColorForType(notification.type, notification.priority)}`} />
       </div>
-
-      {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <PriorityBadge priority={notification.priority} type={notification.type} />
-          {!notification.read && (
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          )}
+        <div className="flex items-center gap-2">
+          <h4 className={`text-sm leading-snug truncate ${isUnread ? 'font-medium text-foreground' : 'font-medium text-foreground/60'}`}>
+            {notification.title}
+          </h4>
+          <PriorityBadge priority={notification.priority} />
         </div>
-        <h4 className={`mt-1.5 text-sm leading-snug ${!notification.read ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
-          {notification.title}
-        </h4>
-        <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">
-          {notification.message}
-        </p>
-        <p className="mt-1.5 text-[10px] text-muted-foreground/60">
-          {timeAgo(notification.created_at)}
-        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-1">{notification.message}</p>
       </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-        {!notification.read && (
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">{timeAgo(notification.created_at)}</span>
+        {notification.action_url && <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          {isUnread && (
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={isProcessing}
+              className="h-6 w-6 hover:bg-white/5 text-muted-foreground hover:text-foreground disabled:opacity-40"
+              onClick={(e) => { e.stopPropagation(); onMarkRead(notification.id) }}
+              title="Mark as read"
+            >
+              <Check className="h-3 w-3" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 hover:bg-white/5 text-muted-foreground hover:text-foreground"
-            onClick={(e) => { e.stopPropagation(); onMarkRead(notification.id) }}
-            title="Mark as read"
+            disabled={isProcessing}
+            className="h-6 w-6 hover:bg-[hsl(var(--sentinel-critical)/0.1)] text-muted-foreground hover:text-[hsl(var(--sentinel-critical))] disabled:opacity-40"
+            onClick={(e) => { e.stopPropagation(); onDelete(notification.id) }}
+            title="Delete"
           >
-            <Check className="h-3.5 w-3.5" />
+            <Trash2 className="h-3 w-3" />
           </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-          onClick={(e) => { e.stopPropagation(); onDelete(notification.id) }}
-          title="Delete"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        </div>
       </div>
     </div>
   )
-
-  return <div className="mb-2">{inner}</div>
 }
 
-// ─── Date group separator ─────────────────────────────────────────────────────
-function DateSeparator({ label }: { label: string }) {
+function DateHeader({ label, isFirst }: { label: string; isFirst: boolean }) {
   return (
-    <div className="flex items-center gap-3 mt-5 mb-2">
-      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+    <div className={`py-3 px-5 ${isFirst ? '' : 'mt-2'}`}>
+      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
         {label}
       </span>
-      <div className="flex-1 h-px bg-white/5" />
     </div>
   )
 }
 
-// ─── Toggle switch ────────────────────────────────────────────────────────────
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function EmptyState({ searchQuery, activeTab }: { searchQuery: string; activeTab: FilterTab }) {
+  if (searchQuery) return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <Search className="h-5 w-5 text-muted-foreground/30 mb-3" />
+      <p className="text-sm text-muted-foreground">No results for &ldquo;{searchQuery}&rdquo;</p>
+    </div>
+  )
+  if (activeTab !== 'all') return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <p className="text-sm text-muted-foreground">No {activeTab} notifications.</p>
+    </div>
+  )
   return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${checked ? 'bg-primary' : 'bg-white/10'}`}
-    >
-      <span
-        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${checked ? 'translate-x-[18px]' : 'translate-x-[3px]'}`}
-      />
-    </button>
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <Bell className="h-5 w-5 text-muted-foreground/30 mb-3" />
+      <p className="text-sm font-medium text-foreground/80">All clear</p>
+      <p className="text-xs text-muted-foreground/60 mt-1 max-w-xs leading-relaxed">Notifications about wellness patterns, scheduled check-ins, and system updates will appear here.</p>
+    </div>
   )
 }
 
-// ─── Delivery mode segmented control ─────────────────────────────────────────
-type DeliveryMode = 'email' | 'in-app' | 'both'
-
-function DeliverySegment({
-  value,
-  onChange,
+function PreferencesContent({
+  preferences,
+  onToggle,
+  onSave,
+  saving,
+  quietHours,
+  onToggleQuietHours,
 }: {
-  value: DeliveryMode
-  onChange: (v: DeliveryMode) => void
+  preferences: any[]
+  onToggle: (index: number) => void
+  onSave: () => void
+  saving: boolean
+  quietHours: boolean
+  onToggleQuietHours: () => void
 }) {
-  const options: { key: DeliveryMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { key: 'email', label: 'Email', icon: Mail },
-    { key: 'in-app', label: 'In-App', icon: Smartphone },
-    { key: 'both', label: 'Both', icon: Bell },
+  const PREF_ROWS = [
+    { label: 'Critical Alerts', description: 'Burnout risk alerts -- always on', locked: true, defaultEnabled: true },
+    { label: 'AI Insights', description: 'Pattern detection and recommendations', locked: false, defaultEnabled: true },
+    { label: 'Team Health Reports', description: 'Weekly and monthly summaries', locked: false, defaultEnabled: true },
+    { label: 'Weekly Summaries', description: 'Digest of key metrics', locked: false, defaultEnabled: true },
+    { label: 'System Updates', description: 'Platform and maintenance notices', locked: false, defaultEnabled: false },
   ]
   return (
-    <div className="flex rounded-lg bg-background border border-white/5 p-0.5 gap-0.5">
-      {options.map(({ key, label, icon: Icon }) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          className={[
-            'flex items-center gap-1.5 flex-1 justify-center text-xs rounded-md px-3 py-1.5 transition-all duration-150',
-            value === key
-              ? 'bg-card text-foreground font-medium border border-white/5 shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-          ].join(' ')}
-        >
-          <Icon className="h-3 w-3" />
-          {label}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="mt-6">
+        {PREF_ROWS.map((pref, idx) => (
+          <div key={idx} className="flex items-center justify-between py-3 border-b border-white/[0.04] last:border-b-0">
+            <div className="min-w-0 flex-1 pr-3">
+              <p className="text-sm font-medium text-foreground">{pref.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{pref.description}</p>
+            </div>
+            <Toggle checked={pref.locked || (preferences[idx]?.enabled ?? pref.defaultEnabled)} onChange={() => !pref.locked && onToggle(idx)} disabled={pref.locked} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 flex items-center justify-between py-3 bg-white/[0.02] border border-white/[0.06] rounded-lg px-4">
+        <div className="flex items-center gap-2.5">
+          <Moon className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Quiet Hours</p>
+            <p className="text-[11px] text-muted-foreground">9 pm -- 8 am, no alerts</p>
+          </div>
+        </div>
+        <Toggle checked={quietHours} onChange={onToggleQuietHours} />
+      </div>
+      <div className="mt-6">
+        <Button onClick={onSave} disabled={saving} className="w-full text-sm">
+          {saving ? 'Saving...' : 'Save Preferences'}
+        </Button>
+      </div>
+    </>
   )
 }
 
-// ─── Page Component ───────────────────────────────────────────────────────────
+const TABS: { key: FilterTab; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'critical', label: 'Critical' },
+  { key: 'health', label: 'Health' },
+  { key: 'insights', label: 'Insights' },
+  { key: 'system', label: 'System' },
+]
+
 function NotificationsContent() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
@@ -264,24 +296,22 @@ function NotificationsContent() {
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [preferences, setPreferences] = useState<any[]>([])
   const [prefsSaving, setPrefsSaving] = useState(false)
-  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>('both')
   const [quietHours, setQuietHours] = useState(true)
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
 
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await getNotifications(activeTab === 'all' ? false : false, 100)
+      const data = await getNotifications(false, 100)
       setNotifications(data.notifications || [])
     } catch {
-      // silent - notifications are non-critical
+      // silent -- notifications are non-critical
     } finally {
       setLoading(false)
     }
-  }, [activeTab])
+  }, [])
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [fetchNotifications])
+  useEffect(() => { fetchNotifications() }, [fetchNotifications])
 
   const openPreferences = async () => {
     setPrefsOpen(true)
@@ -310,280 +340,157 @@ function NotificationsContent() {
   }
 
   const handleMarkAsRead = async (id: string) => {
-    await markAsRead(id)
-    setNotifications((prev) =>
-      prev.map((n) => n.id === id ? { ...n, read: true, read_at: new Date().toISOString() } : n)
-    )
+    if (processingIds.has(id)) return
+    setProcessingIds((prev) => new Set(prev).add(id))
+    try {
+      await markAsRead(id)
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true, read_at: new Date().toISOString() } : n))
+      )
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err)
+    } finally {
+      setProcessingIds((prev) => { const next = new Set(prev); next.delete(id); return next })
+    }
   }
 
   const handleMarkAllRead = async () => {
-    await markAllRead()
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true, read_at: new Date().toISOString() })))
+    if (processingIds.size > 0) return
+    setProcessingIds(new Set(['__all__']))
+    try {
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, read: true, read_at: new Date().toISOString() }))
+      )
+      await markAllRead()
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err)
+      fetchNotifications()
+    } finally {
+      setProcessingIds(new Set())
+    }
   }
 
   const handleDelete = async (id: string) => {
-    await deleteNotification(id)
+    if (processingIds.has(id)) return
+    setProcessingIds((prev) => new Set(prev).add(id))
     setNotifications((prev) => prev.filter((n) => n.id !== id))
+    try {
+      await deleteNotification(id)
+    } catch (err) {
+      console.error('Failed to delete notification:', err)
+      fetchNotifications()
+    } finally {
+      setProcessingIds((prev) => { const next = new Set(prev); next.delete(id); return next })
+    }
   }
 
-  // Filter notifications
-  const filteredNotifications = notifications.filter((n) => {
-    const tabMatch = matchesTab(n, activeTab)
-    const searchMatch =
-      !searchQuery ||
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.message.toLowerCase().includes(searchQuery.toLowerCase())
-    return tabMatch && searchMatch
-  })
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((n) => {
+      const tabMatch = matchesTab(n, activeTab)
+      const q = searchQuery.toLowerCase()
+      const searchMatch =
+        !q ||
+        n.title.toLowerCase().includes(q) ||
+        n.message.toLowerCase().includes(q)
+      return tabMatch && searchMatch
+    })
+  }, [notifications, activeTab, searchQuery])
 
-  // Tab counts
-  const counts: Record<FilterTab, number> = {
+  const counts: Record<FilterTab, number> = useMemo(() => ({
     all: notifications.length,
     critical: notifications.filter((n) => n.priority === 'critical').length,
     health: notifications.filter((n) => n.type === 'team' || n.type === 'activity').length,
-    insights: notifications.filter((n) => (n as any).category === 'insight' || n.type === 'activity').length,
+    insights: notifications.filter((n) => n.type === 'activity' && n.priority === 'normal').length,
     system: notifications.filter((n) => n.type === 'system' || n.type === 'auth').length,
-  }
+  }), [notifications])
 
-  const unreadCount = notifications.filter((n) => !n.read).length
-
-  // Group notifications by date
-  const todayStr = new Date().toDateString()
-  const yesterdayDate = new Date()
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1)
-  const yesterdayStr = yesterdayDate.toDateString()
-
-  const todayItems = filteredNotifications.filter(
-    (n) => new Date(n.created_at).toDateString() === todayStr
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications],
   )
-  const yesterdayItems = filteredNotifications.filter(
-    (n) => new Date(n.created_at).toDateString() === yesterdayStr
-  )
-  const olderItems = filteredNotifications.filter((n) => {
-    const d = new Date(n.created_at).toDateString()
-    return d !== todayStr && d !== yesterdayStr
-  })
 
-  const TABS: { key: FilterTab; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'critical', label: 'Critical' },
-    { key: 'health', label: 'Health' },
-    { key: 'insights', label: 'Insights' },
-    { key: 'system', label: 'System' },
-  ]
+  const dateGroups = useMemo(
+    () => groupByDate(filteredNotifications),
+    [filteredNotifications],
+  )
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8 min-h-screen bg-background">
-
-      {/* ── Page Header ──────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="w-full max-w-4xl mx-auto">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Stay on top of critical alerts and AI insights.
-          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">Wellness alerts and system updates</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleMarkAllRead}
-              className="text-xs border border-white/10 hover:bg-white/5 text-muted-foreground hover:text-foreground gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="text-xs border border-white/[0.08] hover:bg-white/[0.04] text-muted-foreground hover:text-foreground gap-1.5">
               <CheckCheck className="h-3.5 w-3.5" />
               Mark all read
-              <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
-                {unreadCount}
-              </span>
+              <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[10px] font-semibold ml-0.5">{unreadCount}</span>
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={openPreferences}
-            className="text-xs border border-white/10 hover:bg-white/5 text-muted-foreground hover:text-foreground gap-2"
-          >
+          <Button variant="ghost" size="icon" onClick={openPreferences} className="h-8 w-8 border border-white/[0.08] hover:bg-white/[0.04] text-muted-foreground hover:text-foreground" title="Preferences">
             <Settings className="h-3.5 w-3.5" />
-            Preferences
           </Button>
         </div>
       </div>
 
-      {/* ── Preferences Sheet ────────────────────────────────────────────── */}
       <Sheet open={prefsOpen} onOpenChange={setPrefsOpen}>
-        <SheetContent className="bg-card border-l border-white/10 w-80">
+        <SheetContent className="bg-card border-l border-white/[0.06] w-80">
           <SheetHeader>
             <SheetTitle className="text-base font-semibold">Notification Preferences</SheetTitle>
-            <SheetDescription className="text-xs text-muted-foreground">
-              Choose which notifications you want to receive.
-            </SheetDescription>
+            <SheetDescription className="text-xs text-muted-foreground">Choose which in-app notifications you receive.</SheetDescription>
           </SheetHeader>
-
-          <div className="mt-6 space-y-1">
-            {/* Static preference rows (shown while API prefs load) */}
-            {[
-              { label: 'Critical Alerts', description: 'Burnout risk alerts — always on', enabled: true, locked: true },
-              { label: 'AI Insights', description: 'Pattern detection and recommendations', enabled: true },
-              { label: 'Team Health Reports', description: 'Weekly and monthly summaries', enabled: true },
-              { label: 'Weekly Summaries', description: 'Digest of key metrics', enabled: true },
-              { label: 'System Updates', description: 'Platform and maintenance notices', enabled: false },
-            ].map((pref, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between py-3 border-b border-white/5 last:border-0"
-              >
-                <div className="min-w-0 flex-1 pr-3">
-                  <p className="text-sm font-medium text-foreground">{pref.label}</p>
-                  {pref.description && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{pref.description}</p>
-                  )}
-                </div>
-                <Toggle
-                  checked={pref.locked ? true : (preferences[idx]?.enabled ?? pref.enabled)}
-                  onChange={() => !pref.locked && handleTogglePref(idx)}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Delivery mode */}
-          <div className="mt-5">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-              Delivery Channel
-            </p>
-            <DeliverySegment value={deliveryMode} onChange={setDeliveryMode} />
-          </div>
-
-          {/* Quiet hours */}
-          <div className="mt-5 flex items-center justify-between py-3 bg-card/60 border border-white/5 rounded-xl px-4">
-            <div className="flex items-center gap-2.5">
-              <Moon className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Quiet Hours</p>
-                <p className="text-[11px] text-muted-foreground">9pm – 8am, no alerts</p>
-              </div>
-            </div>
-            <Toggle checked={quietHours} onChange={() => setQuietHours((q) => !q)} />
-          </div>
-
-          <div className="mt-6">
-            <Button
-              onClick={handleSavePrefs}
-              disabled={prefsSaving}
-              className="w-full text-sm active:scale-[0.97] transition-transform"
-            >
-              {prefsSaving ? 'Saving...' : 'Save Preferences'}
-            </Button>
-          </div>
+          <PreferencesContent preferences={preferences} onToggle={handleTogglePref} onSave={handleSavePrefs} saving={prefsSaving} quietHours={quietHours} onToggleQuietHours={() => setQuietHours((q) => !q)} />
         </SheetContent>
       </Sheet>
 
-      {/* ── Filter Bar ───────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap flex-1">
+      <div className="flex items-center justify-between gap-3 mt-6 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {TABS.map(({ key, label }) => {
             const count = counts[key]
             const isActive = activeTab === key
             return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={[
-                  'flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-[background-color,color,border-color] duration-150',
-                  isActive
-                    ? 'bg-primary text-white'
-                    : 'bg-card border border-white/5 text-muted-foreground hover:bg-white/5 hover:text-foreground',
-                ].join(' ')}
-              >
+              <button key={key} onClick={() => setActiveTab(key)} className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
                 {label}
-                {count > 0 && (
-                  <span
-                    className={`text-[10px] font-bold rounded-full px-1.5 ${isActive ? 'bg-white/20 text-white' : 'bg-white/5 text-muted-foreground'}`}
-                  >
-                    {count}
-                  </span>
-                )}
+                {count > 0 && <span className={`text-[10px] font-semibold rounded-full px-1.5 ${isActive ? 'bg-white/20 text-primary-foreground' : 'bg-white/[0.06] text-muted-foreground'}`}>{count}</span>}
               </button>
             )
           })}
         </div>
-
-        {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search notifications..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-card border border-white/10 rounded-lg pl-8 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all w-52"
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+          <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-white/[0.03] border border-white/[0.06] rounded-lg pl-8 pr-4 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all w-44" />
         </div>
       </div>
 
-      {/* ── Notification Feed ────────────────────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : filteredNotifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-card border border-white/5 flex items-center justify-center mb-4">
-            <Bell className="h-8 w-8 text-muted-foreground/40" />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground">No notifications</h3>
-          <p className="text-xs text-muted-foreground mt-1.5 max-w-xs">
-            {searchQuery
-              ? `No results for "${searchQuery}"`
-              : activeTab === 'all'
-                ? 'You have no notifications yet.'
-                : `No ${activeTab} notifications.`}
-          </p>
-        </div>
+        <EmptyState searchQuery={searchQuery} activeTab={activeTab} />
       ) : (
-        <div className="max-w-3xl">
-          {todayItems.length > 0 && (
-            <>
-              <DateSeparator label="Today" />
-              {todayItems.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  onMarkRead={handleMarkAsRead}
-                  onDelete={handleDelete}
-                />
+        <div className="mt-2 rounded-lg border border-white/[0.06] bg-card overflow-hidden divide-y divide-border/30">
+          {dateGroups.map((group, groupIdx) => (
+            <div key={group.label} className={groupIdx > 0 ? 'border-t border-border/30' : ''}>
+              <DateHeader label={group.label} isFirst={groupIdx === 0} />
+              {group.items.map((n, nIdx) => (
+                <div key={n.id} className={nIdx > 0 ? 'border-t border-border/30' : ''}>
+                  <NotificationRow
+                    notification={n}
+                    onMarkRead={handleMarkAsRead}
+                    onDelete={handleDelete}
+                    isProcessing={processingIds.has(n.id)}
+                  />
+                </div>
               ))}
-            </>
-          )}
-          {yesterdayItems.length > 0 && (
-            <>
-              <DateSeparator label="Yesterday" />
-              {yesterdayItems.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  onMarkRead={handleMarkAsRead}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </>
-          )}
-          {olderItems.length > 0 && (
-            <>
-              <DateSeparator label="Older" />
-              {olderItems.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  onMarkRead={handleMarkAsRead}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </>
-          )}
+            </div>
+          ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -188,7 +188,7 @@ export function AiInsightCard({ employee, className }: AiInsightCardProps) {
 
       <CardContent className="flex flex-col gap-5">
         {/* Narrative */}
-        <p className="text-sm leading-relaxed text-foreground/80">
+        <p className="text-sm leading-relaxed text-foreground/80 line-clamp-3">
           {narrative}
         </p>
 
@@ -207,14 +207,11 @@ export function AiInsightCard({ employee, className }: AiInsightCardProps) {
               return (
                 <div
                   key={idx}
-                  className={cn("rounded-lg border p-3", style.bg, style.border)}
+                  className={cn("rounded-lg border px-3 py-2", style.bg, style.border)}
                 >
-                  <div className="flex items-start gap-2.5">
-                    <ActionIcon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", style.text)} />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground">{action.title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{action.description}</p>
-                    </div>
+                  <div className="flex items-center gap-2.5">
+                    <ActionIcon className={cn("h-3.5 w-3.5 shrink-0", style.text)} />
+                    <p className="text-xs font-medium text-foreground truncate">{action.title}</p>
                   </div>
                 </div>
               )

@@ -28,9 +28,14 @@ export function SafetyValve({ employees, selectedUser, onSelectUser }: SafetyVal
 
   const handleRunAnalysis = async () => {
     setAnalysisRunning(true)
-    toast.info("Analysis started - results will appear shortly")
-    // Allow button to reflect loading state briefly
-    setTimeout(() => setAnalysisRunning(false), 2000)
+    toast.info("Re-analyzing team data...")
+    try {
+      // Reload the page to refetch all employee data from the backend
+      window.location.reload()
+    } catch {
+      toast.error("Analysis failed. Please try again.")
+      setAnalysisRunning(false)
+    }
   }
 
   // Aggregate Metrics based on screenshot logic
@@ -41,17 +46,44 @@ export function SafetyValve({ employees, selectedUser, onSelectUser }: SafetyVal
     const critical = employees.filter(e => e.risk_level === "CRITICAL").length
     const avgVelocity = (employees.reduce((acc, e) => acc + (e.velocity || 0), 0) / (total || 1)).toFixed(2)
     
-    // Contagion Risk logic (mock or derived)
-    const contagionRisk = elevated > 2 ? "ELEVATED" : "LOW"
+    // Contagion Risk: consider both critical and elevated counts relative to team size
+    const contagionRisk = (critical >= 2 || (elevated >= 3 && critical >= 1)) ? "ELEVATED" : "LOW"
     
     return { total, healthy, elevated, critical, avgVelocity, contagionRisk }
   }, [employees])
 
   const riskPercent = metrics.total > 0 ? Math.round((metrics.critical / metrics.total) * 100) : 0
 
-  // Mock Forecast Data for Burnout Prediction Banner
-  const highRiskForecast = useMemo(() => employees.filter(e => e.risk_level === "CRITICAL").slice(0, 3), [employees])
-  const atRiskForecast = useMemo(() => employees.filter(e => e.risk_level === "ELEVATED").slice(0, 3), [employees])
+  // Generate context-aware AI recommendation from the selected employee's actual data
+  const aiRecommendation = useMemo(() => {
+    if (!selectedUser) return "No active warnings."
+
+    if (selectedUser.risk_level === "CRITICAL") {
+      return "Multiple risk signals are converging. Immediate 1:1 recommended."
+    }
+
+    const signals: string[] = []
+
+    if (selectedUser.velocity > 2.5) {
+      signals.push("Work intensity is significantly elevated. Consider reviewing current workload distribution.")
+    }
+    if (selectedUser.belongingness_score < 0.4) {
+      signals.push("Social engagement has declined. A casual check-in may help.")
+    }
+    if (selectedUser.circadian_entropy > 1.5) {
+      signals.push("Work schedule has become irregular. Discuss schedule flexibility.")
+    }
+
+    if (signals.length === 0) {
+      return "All signals within healthy range. No action needed."
+    }
+
+    return signals.join(" ")
+  }, [selectedUser])
+
+  // Current risk state for the Burnout Risk Banner
+  const criticalRiskEmployees = useMemo(() => employees.filter(e => e.risk_level === "CRITICAL").slice(0, 3), [employees])
+  const elevatedRiskEmployees = useMemo(() => employees.filter(e => e.risk_level === "ELEVATED").slice(0, 3), [employees])
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -137,42 +169,42 @@ export function SafetyValve({ employees, selectedUser, onSelectUser }: SafetyVal
                <AlertCircle className="w-5 h-5" />
                <CardTitle className="text-base">Burnout Prediction</CardTitle>
             </div>
-            <CardDescription className="text-red-300/60 text-xs">AI-powered risk forecasting based on behavioral patterns</CardDescription>
+            <CardDescription className="text-red-300/60 text-xs">Current risk assessment based on behavioral patterns</CardDescription>
          </CardHeader>
          <CardContent className="p-6 grid md:grid-cols-3 gap-8">
             <div className="space-y-3 border-r border-red-500/10 pr-4">
                <div className="flex items-center justify-between text-xs font-medium text-red-400 uppercase tracking-wider">
-                  High Risk (Next 2 Weeks)
+                  Critical Risk
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                </div>
-               <div className="text-xs text-red-300/70 mb-2">Employees showing signs of potential burnout</div>
-               {highRiskForecast.length > 0 ? (
-                  highRiskForecast.map(e => (
+               <div className="text-xs text-red-300/70 mb-2">Employees currently at critical burnout risk</div>
+               {criticalRiskEmployees.length > 0 ? (
+                  criticalRiskEmployees.map(e => (
                      <div key={e.user_hash} className="flex items-center gap-2 text-red-200 text-sm bg-red-500/10 px-2 py-1.5 rounded-md border border-red-500/10">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                         {e.name}
                      </div>
                   ))
                ) : (
-                  <div className="text-xs text-red-400/50 italic">No high-risk predictions</div>
+                  <div className="text-xs text-red-400/50 italic">No critical risk employees</div>
                )}
             </div>
             
             <div className="space-y-3 border-r border-red-500/10 pr-4">
                <div className="flex items-center justify-between text-xs font-medium text-amber-400 uppercase tracking-wider">
-                  At Risk (Next 4 Weeks)
+                  Elevated Risk
                   <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                </div>
-               <div className="text-xs text-amber-300/70 mb-2">Employees who may become at-risk without intervention</div>
+               <div className="text-xs text-amber-300/70 mb-2">Employees currently showing elevated risk signals</div>
                <div className="space-y-1">
-                  {atRiskForecast.map(e => (
+                  {elevatedRiskEmployees.map(e => (
                      <div key={e.user_hash} className="flex items-center gap-2 text-amber-200 text-sm">
                         <span className="w-1 h-1 rounded-full bg-amber-500"></span>
                         {e.name}
                      </div>
                   ))}
-                  {atRiskForecast.length === 0 && (
-                     <div className="text-xs text-amber-400/50 italic">No predictions</div>
+                  {elevatedRiskEmployees.length === 0 && (
+                     <div className="text-xs text-amber-400/50 italic">No elevated risk employees</div>
                   )}
                </div>
             </div>
@@ -319,7 +351,7 @@ export function SafetyValve({ employees, selectedUser, onSelectUser }: SafetyVal
                   <div className="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">AI Recommendation</div>
                   <div className="bg-indigo-950/30 border border-indigo-500/20 rounded-md p-3">
                      <p className="text-xs text-indigo-200/80 leading-relaxed italic">
-                        "{selectedUser ? "Monitor sleep patterns closely. Velocity spike detected." : "No active warnings."}"
+                        &ldquo;{aiRecommendation}&rdquo;
                      </p>
                   </div>
                </CardContent>

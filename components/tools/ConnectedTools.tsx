@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,14 +71,15 @@ export default function ConnectedTools() {
   };
 
   const handleConnect = (tool: string) => {
-    // In production, this would trigger OAuth flow
-    // For now, show placeholder
-    alert(`OAuth connection flow for ${tool} would be triggered here.\n\nSetup:\n1. Run: composio add ${tool}\n2. Follow browser OAuth prompts\n3. Refresh this page`);
+    toast.info(`Visit Marketplace to manage ${tool} connections`, {
+      description: 'Go to Settings > Marketplace to set up integrations.',
+    });
   };
 
   const handleDisconnect = async (tool: string) => {
-    // Placeholder for disconnect functionality
-    alert(`Disconnect ${tool} - not implemented yet`);
+    toast.info(`Visit Marketplace to manage ${tool} connections`, {
+      description: 'Go to Settings > Marketplace to disconnect integrations.',
+    });
   };
 
   const handleTestTool = async (tool: string) => {

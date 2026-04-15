@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
+  GitHubLogo,
+  SlackLogo,
+  GoogleCalendarLogo,
+  GmailLogo,
+  JiraLogo,
+} from "@/components/source-logos"
+import {
   Database,
   Upload,
   GitBranch,
@@ -26,7 +33,6 @@ import {
   Download,
   Zap,
   Lock,
-  Server,
   BarChart3,
   FileText,
   Loader2,
@@ -114,6 +120,7 @@ const EMPTY_SCORING: PipelineScoring = {
 const MAX_FILE_SIZE_MB = 10
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 const ALLOWED_FILE_TYPES = ['.csv']
+const POLLING_INTERVAL_MS = 30000
 
 // Icon map
 const connectorIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -246,16 +253,16 @@ function DataIngestionContent() {
     }
   }, [fetchStatus, handleSync])
 
+  // Single consolidated polling effect — 30s interval for both status and scoring
   useEffect(() => {
     fetchStatus()
     fetchScoring()
-    const interval = setInterval(fetchStatus, syncingSource ? 2000 : 10000)
-    const scoringInterval = setInterval(fetchScoring, 30000)
-    return () => {
-      clearInterval(interval)
-      clearInterval(scoringInterval)
-    }
-  }, [fetchStatus, fetchScoring, syncingSource])
+    const interval = setInterval(() => {
+      fetchStatus()
+      fetchScoring()
+    }, POLLING_INTERVAL_MS)
+    return () => clearInterval(interval)
+  }, [fetchStatus, fetchScoring])
 
   useEffect(() => {
     if (syncingSource && status?.last_engine_run) {
@@ -384,8 +391,7 @@ function DataIngestionContent() {
 
   const metrics = status?.metrics
   const connectors = status?.connectors || []
-  const stages = status?.pipeline_stages || []
-  const recentEvents = status?.recent_events || []
+  const connectedSourceCount = connectors.filter((c) => c.status === "connected").length
 
   return (
     <div className="flex flex-1 flex-col h-full bg-background">
@@ -467,15 +473,13 @@ function DataIngestionContent() {
             </div>
           )}
 
-          {/* Metrics Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {/* ── Section 1: Pipeline Status (4 compact metric cards) ── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: "Total Events", value: metrics?.total_events?.toLocaleString() || "0", icon: Database, color: "text-muted-foreground" },
               { label: "Active Users", value: metrics?.total_users?.toString() || "0", icon: Shield, color: "text-primary" },
-              { label: "Events/hr", value: metrics?.events_per_hour?.toString() || "0", icon: Zap, color: "text-muted-foreground" },
-              { label: "Avg Latency", value: `${metrics?.avg_latency_ms || 0}ms`, icon: Clock, color: "text-muted-foreground" },
-              { label: "Error Rate", value: `${metrics?.error_rate || 0}%`, icon: AlertCircle, color: "text-muted-foreground" },
-              { label: "Uptime", value: `${metrics?.uptime_hours || 0}h`, icon: Activity, color: "text-muted-foreground" },
+              { label: "Sources Connected", value: connectedSourceCount.toString(), icon: Zap, color: "text-emerald-400" },
+              { label: "Confidence", value: `${Math.round(scoring.avgConfidence * 100)}%`, icon: Gauge, color: "text-primary" },
             ].map((m) => (
               <div key={m.label} className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -487,51 +491,318 @@ function DataIngestionContent() {
             ))}
           </div>
 
-          {/* Visual Pipeline Flow */}
-          <Card className="bg-card border border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <Server className="h-5 w-5 text-emerald-400" />
-                Pipeline Architecture
-              </CardTitle>
-              <CardDescription>
-                Data flows left-to-right: Source Connectors → Validation → Privacy Layer → Storage → Engine Analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                {stages.map((stage, i) => (
-                  <div key={stage.name} className="flex items-center">
-                    <div className={cn(
-                      "min-w-[160px] rounded-lg border p-4 transition-all",
-                      stage.status === "active"
-                        ? "border-emerald-500/30 bg-emerald-500/5"
-                        : stage.status === "error"
-                          ? "border-red-500/30 bg-red-500/5"
-                          : "border-border/50 bg-muted/50"
-                    )}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={cn(
-                          "h-2 w-2 rounded-full",
-                          stage.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground"
+          {/* ── Section 2: Pipeline Flow — the hero visual ── */}
+          <div className="border border-border rounded-xl bg-card p-5 lg:p-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-emerald-400" />
+                Pipeline Flow
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Source ingestion, scoring engine outputs, and risk decision — end to end.
+              </p>
+            </div>
+
+            {/* Row 1: Source Status Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {[
+                { label: "GitHub", icon: GitHubLogo, sourceKey: "Git" },
+                { label: "Slack", icon: SlackLogo, sourceKey: "Slack" },
+                { label: "Calendar", icon: GoogleCalendarLogo, sourceKey: "Calendar" },
+                { label: "Gmail", icon: GmailLogo, sourceKey: "Gmail" },
+              ].map((src) => {
+                const connector = connectors.find((c) => c.name === src.sourceKey)
+                const isConnected = connector?.status === "connected"
+                const eventCount = connector?.events_ingested ?? 0
+                return (
+                  <div key={src.label} className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={cn(
+                        "h-9 w-9 rounded-lg flex items-center justify-center",
+                        isConnected ? "bg-emerald-500/10" : "bg-muted/50"
+                      )}>
+                        <src.icon className={cn(
+                          "h-4 w-4",
+                          isConnected ? "text-emerald-400" : "text-muted-foreground"
                         )} />
-                        <span className="text-xs font-semibold text-foreground">{stage.name}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">{stage.description}</p>
-                      <p className="text-xs font-mono text-primary">{stage.processed.toLocaleString()} processed</p>
+                      <div className={cn(
+                        "h-2.5 w-2.5 rounded-full",
+                        isConnected ? "bg-emerald-400" : "bg-muted-foreground/40"
+                      )} />
                     </div>
-                    {i < stages.length - 1 && (
-                      <ArrowRight className="h-4 w-4 text-muted-foreground/50 mx-1 shrink-0" />
+                    <p className="text-sm font-medium text-foreground">{src.label}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {isConnected ? "Connected" : "Not connected"}
+                      </span>
+                      <span className="text-xs font-mono text-primary">
+                        {eventCount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Arrow connector between sections */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="h-px flex-1 bg-border" />
+              <ArrowRight className="h-4 w-4 text-emerald-400" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                Scoring Engines
+              </span>
+              <ArrowRight className="h-4 w-4 text-emerald-400" />
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            {/* Row 2: Scoring Engine Display */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {[
+                {
+                  label: "Velocity",
+                  value: scoring.avgVelocity.toFixed(2),
+                  icon: TrendingUp,
+                  description: "Rate of behavioral change",
+                  alert: scoring.avgVelocity > 2.5,
+                },
+                {
+                  label: "Connection Index",
+                  value: scoring.avgSentiment.toFixed(2),
+                  icon: Activity,
+                  description: "Team engagement & belonging",
+                  alert: scoring.avgSentiment < 0.3,
+                },
+                {
+                  label: "Circadian Entropy",
+                  value: scoring.avgEntropy.toFixed(2),
+                  icon: Clock,
+                  description: "Work-hour pattern regularity",
+                  alert: scoring.avgEntropy > 1.5,
+                },
+                {
+                  label: "Confidence",
+                  value: `${Math.round(scoring.avgConfidence * 100)}%`,
+                  icon: Gauge,
+                  description: "Multi-source signal strength",
+                  alert: false,
+                  badge: `${scoring.sourceCount} source${scoring.sourceCount !== 1 ? "s" : ""}`,
+                },
+              ].map((metric) => (
+                <div
+                  key={metric.label}
+                  className={cn(
+                    "rounded-lg border p-4 bg-muted/30",
+                    metric.alert
+                      ? "border-amber-500/30"
+                      : "border-border"
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <metric.icon className={cn(
+                      "h-4 w-4",
+                      metric.alert ? "text-amber-400" : "text-muted-foreground"
+                    )} />
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-tight">
+                      {metric.label}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <p className={cn(
+                      "text-2xl font-bold font-mono",
+                      metric.alert ? "text-amber-400" : "text-foreground"
+                    )}>
+                      {metric.value}
+                    </p>
+                    {"badge" in metric && metric.badge && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-400"
+                      >
+                        {metric.badge}
+                      </Badge>
                     )}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">
+                    {metric.description}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-          {/* Connectors + Upload + Live Feed */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Source Connectors */}
+            {/* Arrow connector between sections */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="h-px flex-1 bg-border" />
+              <ArrowRight className="h-4 w-4 text-emerald-400" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                Risk Decision
+              </span>
+              <ArrowRight className="h-4 w-4 text-emerald-400" />
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            {/* Row 3: Risk Decision Output */}
+            <div className={cn(
+              "rounded-lg border p-5",
+              scoring.dominantRisk === "CRITICAL"
+                ? "border-red-500/30 bg-red-500/5"
+                : scoring.dominantRisk === "ELEVATED"
+                  ? "border-amber-500/30 bg-amber-500/5"
+                  : "border-emerald-500/30 bg-emerald-500/5"
+            )}>
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                {/* Risk Level Badge */}
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "h-14 w-14 rounded-xl flex items-center justify-center",
+                    scoring.dominantRisk === "CRITICAL"
+                      ? "bg-red-500/10"
+                      : scoring.dominantRisk === "ELEVATED"
+                        ? "bg-amber-500/10"
+                        : "bg-emerald-500/10"
+                  )}>
+                    {scoring.dominantRisk === "CRITICAL" ? (
+                      <AlertTriangle className="h-7 w-7 text-red-400" />
+                    ) : scoring.dominantRisk === "ELEVATED" ? (
+                      <AlertCircle className="h-7 w-7 text-amber-400" />
+                    ) : (
+                      <CheckCircle2 className="h-7 w-7 text-emerald-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-0.5">
+                      Org Risk Level
+                    </p>
+                    <p className={cn(
+                      "text-xl font-bold font-mono tracking-tight",
+                      scoring.dominantRisk === "CRITICAL"
+                        ? "text-red-400"
+                        : scoring.dominantRisk === "ELEVATED"
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                    )}>
+                      {scoring.dominantRisk}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden md:block h-14 w-px bg-border" />
+
+                {/* Threshold Triggers */}
+                <div className="flex-1">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+                    Threshold Checks
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      {
+                        label: "Velocity > 2.5",
+                        triggered: scoring.avgVelocity > 2.5,
+                        value: scoring.avgVelocity.toFixed(2),
+                      },
+                      {
+                        label: "Connection < 0.3",
+                        triggered: scoring.avgSentiment < 0.3,
+                        value: scoring.avgSentiment.toFixed(2),
+                      },
+                      {
+                        label: "Entropy > 1.5",
+                        triggered: scoring.avgEntropy > 1.5,
+                        value: scoring.avgEntropy.toFixed(2),
+                      },
+                    ].map((threshold) => (
+                      <div
+                        key={threshold.label}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs border",
+                          threshold.triggered
+                            ? "border-red-500/30 bg-red-500/5 text-red-400"
+                            : "border-border bg-muted/50 text-muted-foreground"
+                        )}
+                      >
+                        <div className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          threshold.triggered ? "bg-red-400" : "bg-emerald-400"
+                        )} />
+                        <span className="font-mono">{threshold.label}</span>
+                        <span className="text-[10px] opacity-70">({threshold.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden md:block h-14 w-px bg-border" />
+
+                {/* Multi-source Confidence */}
+                <div className="text-right md:text-left">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1">
+                    Multi-Source Confidence
+                  </p>
+                  <p className="text-2xl font-bold font-mono text-foreground">
+                    {Math.round(scoring.avgConfidence * 100)}%
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70">
+                    {scoring.userCount} user{scoring.userCount !== 1 ? "s" : ""} analyzed
+                  </p>
+                </div>
+              </div>
+
+              {/* Risk Distribution Bar */}
+              {scoring.userCount > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+                    Risk Distribution
+                  </p>
+                  <div className="flex h-2 rounded-full overflow-hidden bg-muted/50">
+                    {scoring.riskDistribution.low > 0 && (
+                      <div
+                        className="bg-emerald-400 transition-all duration-500"
+                        style={{
+                          width: `${(scoring.riskDistribution.low / scoring.userCount) * 100}%`,
+                        }}
+                      />
+                    )}
+                    {scoring.riskDistribution.elevated > 0 && (
+                      <div
+                        className="bg-amber-400 transition-all duration-500"
+                        style={{
+                          width: `${(scoring.riskDistribution.elevated / scoring.userCount) * 100}%`,
+                        }}
+                      />
+                    )}
+                    {scoring.riskDistribution.critical > 0 && (
+                      <div
+                        className="bg-red-400 transition-all duration-500"
+                        style={{
+                          width: `${(scoring.riskDistribution.critical / scoring.userCount) * 100}%`,
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      Low ({scoring.riskDistribution.low})
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                      Elevated ({scoring.riskDistribution.elevated})
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                      Critical ({scoring.riskDistribution.critical})
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Section 3: Source Connectors + Data Transparency (two columns) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left: Source Connectors */}
             <Card className="bg-card border border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -545,14 +816,9 @@ function DataIngestionContent() {
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <RefreshCw className={cn("h-3.5 w-3.5", syncingSource === "all" && "animate-spin")} />
-                    {syncingSource === "all" ? "Syncing..." : "Sync All Connected"}
+                    {syncingSource === "all" ? "Syncing..." : "Sync All"}
                   </button>
                 </div>
-                {syncResult && (
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-lg p-3 mt-3">
-                    {syncResult}
-                  </div>
-                )}
               </CardHeader>
               <CardContent className="space-y-3">
                 {connectors.map((c) => {
@@ -617,582 +883,167 @@ function DataIngestionContent() {
               </CardContent>
             </Card>
 
-            {/* CSV Upload */}
-            <Card className="bg-card border border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground text-base">
-                  <Upload className="h-5 w-5 text-purple-400" />
-                  Data Upload
+            {/* Right: Data Transparency */}
+            <Card className="border border-border bg-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-emerald-400" />
+                  Data Transparency
                 </CardTitle>
-                <CardDescription>Upload CSV files to ingest behavioral data through the pipeline.</CardDescription>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Sentinel analyzes behavioral metadata only. We never access message content, code, or files.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Upload area */}
-                <div
-                  className={cn(
-                    "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
-                    uploading
-                      ? "border-purple-500/30 bg-purple-500/5"
-                      : "border-border hover:border-emerald-500/30 hover:bg-emerald-500/5"
-                  )}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handleCSVUpload}
-                  />
-                  {uploading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-purple-400 mx-auto mb-2" />
-                  ) : (
-                    <FileText className="h-8 w-8 text-muted-foreground/70 mx-auto mb-2" />
-                  )}
-                  <p className="text-sm text-foreground/80 font-medium">
-                    {uploading ? "Processing..." : "Click to upload CSV"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/70 mt-1">
-                    Required: timestamp, user_email, event_type, source
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-                    Max file size: {MAX_FILE_SIZE_MB}MB
-                  </p>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Source</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-emerald-400 uppercase tracking-wider">What We See</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-red-400 uppercase tracking-wider">What We Never See</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      <tr className="hover:bg-muted/30 transition-colors">
+                        <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><GitHubLogo className="h-4 w-4" /> GitHub</td>
+                        <td className="py-2.5 px-3 text-foreground/80">Commit timestamps, file counts, PR review frequency</td>
+                        <td className="py-2.5 px-3 text-muted-foreground/70">Code content, PR descriptions, commit messages</td>
+                      </tr>
+                      <tr className="hover:bg-muted/30 transition-colors">
+                        <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><SlackLogo className="h-4 w-4" /> Slack</td>
+                        <td className="py-2.5 px-3 text-foreground/80">Reply patterns, reaction counts, channel activity</td>
+                        <td className="py-2.5 px-3 text-muted-foreground/70">Message text, DMs, file attachments</td>
+                      </tr>
+                      <tr className="hover:bg-muted/30 transition-colors">
+                        <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><GoogleCalendarLogo className="h-4 w-4" /> Calendar</td>
+                        <td className="py-2.5 px-3 text-foreground/80">Meeting duration, attendee count, time of day</td>
+                        <td className="py-2.5 px-3 text-muted-foreground/70">Meeting agenda, notes, attendee names</td>
+                      </tr>
+                      <tr className="hover:bg-muted/30 transition-colors">
+                        <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><JiraLogo className="h-4 w-4" /> Jira</td>
+                        <td className="py-2.5 px-3 text-foreground/80">Ticket status changes, sprint velocity, overdue count</td>
+                        <td className="py-2.5 px-3 text-muted-foreground/70">Ticket descriptions, comments, attachments</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+                <p className="text-xs text-muted-foreground/70 mt-3 flex items-center gap-1.5">
+                  <Lock className="h-3 w-3" />
+                  All identities are HMAC-SHA256 hashed before storage. Emails are AES-encrypted in a separate vault.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-                {/* Download sample */}
+          {/* ── Section 4: CSV Upload (simple, at bottom) ── */}
+          <Card className="bg-card border border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground text-base">
+                <Upload className="h-5 w-5 text-purple-400" />
+                Data Upload
+              </CardTitle>
+              <CardDescription>Upload CSV files to ingest behavioral data through the pipeline.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Upload area */}
+              <div
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
+                  uploading
+                    ? "border-purple-500/30 bg-purple-500/5"
+                    : "border-border hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                )}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleCSVUpload}
+                />
+                {uploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-purple-400 mx-auto mb-2" />
+                ) : (
+                  <FileText className="h-8 w-8 text-muted-foreground/70 mx-auto mb-2" />
+                )}
+                <p className="text-sm text-foreground/80 font-medium">
+                  {uploading ? "Processing..." : "Click to upload CSV"}
+                </p>
+                <p className="text-[10px] text-muted-foreground/70 mt-1">
+                  Required: timestamp, user_email, event_type, source
+                </p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                  Max file size: {MAX_FILE_SIZE_MB}MB
+                </p>
+              </div>
+
+              {/* Download sample + privacy note row */}
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadSample}
-                  className="w-full gap-2 border-border hover:bg-muted/50 text-foreground/80"
+                  className="gap-2 border-border hover:bg-muted/50 text-foreground/80"
                 >
                   <Download className="h-4 w-4" />
                   Download Sample CSV
                 </Button>
-
-                {/* Upload result */}
-                {uploadResult && (
-                  <div className={cn(
-                    "rounded-lg p-4 border",
-                    uploadResult.success
-                      ? "border-emerald-500/20 bg-emerald-500/5"
-                      : "border-red-500/20 bg-red-500/5"
-                  )}>
-                    {uploadResult.success ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          <span className="text-sm font-medium text-emerald-400">Upload Successful</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-muted-foreground/70">Ingested:</span>
-                            <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.ingested}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground/70">Hashed:</span>
-                            <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.privacy_hashed}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground/70">Errors:</span>
-                            <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.errors}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground/70">Total:</span>
-                            <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.total_rows}</span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-red-400" />
-                        <span className="text-sm text-red-400">
-                          {uploadResult.detail || uploadResult.error_details?.[0] || "Upload failed"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Privacy note */}
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex-1">
                   <Lock className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
                   <p className="text-[10px] text-emerald-400/80 leading-relaxed">
                     All emails are HMAC-hashed before storage. Original PII is AES-256 encrypted in Vault B.
                     Only anonymized hashes enter the analytics pipeline.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Live Ingestion Feed */}
-            <Card className="bg-card border border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground text-base">
-                  <Activity className="h-5 w-5 text-cyan-400" />
-                  Live Ingestion Feed
-                  <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse ml-auto" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[360px]">
-                  <div className="space-y-2">
-                    {recentEvents.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground/70">
-                        <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No recent events</p>
-                        <p className="text-xs mt-1">Upload a CSV to see data flow through the pipeline</p>
-                      </div>
-                    ) : (
-                      recentEvents.slice().reverse().map((event) => (
-                        <div
-                          key={event.id}
-                          className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border animate-in fade-in duration-300"
-                        >
-                          <div className={cn(
-                            "h-2 w-2 rounded-full shrink-0",
-                            event.status === "ingested" ? "bg-emerald-400" : event.status === "hashed" ? "bg-blue-400" : "bg-red-400"
-                          )} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
-                                {event.source}
-                              </Badge>
-                              <span className="text-xs text-foreground truncate">{event.event_type}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-muted-foreground/70 font-mono">{event.user_hash}</span>
-                              <span className="text-[10px] text-muted-foreground/50">
-                                {new Date(event.timestamp).toLocaleTimeString()}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-mono text-primary/70 shrink-0">
-                            {event.latency_ms}ms
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Data Transparency — What We Collect */}
-          <Card className="border border-border bg-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-emerald-400" />
-                Data Transparency — What Sentinel Sees
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground">
-                Sentinel analyzes behavioral metadata only. We never access message content, code, or files.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Source</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-emerald-400 uppercase tracking-wider">What We See</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-red-400 uppercase tracking-wider">What We Never See</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/30">
-                    <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><GitBranch className="h-3.5 w-3.5 text-muted-foreground" /> GitHub</td>
-                      <td className="py-2.5 px-3 text-foreground/80">Commit timestamps, file counts, PR review frequency</td>
-                      <td className="py-2.5 px-3 text-muted-foreground/70">Code content, PR descriptions, commit messages</td>
-                    </tr>
-                    <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-muted-foreground" /> Slack</td>
-                      <td className="py-2.5 px-3 text-foreground/80">Reply patterns, reaction counts, channel activity</td>
-                      <td className="py-2.5 px-3 text-muted-foreground/70">Message text, DMs, file attachments</td>
-                    </tr>
-                    <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-muted-foreground" /> Calendar</td>
-                      <td className="py-2.5 px-3 text-foreground/80">Meeting duration, attendee count, time of day</td>
-                      <td className="py-2.5 px-3 text-muted-foreground/70">Meeting agenda, notes, attendee names</td>
-                    </tr>
-                    <tr className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2"><ClipboardList className="h-3.5 w-3.5 text-muted-foreground" /> Jira</td>
-                      <td className="py-2.5 px-3 text-foreground/80">Ticket status changes, sprint velocity, overdue count</td>
-                      <td className="py-2.5 px-3 text-muted-foreground/70">Ticket descriptions, comments, attachments</td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
-              <p className="text-xs text-muted-foreground/70 mt-3 flex items-center gap-1.5">
-                <Lock className="h-3 w-3" />
-                All identities are HMAC-SHA256 hashed before storage. Emails are AES-encrypted in a separate vault.
-              </p>
-            </CardContent>
-          </Card>
 
-          {/* Privacy Architecture */}
-          <Card className="bg-card border border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <Lock className="h-5 w-5 text-emerald-400" />
-                Privacy Architecture
-              </CardTitle>
-              <CardDescription>
-                Dual-vault system ensuring employee data is never stored in plaintext.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
-                  <h4 className="text-sm font-semibold text-blue-400 mb-2">1. Identity Hashing</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Emails are HMAC-SHA256 hashed with a secure salt. The hash becomes the
-                    user identifier throughout the entire analytics pipeline.
-                  </p>
-                  <code className="block mt-2 text-[10px] text-blue-400/60 font-mono bg-blue-500/5 rounded p-2">
-                    alex@co.com → a7f3b2c1...
-                  </code>
-                </div>
-                <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
-                  <h4 className="text-sm font-semibold text-purple-400 mb-2">2. Vault A: Analytics</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Stores behavioral events, risk scores, and engine outputs.
-                    Contains only hashed identifiers — no PII.
-                  </p>
-                  <code className="block mt-2 text-[10px] text-purple-400/60 font-mono bg-purple-500/5 rounded p-2">
-                    {"{"} user_hash, event_type, timestamp {"}"}
-                  </code>
-                </div>
-                <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-                  <h4 className="text-sm font-semibold text-emerald-400 mb-2">3. Vault B: Identity</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Maps hashes back to encrypted emails for authorized personnel.
-                    AES-256-Fernet encryption at rest.
-                  </p>
-                  <code className="block mt-2 text-[10px] text-emerald-400/60 font-mono bg-emerald-500/5 rounded p-2">
-                    {"{"} hash → AES(email) {"}"}
-                  </code>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* ======= PIPELINE FLOW — Scoring & Risk Decision ======= */}
-          <div className="border-t border-border pt-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-emerald-400" />
-                Pipeline Flow
-              </h2>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Source ingestion, scoring engine outputs, and risk decision — end to end.
-              </p>
-            </div>
-
-            {/* Row 1: Source Status Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {[
-                { label: "GitHub", icon: GitBranch, sourceKey: "Git" },
-                { label: "Slack", icon: MessageSquare, sourceKey: "Slack" },
-                { label: "Calendar", icon: Calendar, sourceKey: "Calendar" },
-                { label: "Gmail", icon: Mail, sourceKey: "Gmail" },
-              ].map((src) => {
-                const connector = connectors.find((c) => c.name === src.sourceKey)
-                const isConnected = connector?.status === "connected"
-                const eventCount = connector?.events_ingested ?? 0
-                return (
-                  <Card key={src.label} className="bg-card border border-border">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className={cn(
-                          "h-9 w-9 rounded-lg flex items-center justify-center",
-                          isConnected ? "bg-emerald-500/10" : "bg-muted/50"
-                        )}>
-                          <src.icon className={cn(
-                            "h-4 w-4",
-                            isConnected ? "text-emerald-400" : "text-muted-foreground"
-                          )} />
+              {/* Upload result */}
+              {uploadResult && (
+                <div className={cn(
+                  "rounded-lg p-4 border",
+                  uploadResult.success
+                    ? "border-emerald-500/20 bg-emerald-500/5"
+                    : "border-red-500/20 bg-red-500/5"
+                )}>
+                  {uploadResult.success ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <span className="text-sm font-medium text-emerald-400">Upload Successful</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground/70">Ingested:</span>
+                          <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.ingested}</span>
                         </div>
-                        <div className={cn(
-                          "h-2.5 w-2.5 rounded-full",
-                          isConnected ? "bg-emerald-400" : "bg-muted-foreground/40"
-                        )} />
+                        <div>
+                          <span className="text-muted-foreground/70">Hashed:</span>
+                          <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.privacy_hashed}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground/70">Errors:</span>
+                          <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.errors}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground/70">Total:</span>
+                          <span className="text-foreground ml-1 font-mono">{uploadResult.summary?.total_rows}</span>
+                        </div>
                       </div>
-                      <p className="text-sm font-medium text-foreground">{src.label}</p>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {isConnected ? "Connected" : "Not connected"}
-                        </span>
-                        <span className="text-xs font-mono text-primary">
-                          {eventCount.toLocaleString()}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-
-            {/* Arrow connector between sections */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="h-px flex-1 bg-border" />
-              <ArrowRight className="h-4 w-4 text-emerald-400" />
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                Scoring Engines
-              </span>
-              <ArrowRight className="h-4 w-4 text-emerald-400" />
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            {/* Row 2: Scoring Engine Display */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {[
-                {
-                  label: "Velocity",
-                  value: scoring.avgVelocity.toFixed(2),
-                  icon: TrendingUp,
-                  description: "Rate of behavioral change",
-                  alert: scoring.avgVelocity > 2.5,
-                },
-                {
-                  label: "Connection Index",
-                  value: scoring.avgSentiment.toFixed(2),
-                  icon: Activity,
-                  description: "Team engagement & belonging",
-                  alert: scoring.avgSentiment < 0.3,
-                },
-                {
-                  label: "Circadian Entropy",
-                  value: scoring.avgEntropy.toFixed(2),
-                  icon: Clock,
-                  description: "Work-hour pattern regularity",
-                  alert: scoring.avgEntropy > 1.5,
-                },
-                {
-                  label: "Confidence",
-                  value: `${Math.round(scoring.avgConfidence * 100)}%`,
-                  icon: Gauge,
-                  description: "Multi-source signal strength",
-                  alert: false,
-                  badge: `${scoring.sourceCount} source${scoring.sourceCount !== 1 ? "s" : ""}`,
-                },
-              ].map((metric) => (
-                <Card
-                  key={metric.label}
-                  className={cn(
-                    "bg-card border",
-                    metric.alert
-                      ? "border-amber-500/30"
-                      : "border-border"
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-red-400" />
+                      <span className="text-sm text-red-400">
+                        {uploadResult.detail || uploadResult.error_details?.[0] || "Upload failed"}
+                      </span>
+                    </div>
                   )}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <metric.icon className={cn(
-                        "h-4 w-4",
-                        metric.alert ? "text-amber-400" : "text-muted-foreground"
-                      )} />
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-tight">
-                        {metric.label}
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <p className={cn(
-                        "text-2xl font-bold font-mono",
-                        metric.alert ? "text-amber-400" : "text-foreground"
-                      )}>
-                        {metric.value}
-                      </p>
-                      {"badge" in metric && metric.badge && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-400"
-                        >
-                          {metric.badge}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/70 mt-1">
-                      {metric.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Arrow connector between sections */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="h-px flex-1 bg-border" />
-              <ArrowRight className="h-4 w-4 text-emerald-400" />
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                Risk Decision
-              </span>
-              <ArrowRight className="h-4 w-4 text-emerald-400" />
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            {/* Row 3: Risk Decision Output */}
-            <Card className={cn(
-              "bg-card border",
-              scoring.dominantRisk === "CRITICAL"
-                ? "border-red-500/30"
-                : scoring.dominantRisk === "ELEVATED"
-                  ? "border-amber-500/30"
-                  : "border-emerald-500/30"
-            )}>
-              <CardContent className="p-5">
-                <div className="flex flex-col md:flex-row md:items-center gap-6">
-                  {/* Risk Level Badge */}
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "h-14 w-14 rounded-xl flex items-center justify-center",
-                      scoring.dominantRisk === "CRITICAL"
-                        ? "bg-red-500/10"
-                        : scoring.dominantRisk === "ELEVATED"
-                          ? "bg-amber-500/10"
-                          : "bg-emerald-500/10"
-                    )}>
-                      {scoring.dominantRisk === "CRITICAL" ? (
-                        <AlertTriangle className="h-7 w-7 text-red-400" />
-                      ) : scoring.dominantRisk === "ELEVATED" ? (
-                        <AlertCircle className="h-7 w-7 text-amber-400" />
-                      ) : (
-                        <CheckCircle2 className="h-7 w-7 text-emerald-400" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-0.5">
-                        Org Risk Level
-                      </p>
-                      <p className={cn(
-                        "text-xl font-bold font-mono tracking-tight",
-                        scoring.dominantRisk === "CRITICAL"
-                          ? "text-red-400"
-                          : scoring.dominantRisk === "ELEVATED"
-                            ? "text-amber-400"
-                            : "text-emerald-400"
-                      )}>
-                        {scoring.dominantRisk}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="hidden md:block h-14 w-px bg-border" />
-
-                  {/* Threshold Triggers */}
-                  <div className="flex-1">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
-                      Threshold Checks
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        {
-                          label: "Velocity > 2.5",
-                          triggered: scoring.avgVelocity > 2.5,
-                          value: scoring.avgVelocity.toFixed(2),
-                        },
-                        {
-                          label: "Connection < 0.3",
-                          triggered: scoring.avgSentiment < 0.3,
-                          value: scoring.avgSentiment.toFixed(2),
-                        },
-                        {
-                          label: "Entropy > 1.5",
-                          triggered: scoring.avgEntropy > 1.5,
-                          value: scoring.avgEntropy.toFixed(2),
-                        },
-                      ].map((threshold) => (
-                        <div
-                          key={threshold.label}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs border",
-                            threshold.triggered
-                              ? "border-red-500/30 bg-red-500/5 text-red-400"
-                              : "border-border bg-muted/50 text-muted-foreground"
-                          )}
-                        >
-                          <div className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            threshold.triggered ? "bg-red-400" : "bg-emerald-400"
-                          )} />
-                          <span className="font-mono">{threshold.label}</span>
-                          <span className="text-[10px] opacity-70">({threshold.value})</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="hidden md:block h-14 w-px bg-border" />
-
-                  {/* Multi-source Confidence */}
-                  <div className="text-right md:text-left">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1">
-                      Multi-Source Confidence
-                    </p>
-                    <p className="text-2xl font-bold font-mono text-foreground">
-                      {Math.round(scoring.avgConfidence * 100)}%
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/70">
-                      {scoring.userCount} user{scoring.userCount !== 1 ? "s" : ""} analyzed
-                    </p>
-                  </div>
                 </div>
-
-                {/* Risk Distribution Bar */}
-                {scoring.userCount > 0 && (
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
-                      Risk Distribution
-                    </p>
-                    <div className="flex h-2 rounded-full overflow-hidden bg-muted/50">
-                      {scoring.riskDistribution.low > 0 && (
-                        <div
-                          className="bg-emerald-400 transition-all duration-500"
-                          style={{
-                            width: `${(scoring.riskDistribution.low / scoring.userCount) * 100}%`,
-                          }}
-                        />
-                      )}
-                      {scoring.riskDistribution.elevated > 0 && (
-                        <div
-                          className="bg-amber-400 transition-all duration-500"
-                          style={{
-                            width: `${(scoring.riskDistribution.elevated / scoring.userCount) * 100}%`,
-                          }}
-                        />
-                      )}
-                      {scoring.riskDistribution.critical > 0 && (
-                        <div
-                          className="bg-red-400 transition-all duration-500"
-                          style={{
-                            width: `${(scoring.riskDistribution.critical / scoring.userCount) * 100}%`,
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 mt-2">
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        Low ({scoring.riskDistribution.low})
-                      </span>
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                        Elevated ({scoring.riskDistribution.elevated})
-                      </span>
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
-                        Critical ({scoring.riskDistribution.critical})
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </main>
       </ScrollArea>
     </div>
