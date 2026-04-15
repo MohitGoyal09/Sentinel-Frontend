@@ -6,7 +6,6 @@ import { ProtectedRoute } from "@/components/protected-route"
 import { RiskAssessment } from "@/components/risk-assessment"
 import { AiInsightCard } from "@/components/ai/AiInsightCard"
 import { StatCards } from "@/components/stat-cards"
-import { NudgeCard } from "@/components/nudge-card"
 import { VelocityChart } from "@/components/velocity-chart"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
@@ -56,7 +55,6 @@ import { useRiskData } from "@/hooks/useRiskData"
 import { useTeamData } from "@/hooks/useTeamData"
 import { useRiskHistory } from "@/hooks/useRiskHistory"
 import { useUsers } from "@/hooks/useUsers"
-import { useNudge } from "@/hooks/useNudge"
 import { useBenchmarks } from "@/hooks/useBenchmarks"
 import { cn, getInitials } from "@/lib/utils"
 
@@ -307,7 +305,6 @@ function SafetyContent() {
   , [employees, selectedUserHash])
 
   const { data: riskData } = useRiskData(selectedUserHash)
-  const { data: nudgeData } = useNudge(selectedUserHash)
   const { data: teamData } = useTeamData()
   const { history: riskHistory } = useRiskHistory(selectedUserHash)
   const { data: benchmarkData } = useBenchmarks()
@@ -323,6 +320,8 @@ function SafetyContent() {
       belongingness_score: riskData.belongingness_score,
       circadian_entropy: riskData.circadian_entropy,
       attrition_probability: riskData.attrition_probability ?? 0,
+      sentiment_score: riskData.sentiment_score ?? null,
+      sentiment_available: riskData.sentiment_available ?? false,
       indicators: {
         chaotic_hours: riskData.indicators?.chaotic_hours || false,
         social_withdrawal: riskData.indicators?.social_withdrawal || false,
@@ -745,8 +744,6 @@ function SafetyContent() {
 
                   {/* AI Insight + Manager Action Plan */}
                   <AiInsightCard employee={currentEmployee} />
-
-                  <NudgeCard nudge={nudgeData ?? undefined} />
                 </div>
               ) : (
                 <div className="bg-card border border-border rounded-lg flex flex-col items-center justify-center py-16">

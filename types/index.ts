@@ -216,6 +216,8 @@ export interface UserSummary {
   sustained_intensity?: boolean;
   has_explained_context?: boolean;
   attrition_probability?: number;
+  sentiment_score?: number | null;
+  sentiment_available?: boolean;
 }
 
 export interface CreatePersonaResponse {
