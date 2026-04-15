@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { AlertCircle, Loader2, Shield, CheckCircle, Zap, TrendingUp, Eye, EyeOff, ArrowRight } from 'lucide-react'
@@ -253,8 +254,8 @@ function LoginContent() {
         >
           {/* Logo mark */}
           <div className="flex flex-col items-center mb-8">
-            <div className="inline-flex h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center mb-4">
-              <Shield className="h-6 w-6 text-primary" />
+            <div className="mb-4">
+              <Image src="/favicon-sentinel.png" alt="Sentinel" width={48} height={48} className="rounded-xl" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h2>
             <p className="text-sm text-muted-foreground mt-1">Sign in to your workspace</p>

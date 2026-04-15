@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 import { SettingsModal } from '@/components/settings-modal'
 import { usePathname, useRouter } from 'next/navigation'
@@ -217,9 +218,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <div className="flex items-center gap-1">
               <SidebarMenuButton size="lg" asChild tooltip="Sentinel" className="flex-1">
                 <Link href="/dashboard">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-400 text-white shadow-sm shadow-emerald-500/20">
-                    <Shield className="size-4" />
-                  </div>
+                  <Image
+                    src="/favicon-sentinel.png"
+                    alt="Sentinel"
+                    width={32}
+                    height={32}
+                    className="rounded-lg"
+                  />
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold">{currentTenant?.name ?? 'Sentinel'}</span>
                     <span className="text-xs text-muted-foreground">{currentTenant ? capitalize(currentTenant.plan ?? 'free') : 'Employee Insights'}</span>
