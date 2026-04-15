@@ -62,7 +62,7 @@ export function SkillsRadar({ data, className, height = 300 }: SkillsRadarProps)
   }
 
   return (
-    <div className={className}>
+    <div className={`w-full ${className ?? ""}`}>
       <ResponsiveContainer width="100%" height={height}>
         <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
           <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.5} />

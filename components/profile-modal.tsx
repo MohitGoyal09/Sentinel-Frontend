@@ -337,7 +337,7 @@ export function ProfileModal({ userHash, open, onOpenChange }: ProfileModalProps
                       <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Skill Profile</p>
                     </div>
-                    <div className="flex items-center justify-center">
+                    <div className="w-full flex items-center justify-center">
                       <SkillsRadar data={skillsData} height={180} />
                     </div>
                   </div>
