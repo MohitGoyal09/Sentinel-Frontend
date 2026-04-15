@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
@@ -27,7 +27,7 @@ import { SectionCard } from "@/components/dashboard/section-card"
 import { SentinelCard } from "@/components/dashboard/sentinel-card"
 import { SkillsRadar } from "@/components/skills-radar"
 import { formatDate, sparkPoints, buildTrendData } from "@/components/dashboard/helpers"
-import { scheduleBreak } from "@/lib/api"
+import { scheduleBreak, getTeamMemberSkills } from "@/lib/api"
 import { getInitials } from "@/lib/utils"
 import type { Employee } from "@/types"
 
@@ -41,6 +41,26 @@ export function ManagerView({ employees, userName }: ManagerViewProps) {
   const [isAnonymized, setIsAnonymized] = useState(true)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isScheduling, setIsScheduling] = useState(false)
+  const [skillsData, setSkillsData] = useState<{
+    technical: number;
+    communication: number;
+    leadership: number;
+    collaboration: number;
+    adaptability: number;
+    creativity: number;
+  } | null>(null)
+
+  useEffect(() => {
+    if (!selectedEmployee) {
+      setSkillsData(null)
+      return
+    }
+    let cancelled = false
+    getTeamMemberSkills(selectedEmployee.user_hash)
+      .then((skills) => { if (!cancelled) setSkillsData(skills) })
+      .catch(() => { if (!cancelled) setSkillsData(null) })
+    return () => { cancelled = true }
+  }, [selectedEmployee])
 
   const critical = employees.filter(e => e.risk_level === "CRITICAL")
   const elevated = employees.filter(e => e.risk_level === "ELEVATED")
@@ -381,15 +401,6 @@ export function ManagerView({ employees, userName }: ManagerViewProps) {
                 return `Early warning signals present. Connection index at ${connectionPct}% and velocity trending ${emp.velocity > 3 ? "above" : "at"} baseline. Proactive check-in advised.`
               }
               return `All indicators within healthy range. Velocity at ${emp.velocity.toFixed(1)}, connection at ${connectionPct}%, schedule entropy stable. No intervention needed.`
-            }
-
-            const skillsData = {
-              technical: 70,
-              communication: 50,
-              leadership: 40,
-              collaboration: 80,
-              adaptability: 60,
-              creativity: 50,
             }
 
             return (

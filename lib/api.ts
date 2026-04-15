@@ -234,6 +234,26 @@ export async function getTeamEnergyHeatmap(days: number = 30): Promise<any> {
 }
 
 // ============================================
+// Team Member Details API
+// ============================================
+
+/**
+ * Get skills profile for a team member
+ * GET /team/member/{user_hash}
+ */
+export async function getTeamMemberSkills(userHash: string): Promise<{
+  technical: number;
+  communication: number;
+  leadership: number;
+  collaboration: number;
+  adaptability: number;
+  creativity: number;
+} | null> {
+  const result = await handleResponse(api.get<any>(`/team/member/${userHash}`));
+  return result?.skills ?? null;
+}
+
+// ============================================
 // Simulation API
 // ============================================
 
