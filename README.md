@@ -4,9 +4,9 @@ Privacy-first burnout detection, talent discovery, and team health monitoring. B
 
 ## Overview
 
-Sentinel is an employee wellbeing analytics platform that detects burnout risk, surfaces hidden talent, and monitors team health through behavioral metadata analysis. The frontend provides role-adaptive dashboards (Employee, Manager, Admin), real-time AI chat with tool execution, and a privacy-first design where employee identities are anonymized by default.
+Sentinel is an employee wellbeing analytics platform that detects burnout risk, surfaces hidden talent, and monitors team health through a hybrid model: metadata-first behavioral signals with optional consented sentiment. The frontend provides role-adaptive dashboards (Employee, Manager, Admin), real-time AI chat with tool execution, and a privacy-first design where employee identities are anonymized by default.
 
-The platform processes only metadata (timestamps, message counts, calendar density) and never reads message content. Sentiment analysis is opt-in, and raw text is never stored.
+The platform is metadata-first for core risk scoring (timestamps, message counts, calendar density), and supports opt-in sentiment classification as a secondary signal. Raw text is never stored.
 
 ## Tech Stack
 
@@ -272,7 +272,7 @@ The AI chat uses Server-Sent Events (`POST /ai/chat/stream`) instead of WebSocke
 
 ### 5. Privacy-First Data Display
 
-Employee hashes (`user_hash`) are the default identifier in all views. Real names (`display_name`) are fetched from the backend profile only for Admin views and CRITICAL risk escalations. The `Connection Index` (not sentiment) is the primary engagement signal, avoiding the ethical concerns of emotion tracking.
+Employee hashes (`user_hash`) are the default identifier in all views. Real names (`display_name`) are fetched from the backend profile only for Admin views and CRITICAL risk escalations. The `Connection Index` remains the primary engagement signal, while opt-in sentiment acts as a secondary confirmation layer.
 
 ### 6. Cached Access Token Pattern
 

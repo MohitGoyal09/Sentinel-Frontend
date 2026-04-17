@@ -53,7 +53,7 @@ const SUGGESTION_CARDS = [
     iconColor: "text-emerald-400",
     bgColor: "bg-emerald-400/10",
     title: "How does Sentinel protect employee privacy?",
-    description: "Two-vault architecture and metadata-only analysis.",
+    description: "Two-vault architecture and metadata-first hybrid analysis.",
     prompt: "How does Sentinel protect employee privacy?",
   },
 ] as const

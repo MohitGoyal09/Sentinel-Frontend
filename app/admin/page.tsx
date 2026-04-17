@@ -191,10 +191,10 @@ function AdminPageContent() {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteRole, setInviteRole] = useState("employee")
-  const [inviteTeam, setInviteTeam] = useState("")
+  const [inviteTeam, setInviteTeam] = useState("none")
   const [createTeamOpen, setCreateTeamOpen] = useState(false)
   const [createTeamName, setCreateTeamName] = useState("")
-  const [createTeamManager, setCreateTeamManager] = useState("")
+  const [createTeamManager, setCreateTeamManager] = useState("none")
   const [deleteTeam, setDeleteTeam] = useState<Team | null>(null)
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null)
   const [teamDetail, setTeamDetail] = useState<TeamDetail | null>(null)
@@ -317,6 +317,7 @@ function AdminPageContent() {
       toast.success(`${promoteUser.name ?? promoteUser.user_hash.slice(0, 8)} promoted to ${nr}`)
       setPromoteUser(null)
       fetchUsers()
+      fetchManagers()
       fetchHealth()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to promote"
@@ -336,6 +337,7 @@ function AdminPageContent() {
       toast.success(`${demoteUser.name ?? demoteUser.user_hash.slice(0, 8)} demoted to ${nr}`)
       setDemoteUser(null)
       fetchUsers()
+      fetchManagers()
       fetchHealth()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to demote"
@@ -384,13 +386,13 @@ function AdminPageContent() {
     setActionLoading("invite")
     try {
       const payload: Record<string, string> = { email: inviteEmail.trim(), role: inviteRole }
-      if (inviteTeam) payload.team_id = inviteTeam
+      if (inviteTeam && inviteTeam !== "none") payload.team_id = inviteTeam
       await api.post("/admin/invite", payload)
       toast.success(`Invitation sent to ${inviteEmail}`)
       setInviteOpen(false)
       setInviteEmail("")
       setInviteRole("employee")
-      setInviteTeam("")
+      setInviteTeam("none")
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to send invite"
       toast.error(msg)
@@ -406,12 +408,12 @@ function AdminPageContent() {
     try {
       await api.post("/admin/teams", {
         name: trimmed,
-        manager_hash: createTeamManager || null,
+        manager_hash: createTeamManager && createTeamManager !== "none" ? createTeamManager : null,
       })
       toast.success(`Team "${trimmed}" created`)
       setCreateTeamOpen(false)
       setCreateTeamName("")
-      setCreateTeamManager("")
+      setCreateTeamManager("none")
       fetchTeams()
       fetchHealth()
     } catch (err: unknown) {
